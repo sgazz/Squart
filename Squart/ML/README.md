@@ -1,70 +1,112 @@
-# Mašinsko učenje u Squart igri
+# Squart - Mašinsko učenje (ML)
 
-Ovaj direktorijum sadrži komponente za implementaciju mašinskog učenja (ML) u Squart igru. ML je korišćen za poboljšanje AI igrača, omogućavajući mu da uči iz iskustva i donosi bolje odluke.
+Ova komponenta aplikacije Squart omogućava podršku za mašinsko učenje (ML) kako bi se unapredila veštačka inteligencija u igri. ML sistem ima sledeće mogućnosti:
 
-## Struktura
+1. Prikupljanje podataka iz odigranih partija za treniranje modela
+2. Evaluaciju pozicija na tabli koristeći ML model
+3. Inteligentnije donošenje odluka AI igrača koji koristi ML algoritme
 
-- `MLPositionEvaluator.swift` - Klasa odgovorna za evaluaciju pozicije koristeći ML model
-- `GameDataCollector.swift` - Klasa za prikupljanje podataka iz igre za treniranje modela
-- `MLPlayer.swift` - Implementacija AI igrača koja koristi ML za donošenje odluka
-- `MLModelTraining.py` - Python skripta za treniranje ML modela (izvršava se van aplikacije)
+## Komponente
 
-## Kako radi
+ML sistem se sastoji od nekoliko ključnih komponenti:
 
-1. **Prikupljanje podataka**: Tokom igranja, `GameDataCollector` beleži sve poteze i njihov konačni ishod.
-2. **Izvoz podataka**: Korisnik može izvesti prikupljene podatke za treniranje modela.
-3. **Treniranje**: Python skripta `MLModelTraining.py` koristi podatke za treniranje neuronske mreže.
-4. **Konverzija**: Trenirani model se konvertuje u CoreML format.
-5. **Implementacija**: Model se učitava u aplikaciju i koristi za procenu pozicije.
+- **MLPositionEvaluator**: klasa koja procenjuje kvalitet pozicije na tabli
+- **MLPlayer**: implementacija AI igrača koji koristi ML za određivanje poteza
+- **GameDataCollector**: prikuplja podatke iz partija za treniranje modela
+- **train_model.py**: Python skripta za treniranje ML modela
 
-## Hibridni pristup
+## Korišćenje ML funkcionalnosti
 
-Squart koristi hibridni pristup za AI:
+### 1. Uključivanje ML u igri
 
-- **Minimax algoritam** se koristi za pretragu poteza unapred.
-- **Neuronska mreža** se koristi za brzu procenu pozicije, što omogućava efikasnije pretrage.
-- **Heuristike** se koriste kao rezervna strategija kada ML model nije dostupan.
+Da biste koristili ML u igri:
 
-## Treniranje modela
+1. Otvorite podešavanja igre
+2. Omogućite opciju "AI protiv igrača" ili "AI protiv AI"
+3. Uključite opciju "Koristi mašinsko učenje"
+4. Izaberite težinu AI igrača
+5. Započnite novu igru
 
-### Preduslovi
+### 2. Prikupljanje podataka za treniranje
 
-- Python 3.6+
-- TensorFlow 2.0+
-- CoreMLTools
-- NumPy
+ML sistem automatski prikuplja podatke tokom igranja, koji se mogu koristiti za unapređivanje modela:
 
-### Koraci za treniranje
+1. Igrajte partije protiv AI ili pustite da AI igra protiv sebe
+2. Podaci o potezima, stanjima table i pobedniku se automatski čuvaju
+3. Nakon 5 odigranih partija, mock model će se automatski "trenirati" na prikupljenim podacima
 
-1. Izvezite podatke iz aplikacije (podešavanja → ML → "Izvezi podatke za treniranje").
-2. Instalirajte potrebne Python biblioteke:
-   ```
-   pip install tensorflow numpy coremltools
-   ```
-3. Pokrenite skriptu za treniranje:
-   ```
-   python MLModelTraining.py --data path/to/squart_training_data.json --output SquartModel.mlmodel --epochs 50
-   ```
-4. Dodajte trenirani model u Xcode projekat.
+### 3. Vizualizacija ML informacija
 
-## Implementacija modela
+Tokom igre možete videti informacije o ML sistemu:
+- Status prikupljanja podataka
+- Broj snimljenih partija
+- Informacije o modelu koji se koristi
 
-Nakon što imate trenirani CoreML model, dodajte ga u Xcode projekat:
+## Treniranje ML modela
 
-1. Prevucite `.mlmodel` fajl u Xcode projekat.
-2. Uverite se da je označena opcija "Target Membership" za Squart.
-3. U `MLPositionEvaluator.swift`, ažurirajte `prepareModel()` metodu da učita vaš model.
+### Izvoz podataka
 
-## Performanse i optimizacija
+Da biste izvezli prikupljene podatke za treniranje:
 
-- ML model je optimizovan za brzu evaluaciju pozicije.
-- Za veliki broj poteza, ML se koristi za preliminarnu procenu kako bi se identifikovali najobećavajući potezi.
-- Detaljnija pretraga se zatim primenjuje samo na te poteze.
+```swift
+let dataURL = GameDataCollector.shared.exportTrainingData()
+```
 
-## Dalji razvoj
+### Treniranje modela koristeći Python skriptu
 
-Moguća poboljšanja uključuju:
+1. Instalirajte potrebne Python biblioteke:
 
-- Konvolucione neuronske mreže (CNN) za bolje prepoznavanje prostornih šablona na tabli.
-- Reinforcement Learning (RL) gde AI uči kroz igranje protiv sebe.
-- Self-play strategiju za generisanje većih količina podataka za trening. 
+```bash
+pip install numpy pandas scikit-learn coremltools
+```
+
+2. Pokrenite skriptu za treniranje:
+
+```bash
+python train_model.py --input /putanja/do/squart_training_data.json --output /putanja/do/SquartMLModel.mlmodel --verbose
+```
+
+3. Dobijeni CoreML model (`SquartMLModel.mlmodel`) dodajte u Xcode projekat
+
+### Parametri Python skripte
+
+- `--input`: JSON fajl sa trening podacima
+- `--output`: Putanja gde će se sačuvati CoreML model
+- `--verbose`: Opcioni parameter za detaljnije informacije tokom treninga
+
+## Struktura podataka za treniranje
+
+Podaci za treniranje se izvoze u JSON formatu sa sledećom strukturom:
+
+```json
+[
+  {
+    "moves": [{"row": 3, "column": 4}, ...],
+    "winner": "blue",
+    "boardSize": 9,
+    "boardStates": [...],
+    "currentPlayers": ["blue", "red", ...]
+  },
+  ...
+]
+```
+
+## Trenutna implementacija
+
+Trenutna implementacija koristi mock model za evaluaciju pozicija. U budućim verzijama će biti implementirana puna podrška za CoreML model.
+
+## Fallback sistem
+
+Ako ML model nije dostupan, sistem će automatski koristiti tradicionalnu heurističku evaluaciju pozicije.
+
+## Poboljšanje AI razmatranjem više faktora
+
+ML sistem razmatra sledeće faktore pri evaluaciji pozicije:
+
+1. Broj validnih poteza za igrača i protivnika
+2. Kontrola ivica table
+3. Kontrola ćoškova (posebno važno)
+4. Kontrola centralnog dela table
+5. Blokiranje protivničkih poteza
+6. Mobilnost (sloboda za buduće poteze)
+7. Kontrola teritorije 

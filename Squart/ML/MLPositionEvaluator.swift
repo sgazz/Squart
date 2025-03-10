@@ -46,25 +46,39 @@ class MLPositionEvaluator {
         }
         
         // U pravoj implementaciji, ovde bismo učitali CoreML model
-        // Trenutno koristimo mock model za testiranje
         if model == nil {
-            createMockModel()
-            print("ML: Kreiran novi mock model")
+            // Prvo pokušavamo da učitamo realni model ako postoji
+            loadRealModel()
+            
+            // Ako ne možemo učitati realni model, kreiramo mock model
+            if model == nil {
+                createMockModel()
+                print("ML: Kreiran novi mock model")
+            }
+        }
+    }
+    
+    // Funkcija koja pokušava da učita pravi CoreML model
+    private func loadRealModel() {
+        // Pokušavamo pronaći model u bundle-u
+        guard let modelURL = Bundle.main.url(forResource: "SquartMLModel", withExtension: "mlmodelc") else {
+            print("ML: CoreML model nije pronađen u bundle-u")
+            return
         }
         
-        // TODO: Implementirati pravi CoreML model
-        // Primer koda za učitavanje CoreML modela:
-        /*
+        // Pokušavamo učitati model
         do {
-            let modelConfig = MLModelConfiguration()
-            let model = try SquartPositionEvaluator(configuration: modelConfig)
-            self.model = model
-            print("ML: Model uspešno učitan")
+            // U stvarnoj implementaciji, ovde bismo učitali pravi model
+            // let model = try MLModel(contentsOf: modelURL)
+            print("ML: CoreML model pronađen na: \(modelURL.path)")
+            
+            // Za sada samo logujemo da smo našli model, ali i dalje koristimo mock
+            createMockModel()
+            print("ML: Koristi se mock model jer stvarni model još uvek nije implementiran")
         } catch {
-            print("ML greška: Nije moguće učitati model: \(error)")
-            self.model = nil
+            print("ML: Greška pri učitavanju CoreML modela: \(error)")
+            model = nil
         }
-        */
     }
     
     // Metoda za konverziju stanja igre u format prihvatljiv za ML model
@@ -169,7 +183,7 @@ class MLPositionEvaluator {
         let opponent = player == .blue ? Player.red : Player.blue
         let board = game.board
         
-        // Brojimo validne poteze za oba igrača
+        // Dobijamo validne poteze za oba igrača
         let playerMoves = getValidMoves(for: board, player: player)
         let opponentMoves = getValidMoves(for: board, player: opponent)
         
@@ -184,27 +198,143 @@ class MLPositionEvaluator {
         
         var score = 0
         
-        // 1. Razlika u broju validnih poteza
-        score += (playerMoves.count - opponentMoves.count) * 5
+        // 1. Razlika u broju validnih poteza (najvažniji faktor)
+        score += (playerMoves.count - opponentMoves.count) * 10
         
         // 2. Bonus za kontrolu ivica
-        score += countEdgeMoves(playerMoves, boardSize: board.size) * 2
-        score -= countEdgeMoves(opponentMoves, boardSize: board.size) * 2
+        let playerEdges = countEdgeMoves(playerMoves, boardSize: board.size)
+        let opponentEdges = countEdgeMoves(opponentMoves, boardSize: board.size)
+        score += (playerEdges - opponentEdges) * 5
         
-        // 3. Bonus za kontrolu ćoškova
-        score += countCornerMoves(playerMoves, boardSize: board.size) * 3
-        score -= countCornerMoves(opponentMoves, boardSize: board.size) * 3
+        // 3. Bonus za kontrolu ćoškova (još važniji)
+        let playerCorners = countCornerMoves(playerMoves, boardSize: board.size)
+        let opponentCorners = countCornerMoves(opponentMoves, boardSize: board.size)
+        score += (playerCorners - opponentCorners) * 8
         
         // 4. Bonus za kontrolu centra (važniji na većim tablama)
         if board.size >= 7 {
-            score += countCenterMoves(playerMoves, boardSize: board.size) * 2
-            score -= countCenterMoves(opponentMoves, boardSize: board.size) * 2
+            let playerCenter = countCenterMoves(playerMoves, boardSize: board.size)
+            let opponentCenter = countCenterMoves(opponentMoves, boardSize: board.size)
+            score += (playerCenter - opponentCenter) * 7
         }
         
-        // 5. Faktor za blokiranje poteza
-        score += calculateBlockingFactor(game, player: player)
+        // 5. Faktor za blokiranje poteza protivnika
+        let blockingFactor = calculateBlockingFactor(game, player: player)
+        score += Int(blockingFactor)
+        
+        // 6. Mobilnost poteza (koliko slobode imamo za buduće poteze)
+        let mobilityScore = calculateMobilityScore(game, player: player)
+        score += mobilityScore
+        
+        // 7. Kontrola teritorije (više poteza u određenim delovima table)
+        let territoryScore = calculateTerritoryControl(game, player: player)
+        score += territoryScore
         
         return score
+    }
+    
+    // Nova pomoćna funkcija za računanje mobilnosti poteza
+    private func calculateMobilityScore(_ game: Game, player: Player) -> Int {
+        let opponent = player == .blue ? Player.red : Player.blue
+        let board = game.board
+        
+        var mobilityScore = 0
+        
+        // Proveravamo susedna polja za moje validne poteze
+        let playerMoves = getValidMoves(for: board, player: player)
+        
+        for move in playerMoves {
+            // Brojimo koliko susednih polja je prazno za svaki validni potez
+            let neighbors = getNeighbors(move, boardSize: board.size)
+            let emptyNeighbors = neighbors.filter { 
+                let (r, c) = $0
+                return r >= 0 && r < board.size && c >= 0 && c < board.size && 
+                       board.cells[r][c].type == .empty 
+            }
+            
+            mobilityScore += emptyNeighbors.count
+        }
+        
+        // Oduzimamo mobilnost protivnika
+        let opponentMoves = getValidMoves(for: board, player: opponent)
+        
+        for move in opponentMoves {
+            let neighbors = getNeighbors(move, boardSize: board.size)
+            let emptyNeighbors = neighbors.filter { 
+                let (r, c) = $0
+                return r >= 0 && r < board.size && c >= 0 && c < board.size && 
+                       board.cells[r][c].type == .empty 
+            }
+            
+            mobilityScore -= emptyNeighbors.count
+        }
+        
+        return mobilityScore / 2  // Normalizujemo vrednost
+    }
+    
+    // Nova pomoćna funkcija za računanje susednih polja
+    private func getNeighbors(_ position: (row: Int, column: Int), boardSize: Int) -> [(Int, Int)] {
+        let (row, col) = position
+        
+        // 8 mogućih suseda (gore, dole, levo, desno, dijagonale)
+        return [
+            (row-1, col-1), (row-1, col), (row-1, col+1),
+            (row, col-1),                 (row, col+1),
+            (row+1, col-1), (row+1, col), (row+1, col+1)
+        ]
+    }
+    
+    // Nova pomoćna funkcija za računanje kontrole teritorije
+    private func calculateTerritoryControl(_ game: Game, player: Player) -> Int {
+        let opponent = player == .blue ? Player.red : Player.blue
+        let board = game.board
+        
+        // Definišemo četvrtine table kao teritorije
+        let quarters = [
+            // Gornja leva četvrtina
+            (0..<board.size/2).flatMap { r in
+                (0..<board.size/2).map { c in (r, c) }
+            },
+            // Gornja desna četvrtina
+            (0..<board.size/2).flatMap { r in
+                (board.size/2..<board.size).map { c in (r, c) }
+            },
+            // Donja leva četvrtina
+            (board.size/2..<board.size).flatMap { r in
+                (0..<board.size/2).map { c in (r, c) }
+            },
+            // Donja desna četvrtina
+            (board.size/2..<board.size).flatMap { r in
+                (board.size/2..<board.size).map { c in (r, c) }
+            }
+        ]
+        
+        var territoryScore = 0
+        
+        for (index, territory) in quarters.enumerated() {
+            var playerCells = 0
+            var opponentCells = 0
+            
+            for (r, c) in territory {
+                if board.cells[r][c].type == .blue && player == .blue {
+                    playerCells += 1
+                } else if board.cells[r][c].type == .red && player == .red {
+                    playerCells += 1
+                } else if board.cells[r][c].type == .blue && player == .red {
+                    opponentCells += 1
+                } else if board.cells[r][c].type == .red && player == .blue {
+                    opponentCells += 1
+                }
+            }
+            
+            // Dodajemo bonus za dominaciju u teritoriji
+            let territoryDiff = playerCells - opponentCells
+            territoryScore += territoryDiff * 3
+            
+            // Bonus za kontrolu centra je već računat u glavnoj funkciji
+        }
+        
+        return territoryScore
     }
     
     // Pomoćne metode za evaluaciju
@@ -285,7 +415,6 @@ class MLPositionEvaluator {
     // Funkcija za trening modela (koristiće se offline)
     func trainModel(withGameData games: [GameRecord]) {
         // TODO: Implementirati offline trening na osnovu snimljenih partija
-        // Ovo će biti poseban proces koji će generisati CoreML model
         print("ML: Započinjem trening sa \(games.count) partija")
         
         // Ovde bismo pozivali Python skriptu za treniranje
@@ -294,14 +423,73 @@ class MLPositionEvaluator {
         if let mockModel = model as? [String: Float] {
             var updatedWeights = mockModel
             
-            // Simuliramo "učenje" povećavajući težine na osnovu broja partija
-            let factor = min(Float(games.count) / 10.0, 2.0)
+            // Simuliramo "učenje" ažuriranjem težina na osnovu analize partija
+            let gameFactor = min(Float(games.count) / 10.0, 2.0)
             
-            updatedWeights["move_advantage"] = (mockModel["move_advantage"] ?? 1.0) * factor
-            updatedWeights["blocking_factor"] = (mockModel["blocking_factor"] ?? 1.0) * factor
+            // Analiza pobedničke strategije iz podataka
+            var blueWins = 0
+            var redWins = 0
+            var moveCountSum = 0
+            var edgeMovesSumWinner = 0
+            var cornerMovesSumWinner = 0
+            
+            for game in games {
+                moveCountSum += game.moves.count
+                
+                if game.winner == .blue {
+                    blueWins += 1
+                } else {
+                    redWins += 1
+                }
+                
+                // Brojimo ivice i ćoškove pobednika
+                if let boardSize = game.boardStates.first?.count {
+                    for move in game.moves {
+                        let isWinnerMove = (game.currentPlayers[game.moves.firstIndex(of: move) ?? 0] == game.winner)
+                        if isWinnerMove {
+                            if move.row == 0 || move.row == boardSize - 1 || 
+                               move.column == 0 || move.column == boardSize - 1 {
+                                edgeMovesSumWinner += 1
+                            }
+                            
+                            if (move.row == 0 && move.column == 0) ||
+                               (move.row == 0 && move.column == boardSize - 1) ||
+                               (move.row == boardSize - 1 && move.column == 0) ||
+                               (move.row == boardSize - 1 && move.column == boardSize - 1) {
+                                cornerMovesSumWinner += 1
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Odlučujemo koju strategiju favorizujemo na osnovu analize
+            let averageMoves = games.isEmpty ? 0 : Float(moveCountSum) / Float(games.count)
+            let edgeRatio = games.isEmpty ? 0 : Float(edgeMovesSumWinner) / Float(moveCountSum)
+            let cornerRatio = games.isEmpty ? 0 : Float(cornerMovesSumWinner) / Float(moveCountSum)
+            
+            // Ažuriramo težine prema analizi
+            updatedWeights["move_advantage"] = (mockModel["move_advantage"] ?? 1.0) * gameFactor
+            
+            // Ako pobednici često igraju na ivicama, povećavamo težinu ivica
+            if edgeRatio > 0.3 {
+                updatedWeights["edge_control"] = (mockModel["edge_control"] ?? 1.0) * (1.0 + edgeRatio)
+            }
+            
+            // Ako pobednici često igraju u ćoškovima, povećavamo težinu ćoškova
+            if cornerRatio > 0.2 {
+                updatedWeights["corner_control"] = (mockModel["corner_control"] ?? 1.0) * (1.0 + cornerRatio * 2)
+            }
+            
+            // Ako su partije kratke, favorizujemo agresivniju strategiju
+            if averageMoves < 15 {
+                updatedWeights["blocking_factor"] = (mockModel["blocking_factor"] ?? 1.0) * 1.5
+            } else {
+                updatedWeights["center_control"] = (mockModel["center_control"] ?? 1.0) * 1.3
+            }
             
             model = updatedWeights
-            print("ML: Mock trening završen, ažurirane težine")
+            print("ML: Mock trening završen, ažurirane težine na osnovu analize \(games.count) partija")
         }
     }
 }
