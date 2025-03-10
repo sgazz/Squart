@@ -181,64 +181,73 @@ class GameSettingsManager: ObservableObject {
     }
     
     private init() {
-        // Učitaj boardSize iz korisničkih podešavanja ili koristi podrazumevanu vrednost
-        self.boardSize = UserDefaults.standard.integer(forKey: "board_size")
-        if self.boardSize < GameSettings.minBoardSize || self.boardSize > GameSettings.maxBoardSize {
-            self.boardSize = GameSettings.defaultBoardSize
+        // Prvo inicijalizujemo sve promenljive sa podrazumevanim vrednostima
+        self.boardSize = GameSettings.defaultBoardSize
+        self.currentTheme = .ocean
+        self.timerOption = .none
+        self.soundEnabled = true
+        self.hapticFeedbackEnabled = true
+        self.aiEnabled = false
+        self.aiDifficulty = .medium
+        self.aiTeam = .red
+        self.aiVsAiMode = false
+        self.secondAiDifficulty = .medium
+        self.useMachineLearning = false
+        self.showMLFeedback = false
+        
+        // Sada učitavamo vrednosti iz UserDefaults
+        if let boardSizeValue = UserDefaults.standard.object(forKey: "board_size") as? Int,
+           boardSizeValue >= GameSettings.minBoardSize && boardSizeValue <= GameSettings.maxBoardSize {
+            self.boardSize = boardSizeValue
         }
         
-        // Učitaj temu iz korisničkih podešavanja ili koristi podrazumevanu vrednost
         if let themeString = UserDefaults.standard.string(forKey: "theme"),
            let theme = ThemeType(rawValue: themeString) {
             self.currentTheme = theme
-        } else {
-            self.currentTheme = .ocean
         }
         
-        // Učitaj timer opciju iz korisničkih podešavanja ili koristi podrazumevanu vrednost
         let timerValue = UserDefaults.standard.integer(forKey: "timer_option")
         if let timer = TimerOption(rawValue: timerValue) {
             self.timerOption = timer
-        } else {
-            self.timerOption = .none
         }
         
-        // Učitaj podešavanja za zvuk i vibraciju
-        self.soundEnabled = UserDefaults.standard.bool(forKey: "sound_enabled")
-        self.hapticFeedbackEnabled = UserDefaults.standard.bool(forKey: "haptic_feedback_enabled")
+        if UserDefaults.standard.object(forKey: "sound_enabled") != nil {
+            self.soundEnabled = UserDefaults.standard.bool(forKey: "sound_enabled")
+        }
         
-        // Učitaj AI podešavanja
-        self.aiEnabled = UserDefaults.standard.bool(forKey: "ai_enabled")
+        if UserDefaults.standard.object(forKey: "haptic_feedback_enabled") != nil {
+            self.hapticFeedbackEnabled = UserDefaults.standard.bool(forKey: "haptic_feedback_enabled")
+        }
         
-        // Učitaj težinu AI-a
+        if UserDefaults.standard.object(forKey: "ai_enabled") != nil {
+            self.aiEnabled = UserDefaults.standard.bool(forKey: "ai_enabled")
+        }
+        
         let aiDifficultyValue = UserDefaults.standard.integer(forKey: "ai_difficulty")
         if let aiDifficulty = AIDifficulty(rawValue: aiDifficultyValue) {
             self.aiDifficulty = aiDifficulty
-        } else {
-            self.aiDifficulty = .medium
         }
         
-        // Učitaj AI tim
         if let aiTeamString = UserDefaults.standard.string(forKey: "ai_team") {
             self.aiTeam = aiTeamString == "blue" ? .blue : .red
-        } else {
-            self.aiTeam = .red
         }
         
-        // Učitaj AI vs AI mod
-        self.aiVsAiMode = UserDefaults.standard.bool(forKey: "ai_vs_ai_mode")
+        if UserDefaults.standard.object(forKey: "ai_vs_ai_mode") != nil {
+            self.aiVsAiMode = UserDefaults.standard.bool(forKey: "ai_vs_ai_mode")
+        }
         
-        // Učitaj težinu drugog AI-a
         let secondAiDifficultyValue = UserDefaults.standard.integer(forKey: "second_ai_difficulty")
         if let secondAiDifficulty = AIDifficulty(rawValue: secondAiDifficultyValue) {
             self.secondAiDifficulty = secondAiDifficulty
-        } else {
-            self.secondAiDifficulty = .medium
         }
         
-        // Učitaj ML podešavanja
-        self.useMachineLearning = UserDefaults.standard.bool(forKey: "use_machine_learning")
-        self.showMLFeedback = UserDefaults.standard.bool(forKey: "show_ml_feedback")
+        if UserDefaults.standard.object(forKey: "use_machine_learning") != nil {
+            self.useMachineLearning = UserDefaults.standard.bool(forKey: "use_machine_learning")
+        }
+        
+        if UserDefaults.standard.object(forKey: "show_ml_feedback") != nil {
+            self.showMLFeedback = UserDefaults.standard.bool(forKey: "show_ml_feedback")
+        }
     }
 }
 
