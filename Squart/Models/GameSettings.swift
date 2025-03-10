@@ -84,6 +84,9 @@ struct SettingsData: Codable {
     let hapticFeedbackEnabled: Bool
     let aiEnabled: Bool
     let aiDifficulty: AIDifficulty
+    let aiTeam: Player
+    let aiVsAiMode: Bool
+    let secondAiDifficulty: AIDifficulty
 }
 
 // Glavna klasa za podešavanja
@@ -134,6 +137,24 @@ class GameSettingsManager: ObservableObject {
         }
     }
     
+    @Published var aiTeam: Player = .red {
+        didSet {
+            save()
+        }
+    }
+    
+    @Published var aiVsAiMode: Bool = false {
+        didSet {
+            save()
+        }
+    }
+    
+    @Published var secondAiDifficulty: AIDifficulty = .medium {
+        didSet {
+            save()
+        }
+    }
+    
     private init() {
         load()
     }
@@ -145,7 +166,10 @@ class GameSettingsManager: ObservableObject {
             soundEnabled: soundEnabled,
             hapticFeedbackEnabled: hapticFeedbackEnabled,
             aiEnabled: aiEnabled,
-            aiDifficulty: aiDifficulty
+            aiDifficulty: aiDifficulty,
+            aiTeam: aiTeam,
+            aiVsAiMode: aiVsAiMode,
+            secondAiDifficulty: secondAiDifficulty
         )
         
         if let encoded = try? JSONEncoder().encode(settings) {
@@ -162,6 +186,9 @@ class GameSettingsManager: ObservableObject {
             self.hapticFeedbackEnabled = settings.hapticFeedbackEnabled
             self.aiEnabled = settings.aiEnabled
             self.aiDifficulty = settings.aiDifficulty
+            self.aiTeam = settings.aiTeam
+            self.aiVsAiMode = settings.aiVsAiMode
+            self.secondAiDifficulty = settings.secondAiDifficulty
         }
     }
 }

@@ -136,6 +136,17 @@ class Game: ObservableObject {
     @Published var aiDifficulty: AIDifficulty = .medium
     private var aiPlayer: AIPlayer?
     
+    // Određuje tim koji igra AI (podrazumevano crveni)
+    @Published var aiTeam: Player = .red
+    
+    // Podrška za drugi AI u AI vs AI modu
+    @Published var aiVsAiMode: Bool = false
+    @Published var secondAiDifficulty: AIDifficulty = .medium
+    private var secondAiPlayer: AIPlayer?
+    
+    // Praćenje koji igrač je prvi na potezu (za naizmenično smenjivanje)
+    @Published var startingPlayer: Player = .blue
+    
     // Razlog završetka igre
     enum GameEndReason {
         case noValidMoves  // Nema validnih poteza
@@ -210,7 +221,11 @@ class Game: ObservableObject {
     
     func resetGame() {
         board = GameBoard(size: board.size)
-        currentPlayer = .blue
+        
+        // Naizmenično menjanje prvog igrača
+        startingPlayer = startingPlayer == .blue ? .red : .blue
+        currentPlayer = startingPlayer
+        
         isGameOver = false
         gameEndReason = .none
         
@@ -218,25 +233,76 @@ class Game: ObservableObject {
         timerOption = GameSettingsManager.shared.timerOption
         blueTimeRemaining = timerOption.rawValue
         redTimeRemaining = timerOption.rawValue
+        
+        // AI logika nakon resetovanja igre
+        if aiEnabled {
+            // Za AI vs AI mod, uvek pokrećemo AI potez, bez obzira koji igrač je trenutno
+            if aiVsAiMode {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    self.makeAIMove()
+                }
+            }
+            // Za standardni mod, pokrećemo AI potez samo ako je AI tim na potezu
+            else if currentPlayer == aiTeam {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.makeAIMove()
+                }
+            }
+        }
     }
     
     // AI funkcionalnosti
     
     // Inicijalizacija AI igrača
-    func initializeAI(difficulty: AIDifficulty = .medium) {
+    func initializeAI(difficulty: AIDifficulty = .medium, team: Player = .red) {
         aiEnabled = true
         aiDifficulty = difficulty
+        aiTeam = team
         aiPlayer = AIPlayer(difficulty: difficulty)
+        
+        // Inicijalizacija drugog AI igrača ako je AI vs AI mod uključen
+        if GameSettingsManager.shared.aiVsAiMode {
+            aiVsAiMode = true
+            secondAiDifficulty = GameSettingsManager.shared.secondAiDifficulty
+            secondAiPlayer = AIPlayer(difficulty: secondAiDifficulty)
+        }
     }
     
     // Metoda za AI potez
     func makeAIMove() {
-        guard aiEnabled, !isGameOver, let aiPlayer = aiPlayer else { return }
+        guard aiEnabled, !isGameOver else { return }
         
-        // AI igra samo kao crveni igrač (drugi igrač)
-        if currentPlayer == .red {
-            if let bestMove = aiPlayer.findBestMove(for: self) {
-                _ = makeMove(row: bestMove.row, column: bestMove.column)
+        if aiVsAiMode {
+            // U AI vs AI modu, uvek imamo AI igrača
+            makeAIMoveForCurrentPlayer()
+        } else {
+            // U standardnom modu, AI igra samo za svoj tim
+            if currentPlayer == aiTeam, let aiPlayer = aiPlayer {
+                if let bestMove = aiPlayer.findBestMove(for: self) {
+                    _ = makeMove(row: bestMove.row, column: bestMove.column)
+                }
+            }
+        }
+    }
+    
+    // Pomoćna metoda za AI vs AI mod
+    private func makeAIMoveForCurrentPlayer() {
+        let activeAI: AIPlayer?
+        
+        if currentPlayer == aiTeam {
+            activeAI = aiPlayer
+        } else {
+            activeAI = secondAiPlayer
+        }
+        
+        if let ai = activeAI, let bestMove = ai.findBestMove(for: self) {
+            _ = makeMove(row: bestMove.row, column: bestMove.column)
+            
+            // Ako igra nije završena, planiramo sledeći AI potez sa malim odlaganjem
+            if !isGameOver {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    self.makeAIMove()
+                }
             }
         }
     }

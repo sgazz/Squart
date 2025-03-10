@@ -9,71 +9,10 @@ struct GameControlsView: View {
     var body: some View {
         VStack(spacing: 16) {
             // Status igre
-            HStack {
-                PlayerScoreView(player: .blue, score: game.blueScore)
-                Spacer()
-                if game.isGameOver {
-                    VStack(spacing: 4) {
-                        Text(gameOverMessage)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            
-                        Text(winnerMessage)
-                            .font(.subheadline)
-                            .foregroundColor(.white)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .background(Color.yellow.opacity(0.3))
-                    .cornerRadius(8)
-                    .overlay(
-                        showConfetti ? ConfettiView() : nil
-                    )
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            withAnimation {
-                                showConfetti = true
-                            }
-                        }
-                    }
-                } else {
-                    Text("Na potezu: \(game.currentPlayer == .blue ? "Plavi" : "Crveni")")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 16)
-                        .background(game.currentPlayer == .blue ? Color.blue.opacity(0.3) : Color.red.opacity(0.3))
-                        .cornerRadius(8)
-                }
-                Spacer()
-                PlayerScoreView(player: .red, score: game.redScore)
-            }
+            GameStatusView(game: game, showConfetti: $showConfetti)
             
             // Kontrole
-            HStack(spacing: 30) {
-                Button(action: {
-                    showingSettings = true
-                }) {
-                    Text("Podešavanja")
-                        .foregroundColor(.white)
-                        .padding(10)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(8)
-                }
-                
-                Button(action: {
-                    withAnimation {
-                        showConfetti = false
-                        game.resetGame()
-                    }
-                }) {
-                    Text("Nova igra")
-                        .foregroundColor(.white)
-                        .padding(10)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(8)
-                }
-            }
+            GameButtonsView(game: game, showingSettings: $showingSettings, showConfetti: $showConfetti)
         }
         .padding()
         .background(Color.black.opacity(0.2))
@@ -85,6 +24,67 @@ struct GameControlsView: View {
         .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
         .sheet(isPresented: $showingSettings) {
             SettingsView(selectedSize: $selectedSize, game: game)
+        }
+    }
+}
+
+// Izdvojena komponenta za prikaz statusa igre
+struct GameStatusView: View {
+    @ObservedObject var game: Game
+    @Binding var showConfetti: Bool
+    
+    var body: some View {
+        HStack {
+            PlayerScoreView(player: .blue, score: game.blueScore)
+            Spacer()
+            if game.isGameOver {
+                VStack(spacing: 4) {
+                    Text(gameOverMessage)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        
+                    Text(winnerMessage)
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                }
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .background(Color.yellow.opacity(0.3))
+                .cornerRadius(8)
+                .overlay(
+                    showConfetti ? ConfettiView() : nil
+                )
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation {
+                            showConfetti = true
+                        }
+                    }
+                }
+            } else {
+                Text("Na potezu: \(game.currentPlayer == .blue ? "Plavi" : "Crveni")")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .background(game.currentPlayer == .blue ? Color.blue.opacity(0.3) : Color.red.opacity(0.3))
+                    .cornerRadius(8)
+                    .overlay(
+                        game.aiEnabled ? 
+                        Text(game.aiVsAiMode ? 
+                             "AI (\(game.currentPlayer == .blue ? "plavi" : "crveni")) razmišlja" : 
+                             game.currentPlayer == game.aiTeam ? "AI na potezu" : "Vi ste na potezu")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .padding(4)
+                            .background(Color.black.opacity(0.5))
+                            .cornerRadius(4)
+                            .offset(y: 20)
+                        : nil
+                    )
+            }
+            Spacer()
+            PlayerScoreView(player: .red, score: game.redScore)
         }
     }
     
@@ -106,6 +106,40 @@ struct GameControlsView: View {
     private var winnerMessage: String {
         let lastPlayer = game.currentPlayer == .blue ? Player.red : Player.blue
         return "Pobednik: \(lastPlayer == .blue ? "Plavi" : "Crveni")"
+    }
+}
+
+// Izdvojena komponenta za dugmiće
+struct GameButtonsView: View {
+    @ObservedObject var game: Game
+    @Binding var showingSettings: Bool
+    @Binding var showConfetti: Bool
+    
+    var body: some View {
+        HStack(spacing: 30) {
+            Button(action: {
+                showingSettings = true
+            }) {
+                Text("Podešavanja")
+                    .foregroundColor(.white)
+                    .padding(10)
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(8)
+            }
+            
+            Button(action: {
+                withAnimation {
+                    showConfetti = false
+                    game.resetGame()
+                }
+            }) {
+                Text("Nova igra")
+                    .foregroundColor(.white)
+                    .padding(10)
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(8)
+            }
+        }
     }
 }
 
@@ -212,78 +246,167 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Veličina table")) {
-                    Picker("Veličina", selection: $selectedSize) {
-                        ForEach(GameSettings.minBoardSize...GameSettings.maxBoardSize, id: \.self) { size in
-                            Text("\(size)x\(size)")
-                        }
-                    }
-                }
+                BoardSizeSection(selectedSize: $selectedSize)
                 
-                Section(header: Text("Izgled")) {
-                    Picker("Tema", selection: $settings.currentTheme) {
-                        ForEach(ThemeType.allCases, id: \.self) { theme in
-                            HStack {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(LinearGradient(
-                                        gradient: Gradient(colors: theme.colors),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    ))
-                                    .frame(width: 50, height: 24)
-                                Text(theme.rawValue)
-                            }
-                        }
-                    }
-                    .pickerStyle(MenuPickerStyle())
-                }
+                ThemeSection(settings: settings)
                 
-                Section(header: Text("Vreme za potez")) {
-                    Picker("Ograničenje vremena", selection: $settings.timerOption) {
-                        ForEach(TimerOption.allCases, id: \.self) { option in
-                            Text(option.description)
-                        }
-                    }
-                    .pickerStyle(MenuPickerStyle())
-                }
+                TimerSection(settings: settings)
                 
-                Section(header: Text("Protivnik")) {
-                    Toggle("Igraj protiv računara", isOn: $settings.aiEnabled)
-                    
-                    if settings.aiEnabled {
-                        Picker("Težina", selection: $settings.aiDifficulty) {
-                            ForEach(AIDifficulty.allCases, id: \.self) { difficulty in
-                                Text(difficulty.description)
-                            }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                    }
-                }
+                OpponentSection(game: game, settings: settings)
                 
-                Section(header: Text("Zvuk i vibracija")) {
-                    Toggle("Zvučni efekti", isOn: $settings.soundEnabled)
-                    Toggle("Vibracija", isOn: $settings.hapticFeedbackEnabled)
-                }
+                SoundSection(settings: settings)
                 
-                Section {
-                    Button("Primeni i započni novu igru") {
-                        game.board = GameBoard(size: selectedSize)
-                        
-                        // Inicijalizacija AI ako je uključen
-                        if settings.aiEnabled {
-                            game.initializeAI(difficulty: settings.aiDifficulty)
-                        }
-                        
-                        game.resetGame()
-                        dismiss()
-                    }
-                    .foregroundColor(.blue)
-                }
+                ApplySettingsSection(selectedSize: selectedSize, game: game, settings: settings, dismiss: dismiss)
             }
             .navigationTitle("Podešavanja")
             .navigationBarItems(trailing: Button("Zatvori") {
                 dismiss()
             })
+        }
+    }
+}
+
+// Izdvojena sekcija za veličinu table
+struct BoardSizeSection: View {
+    @Binding var selectedSize: Int
+    
+    var body: some View {
+        Section(header: Text("Veličina table")) {
+            Picker("Veličina", selection: $selectedSize) {
+                ForEach(GameSettings.minBoardSize...GameSettings.maxBoardSize, id: \.self) { size in
+                    Text("\(size)x\(size)")
+                }
+            }
+        }
+    }
+}
+
+// Izdvojena sekcija za temu
+struct ThemeSection: View {
+    @ObservedObject var settings: GameSettingsManager
+    
+    var body: some View {
+        Section(header: Text("Izgled")) {
+            Picker("Tema", selection: $settings.currentTheme) {
+                ForEach(ThemeType.allCases, id: \.self) { theme in
+                    HStack {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(LinearGradient(
+                                gradient: Gradient(colors: theme.colors),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
+                            .frame(width: 50, height: 24)
+                        Text(theme.rawValue)
+                    }
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+        }
+    }
+}
+
+// Izdvojena sekcija za tajmer
+struct TimerSection: View {
+    @ObservedObject var settings: GameSettingsManager
+    
+    var body: some View {
+        Section(header: Text("Vreme za potez")) {
+            Picker("Ograničenje vremena", selection: $settings.timerOption) {
+                ForEach(TimerOption.allCases, id: \.self) { option in
+                    Text(option.description)
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+        }
+    }
+}
+
+// Izdvojena sekcija za protivnika (AI)
+struct OpponentSection: View {
+    @ObservedObject var game: Game
+    @ObservedObject var settings: GameSettingsManager
+    
+    var body: some View {
+        Section(header: Text("Protivnik")) {
+            Toggle("Igraj protiv računara", isOn: $settings.aiEnabled)
+            
+            if settings.aiEnabled {
+                Picker("Težina", selection: $settings.aiDifficulty) {
+                    ForEach(AIDifficulty.allCases, id: \.self) { difficulty in
+                        Text(difficulty.description)
+                    }
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                
+                Picker("AI tim", selection: $settings.aiTeam) {
+                    Text("Plavi").tag(Player.blue)
+                    Text("Crveni").tag(Player.red)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                
+                Toggle("AI vs AI mod", isOn: $settings.aiVsAiMode)
+                
+                if settings.aiVsAiMode {
+                    Picker("Težina drugog AI", selection: $settings.secondAiDifficulty) {
+                        ForEach(AIDifficulty.allCases, id: \.self) { difficulty in
+                            Text(difficulty.description)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+                
+                Text("Prvi na potezu: \(game.startingPlayer == .blue ? "Plavi" : "Crveni")")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 4)
+            }
+        }
+    }
+}
+
+// Izdvojena sekcija za zvuk
+struct SoundSection: View {
+    @ObservedObject var settings: GameSettingsManager
+    
+    var body: some View {
+        Section(header: Text("Zvuk i vibracija")) {
+            Toggle("Zvučni efekti", isOn: $settings.soundEnabled)
+            Toggle("Vibracija", isOn: $settings.hapticFeedbackEnabled)
+        }
+    }
+}
+
+// Izdvojena sekcija za primenu podešavanja
+struct ApplySettingsSection: View {
+    let selectedSize: Int
+    @ObservedObject var game: Game
+    @ObservedObject var settings: GameSettingsManager
+    var dismiss: DismissAction
+    
+    var body: some View {
+        Section {
+            Button("Primeni i započni novu igru") {
+                game.board = GameBoard(size: selectedSize)
+                
+                // Inicijalizacija AI ako je uključen
+                if settings.aiEnabled {
+                    game.aiVsAiMode = settings.aiVsAiMode
+                    game.secondAiDifficulty = settings.secondAiDifficulty
+                    game.initializeAI(difficulty: settings.aiDifficulty, team: settings.aiTeam)
+                    
+                    // Za AI vs AI mod, odmah pokrećemo igru ako je AI na potezu
+                    if game.aiVsAiMode {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            game.makeAIMove()
+                        }
+                    }
+                }
+                
+                game.resetGame()
+                dismiss()
+            }
+            .foregroundColor(.blue)
         }
     }
 }

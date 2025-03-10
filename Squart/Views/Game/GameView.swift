@@ -108,7 +108,7 @@ struct GameView: View {
             
             // Inicijalizacija AI ako je uključen u podešavanjima
             if settings.aiEnabled {
-                game.initializeAI(difficulty: settings.aiDifficulty)
+                game.initializeAI(difficulty: settings.aiDifficulty, team: settings.aiTeam)
             }
         }
         .onChange(of: game.currentPlayer) { oldValue, newValue in
@@ -155,7 +155,7 @@ struct GameView: View {
             
             // Inicijalizacija AI ako je uključen
             if settings.aiEnabled {
-                game.initializeAI(difficulty: settings.aiDifficulty)
+                game.initializeAI(difficulty: settings.aiDifficulty, team: settings.aiTeam)
             }
             
             SoundManager.shared.playSound(.place)

@@ -32,7 +32,7 @@ struct HelpView: View {
                             .font(.title2)
                             .fontWeight(.bold)
                         
-                        Text("• Plavi igrač igra prvi")
+                        Text("• Plavi igrač igra prvi u prvoj partiji, a zatim se naizmenično menja ko igra prvi")
                             .padding(.bottom, 4)
                         
                         Text("• Plavi igrač postavlja plave žetone horizontalno - kada klikne na prazno polje, žeton zauzima to polje i polje desno od njega")
@@ -69,6 +69,42 @@ struct HelpView: View {
                             .padding(.bottom, 4)
                         
                         Text("2. Kada protivniku istekne vreme. Ako igraču istekne vreme na njegovom satu, protivnik je pobednik.")
+                            .padding(.bottom, 4)
+                    }
+                    
+                    // AI protivnik
+                    Group {
+                        Text("AI protivnik")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        
+                        Text("Pored igre protiv drugog igrača, možete igrati i protiv računara (AI):")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .padding(.bottom, 4)
+                        
+                        Text("• AI opciju možete uključiti u podešavanjima")
+                            .padding(.bottom, 4)
+                        
+                        Text("• Možete izabrati da AI igra kao plavi ili crveni tim")
+                            .padding(.bottom, 4)
+                        
+                        Text("• Dostupna su tri nivoa težine: Lako, Srednje i Teško")
+                            .padding(.bottom, 4)
+                        
+                        Text("• Prvi igrač se naizmenično menja nakon svake partije")
+                            .padding(.bottom, 4)
+                        
+                        Text("• Kada je AI na potezu, ne možete vi odigrati njegov potez")
+                            .padding(.bottom, 4)
+                        
+                        Text("• AI vs AI mod: Možete aktivirati i opciju da dva AI igrača igraju jedan protiv drugog")
+                            .padding(.bottom, 4)
+                            
+                        Text("• U AI vs AI modu, možete izabrati težinu za svakog od AI igrača posebno")
+                            .padding(.bottom, 4)
+                            
+                        Text("• AI vs AI mod je koristan za učenje strategije i tehnika igre")
                             .padding(.bottom, 4)
                     }
                     

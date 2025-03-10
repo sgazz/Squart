@@ -12,6 +12,10 @@ struct GameState: Codable {
     let redTimeRemaining: Int
     let aiEnabled: Bool
     let aiDifficulty: AIDifficulty
+    let aiTeam: Player
+    let startingPlayer: Player
+    let aiVsAiMode: Bool
+    let secondAiDifficulty: AIDifficulty
     
     init(from game: Game) {
         self.boardSize = game.board.size
@@ -27,6 +31,10 @@ struct GameState: Codable {
         self.redTimeRemaining = game.redTimeRemaining
         self.aiEnabled = game.aiEnabled
         self.aiDifficulty = game.aiDifficulty
+        self.aiTeam = game.aiTeam
+        self.startingPlayer = game.startingPlayer
+        self.aiVsAiMode = game.aiVsAiMode
+        self.secondAiDifficulty = game.secondAiDifficulty
     }
 }
 
@@ -72,10 +80,14 @@ class GameStorage {
         // Rekonstrukcija AI podešavanja
         game.aiEnabled = gameState.aiEnabled
         game.aiDifficulty = gameState.aiDifficulty
+        game.aiTeam = gameState.aiTeam
+        game.startingPlayer = gameState.startingPlayer
+        game.aiVsAiMode = gameState.aiVsAiMode
+        game.secondAiDifficulty = gameState.secondAiDifficulty
         
         // Inicijalizacija AI ako je potrebno
         if game.aiEnabled {
-            game.initializeAI(difficulty: game.aiDifficulty)
+            game.initializeAI(difficulty: game.aiDifficulty, team: gameState.aiTeam)
         }
         
         return game

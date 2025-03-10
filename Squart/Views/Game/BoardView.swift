@@ -30,6 +30,11 @@ struct BoardView: View {
     private func handleCellTap(row: Int, column: Int) {
         guard !game.isGameOver else { return }
         
+        // Ako je AI uključen i trenutni igrač je AI tim, ignorišemo klikove korisnika
+        if game.aiEnabled && game.currentPlayer == game.aiTeam {
+            return
+        }
+        
         if game.makeMove(row: row, column: column) {
             SoundManager.shared.playSound(.place)
             SoundManager.shared.triggerHaptic()
