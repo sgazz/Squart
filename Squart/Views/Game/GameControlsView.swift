@@ -247,6 +247,19 @@ struct SettingsView: View {
                     .pickerStyle(MenuPickerStyle())
                 }
                 
+                Section(header: Text("Protivnik")) {
+                    Toggle("Igraj protiv računara", isOn: $settings.aiEnabled)
+                    
+                    if settings.aiEnabled {
+                        Picker("Težina", selection: $settings.aiDifficulty) {
+                            ForEach(AIDifficulty.allCases, id: \.self) { difficulty in
+                                Text(difficulty.description)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                    }
+                }
+                
                 Section(header: Text("Zvuk i vibracija")) {
                     Toggle("Zvučni efekti", isOn: $settings.soundEnabled)
                     Toggle("Vibracija", isOn: $settings.hapticFeedbackEnabled)
@@ -255,6 +268,12 @@ struct SettingsView: View {
                 Section {
                     Button("Primeni i započni novu igru") {
                         game.board = GameBoard(size: selectedSize)
+                        
+                        // Inicijalizacija AI ako je uključen
+                        if settings.aiEnabled {
+                            game.initializeAI(difficulty: settings.aiDifficulty)
+                        }
+                        
                         game.resetGame()
                         dismiss()
                     }

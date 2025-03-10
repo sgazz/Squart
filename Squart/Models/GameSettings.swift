@@ -76,6 +76,16 @@ enum TimerOption: Int, CaseIterable, Codable {
     }
 }
 
+// Model podataka za čuvanje podešavanja
+struct SettingsData: Codable {
+    let currentTheme: ThemeType
+    let timerOption: TimerOption
+    let soundEnabled: Bool
+    let hapticFeedbackEnabled: Bool
+    let aiEnabled: Bool
+    let aiDifficulty: AIDifficulty
+}
+
 // Glavna klasa za podešavanja
 class GameSettingsManager: ObservableObject {
     static let shared = GameSettingsManager()
@@ -112,6 +122,18 @@ class GameSettingsManager: ObservableObject {
         }
     }
     
+    @Published var aiEnabled: Bool = false {
+        didSet {
+            save()
+        }
+    }
+    
+    @Published var aiDifficulty: AIDifficulty = .medium {
+        didSet {
+            save()
+        }
+    }
+    
     private init() {
         load()
     }
@@ -121,7 +143,9 @@ class GameSettingsManager: ObservableObject {
             currentTheme: currentTheme,
             timerOption: timerOption,
             soundEnabled: soundEnabled,
-            hapticFeedbackEnabled: hapticFeedbackEnabled
+            hapticFeedbackEnabled: hapticFeedbackEnabled,
+            aiEnabled: aiEnabled,
+            aiDifficulty: aiDifficulty
         )
         
         if let encoded = try? JSONEncoder().encode(settings) {
@@ -136,16 +160,10 @@ class GameSettingsManager: ObservableObject {
             self.timerOption = settings.timerOption
             self.soundEnabled = settings.soundEnabled
             self.hapticFeedbackEnabled = settings.hapticFeedbackEnabled
+            self.aiEnabled = settings.aiEnabled
+            self.aiDifficulty = settings.aiDifficulty
         }
     }
-}
-
-// Model podataka za čuvanje podešavanja
-struct SettingsData: Codable {
-    let currentTheme: ThemeType
-    let timerOption: TimerOption
-    let soundEnabled: Bool
-    let hapticFeedbackEnabled: Bool
 }
 
 // Konstante igre

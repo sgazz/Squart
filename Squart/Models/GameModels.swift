@@ -131,6 +131,11 @@ class Game: ObservableObject {
     @Published var redTimeRemaining: Int
     @Published var timerOption: TimerOption
     
+    // AI podrška
+    @Published var aiEnabled: Bool = false
+    @Published var aiDifficulty: AIDifficulty = .medium
+    private var aiPlayer: AIPlayer?
+    
     // Razlog završetka igre
     enum GameEndReason {
         case noValidMoves  // Nema validnih poteza
@@ -213,5 +218,26 @@ class Game: ObservableObject {
         timerOption = GameSettingsManager.shared.timerOption
         blueTimeRemaining = timerOption.rawValue
         redTimeRemaining = timerOption.rawValue
+    }
+    
+    // AI funkcionalnosti
+    
+    // Inicijalizacija AI igrača
+    func initializeAI(difficulty: AIDifficulty = .medium) {
+        aiEnabled = true
+        aiDifficulty = difficulty
+        aiPlayer = AIPlayer(difficulty: difficulty)
+    }
+    
+    // Metoda za AI potez
+    func makeAIMove() {
+        guard aiEnabled, !isGameOver, let aiPlayer = aiPlayer else { return }
+        
+        // AI igra samo kao crveni igrač (drugi igrač)
+        if currentPlayer == .red {
+            if let bestMove = aiPlayer.findBestMove(for: self) {
+                _ = makeMove(row: bestMove.row, column: bestMove.column)
+            }
+        }
     }
 } 

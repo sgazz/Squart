@@ -105,6 +105,11 @@ struct GameView: View {
         }
         .onAppear {
             startTimer()
+            
+            // Inicijalizacija AI ako je uključen u podešavanjima
+            if settings.aiEnabled {
+                game.initializeAI(difficulty: settings.aiDifficulty)
+            }
         }
         .onChange(of: game.currentPlayer) { oldValue, newValue in
             // Nema potrebe da resetujemo tajmer kod promene igrača kod šahovskog sata
@@ -147,6 +152,12 @@ struct GameView: View {
             game.blueTimeRemaining = loadedGame.blueTimeRemaining
             game.redTimeRemaining = loadedGame.redTimeRemaining
             game.timerOption = loadedGame.timerOption
+            
+            // Inicijalizacija AI ako je uključen
+            if settings.aiEnabled {
+                game.initializeAI(difficulty: settings.aiDifficulty)
+            }
+            
             SoundManager.shared.playSound(.place)
         }
     }
