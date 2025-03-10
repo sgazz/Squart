@@ -254,6 +254,8 @@ struct SettingsView: View {
                 
                 OpponentSection(game: game, settings: settings)
                 
+                MLSection(settings: settings)
+                
                 SoundSection(settings: settings)
                 
                 ApplySettingsSection(selectedSize: selectedSize, game: game, settings: settings, dismiss: dismiss)
@@ -389,6 +391,9 @@ struct ApplySettingsSection: View {
             Button("Primeni i započni novu igru") {
                 game.board = GameBoard(size: selectedSize)
                 
+                // Postavljamo ML opciju
+                game.useMachineLearning = settings.useMachineLearning
+                
                 // Inicijalizacija AI ako je uključen
                 if settings.aiEnabled {
                     game.aiVsAiMode = settings.aiVsAiMode
@@ -407,6 +412,87 @@ struct ApplySettingsSection: View {
                 dismiss()
             }
             .foregroundColor(.blue)
+        }
+    }
+}
+
+// Nova sekcija za ML podešavanja
+struct MLSection: View {
+    @ObservedObject var settings: GameSettingsManager
+    @State private var showMLInfo = false
+    
+    var body: some View {
+        Section(header: Text("Mašinsko učenje (ML)")) {
+            Toggle("Koristi Mašinsko Učenje", isOn: $settings.useMachineLearning)
+                .onChange(of: settings.useMachineLearning) { newValue in
+                    if newValue && !MLPositionEvaluator.shared.isMLReady {
+                        MLPositionEvaluator.shared.prepareModel()
+                    }
+                }
+            
+            if settings.useMachineLearning {
+                Toggle("Prikaži ML povratne informacije", isOn: $settings.showMLFeedback)
+                
+                Button("Izvezi podatke za treniranje") {
+                    if let url = GameDataCollector.shared.exportTrainingData() {
+                        // Prikaži opcije za deljenje podataka
+                        print("Podaci izvezeni u: \(url.path)")
+                    }
+                }
+                
+                Button("Očisti podatke treninga") {
+                    GameDataCollector.shared.clearAllGameRecords()
+                }
+                
+                Button("O mašinskom učenju") {
+                    showMLInfo = true
+                }
+                .sheet(isPresented: $showMLInfo) {
+                    MLInfoView()
+                }
+            }
+        }
+    }
+}
+
+// Prikaz informacija o ML-u
+struct MLInfoView: View {
+    @Environment(\.dismiss) var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("O mašinskom učenju")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    
+                    Text("Squart koristi mašinsko učenje za unapređenje AI igrača. Kada je opcija ML uključena, AI će koristiti neuronsku mrežu za procenu pozicije i donošenje odluka.")
+                    
+                    Text("Kako radi")
+                        .font(.headline)
+                    
+                    Text("1. Prikupljanje podataka: Tokom igranja, aplikacija beleži vaše poteze i poteze AI igrača.")
+                    Text("2. Treniranje: Prikupljeni podaci se mogu izvesti i koristiti za treniranje ML modela.")
+                    Text("3. Predviđanje: Trenirani model može da proceni kvalitet različitih poteza i pomogne AI da donese bolje odluke.")
+                    
+                    Text("Privatnost")
+                        .font(.headline)
+                    
+                    Text("Svi podaci se čuvaju lokalno na vašem uređaju. Možete ih izvesti za analizu ili obrisati u bilo kom trenutku.")
+                    
+                    Text("Napredne opcije")
+                        .font(.headline)
+                    
+                    Text("Za napredne korisnike, moguće je trenirati sopstveni model koristeći izvezene podatke i Python skriptu koju obezbeđujemo.")
+                    
+                    Spacer()
+                }
+                .padding()
+            }
+            .navigationBarItems(trailing: Button("Zatvori") {
+                dismiss()
+            })
         }
     }
 }

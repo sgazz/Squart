@@ -136,6 +136,10 @@ class Game: ObservableObject {
     @Published var aiDifficulty: AIDifficulty = .medium
     private var aiPlayer: AIPlayer?
     
+    // ML podrška - novi deo
+    @Published var useMachineLearning: Bool = false
+    private var mlPlayer: MLPlayer?
+    
     // Određuje tim koji igra AI (podrazumevano crveni)
     @Published var aiTeam: Player = .red
     
@@ -143,6 +147,7 @@ class Game: ObservableObject {
     @Published var aiVsAiMode: Bool = false
     @Published var secondAiDifficulty: AIDifficulty = .medium
     private var secondAiPlayer: AIPlayer?
+    private var secondMlPlayer: MLPlayer?
     
     // Praćenje koji igrač je prvi na potezu (za naizmenično smenjivanje)
     @Published var startingPlayer: Player = .blue
@@ -258,13 +263,34 @@ class Game: ObservableObject {
         aiEnabled = true
         aiDifficulty = difficulty
         aiTeam = team
-        aiPlayer = AIPlayer(difficulty: difficulty)
+        
+        // Kreiranje odgovarajućeg AI igrača (standardni ili ML)
+        if useMachineLearning && MLPositionEvaluator.shared.isMLReady {
+            mlPlayer = MLPlayer(difficulty: difficulty, useML: true)
+            aiPlayer = nil // Ne koristimo standardni AI
+        } else {
+            aiPlayer = AIPlayer(difficulty: difficulty)
+            mlPlayer = nil // Ne koristimo ML AI
+        }
         
         // Inicijalizacija drugog AI igrača ako je AI vs AI mod uključen
         if GameSettingsManager.shared.aiVsAiMode {
             aiVsAiMode = true
             secondAiDifficulty = GameSettingsManager.shared.secondAiDifficulty
-            secondAiPlayer = AIPlayer(difficulty: secondAiDifficulty)
+            
+            // Kreiranje odgovarajućeg drugog AI igrača
+            if useMachineLearning && MLPositionEvaluator.shared.isMLReady {
+                secondMlPlayer = MLPlayer(difficulty: secondAiDifficulty, useML: true)
+                secondAiPlayer = nil
+            } else {
+                secondAiPlayer = AIPlayer(difficulty: secondAiDifficulty)
+                secondMlPlayer = nil
+            }
+        }
+        
+        // Pokrenimo snimanje partije za trening ako koristimo ML
+        if useMachineLearning {
+            GameDataCollector.shared.startRecording(boardSize: board.size)
         }
     }
     
@@ -277,9 +303,16 @@ class Game: ObservableObject {
             makeAIMoveForCurrentPlayer()
         } else {
             // U standardnom modu, AI igra samo za svoj tim
-            if currentPlayer == aiTeam, let aiPlayer = aiPlayer {
-                if let bestMove = aiPlayer.findBestMove(for: self) {
-                    _ = makeMove(row: bestMove.row, column: bestMove.column)
+            if currentPlayer == aiTeam {
+                // Koristimo ML igrača ako je dostupan
+                if let mlPlayer = mlPlayer {
+                    if let bestMove = mlPlayer.findBestMove(for: self) {
+                        _ = makeMove(row: bestMove.row, column: bestMove.column)
+                    }
+                } else if let aiPlayer = aiPlayer {
+                    if let bestMove = aiPlayer.findBestMove(for: self) {
+                        _ = makeMove(row: bestMove.row, column: bestMove.column)
+                    }
                 }
             }
         }
@@ -287,15 +320,17 @@ class Game: ObservableObject {
     
     // Pomoćna metoda za AI vs AI mod
     private func makeAIMoveForCurrentPlayer() {
-        let activeAI: AIPlayer?
+        let activeAI: (any AnyObject)?
+        let useML = useMachineLearning && MLPositionEvaluator.shared.isMLReady
         
         if currentPlayer == aiTeam {
-            activeAI = aiPlayer
+            activeAI = useML ? mlPlayer : aiPlayer
         } else {
-            activeAI = secondAiPlayer
+            activeAI = useML ? secondMlPlayer : secondAiPlayer
         }
         
-        if let ai = activeAI, let bestMove = ai.findBestMove(for: self) {
+        // Izvršavanje poteza
+        if let bestMove = executeMove(for: activeAI) {
             _ = makeMove(row: bestMove.row, column: bestMove.column)
             
             // Ako igra nije završena, planiramo sledeći AI potez sa malim odlaganjem
@@ -303,7 +338,21 @@ class Game: ObservableObject {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     self.makeAIMove()
                 }
+            } else if useML {
+                // Ako je igra završena, završimo snimanje za treniranje
+                GameDataCollector.shared.finishRecording(winner: self.currentPlayer == .blue ? .red : .blue)
             }
         }
     }
+    
+    // Pomoćna metoda za izvršavanje poteza
+    private func executeMove(for activeAI: (any AnyObject)?) -> (row: Int, column: Int)? {
+        if let mlPlayer = activeAI as? MLPlayer {
+            return mlPlayer.findBestMove(for: self)
+        } else if let aiPlayer = activeAI as? AIPlayer {
+            return aiPlayer.findBestMove(for: self)
+        }
+        return nil
+    }
+} 
 } 

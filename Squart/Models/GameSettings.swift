@@ -101,95 +101,144 @@ class GameSettingsManager: ObservableObject {
     static let moveAnimationDuration: Double = 0.3
     static let gameOverAnimationDuration: Double = 0.5
     
-    @Published var currentTheme: ThemeType = .ocean {
+    // Veličina table
+    @Published var boardSize: Int {
         didSet {
-            save()
+            UserDefaults.standard.set(boardSize, forKey: "board_size")
         }
     }
     
-    @Published var timerOption: TimerOption = TimerOption.defaultOption {
+    // Tema igre
+    @Published var currentTheme: ThemeType {
         didSet {
-            save()
+            UserDefaults.standard.set(currentTheme.rawValue, forKey: "theme")
         }
     }
     
-    @Published var soundEnabled: Bool = true {
+    // Timer opcija
+    @Published var timerOption: TimerOption {
         didSet {
-            save()
+            UserDefaults.standard.set(timerOption.rawValue, forKey: "timer_option")
         }
     }
     
-    @Published var hapticFeedbackEnabled: Bool = true {
+    // Zvučni efekti
+    @Published var soundEnabled: Bool {
         didSet {
-            save()
+            UserDefaults.standard.set(soundEnabled, forKey: "sound_enabled")
         }
     }
     
-    @Published var aiEnabled: Bool = false {
+    // Vibracije (haptic feedback)
+    @Published var hapticFeedbackEnabled: Bool {
         didSet {
-            save()
+            UserDefaults.standard.set(hapticFeedbackEnabled, forKey: "haptic_feedback_enabled")
         }
     }
     
-    @Published var aiDifficulty: AIDifficulty = .medium {
+    // AI podešavanja
+    @Published var aiEnabled: Bool {
         didSet {
-            save()
+            UserDefaults.standard.set(aiEnabled, forKey: "ai_enabled")
         }
     }
     
-    @Published var aiTeam: Player = .red {
+    @Published var aiDifficulty: AIDifficulty {
         didSet {
-            save()
+            UserDefaults.standard.set(aiDifficulty.rawValue, forKey: "ai_difficulty")
         }
     }
     
-    @Published var aiVsAiMode: Bool = false {
+    @Published var aiTeam: Player {
         didSet {
-            save()
+            UserDefaults.standard.set(aiTeam == .blue ? "blue" : "red", forKey: "ai_team")
         }
     }
     
-    @Published var secondAiDifficulty: AIDifficulty = .medium {
+    @Published var aiVsAiMode: Bool {
         didSet {
-            save()
+            UserDefaults.standard.set(aiVsAiMode, forKey: "ai_vs_ai_mode")
+        }
+    }
+    
+    @Published var secondAiDifficulty: AIDifficulty {
+        didSet {
+            UserDefaults.standard.set(secondAiDifficulty.rawValue, forKey: "second_ai_difficulty")
+        }
+    }
+    
+    // ML podešavanja
+    @Published var useMachineLearning: Bool {
+        didSet {
+            UserDefaults.standard.set(useMachineLearning, forKey: "use_machine_learning")
+        }
+    }
+    
+    @Published var showMLFeedback: Bool {
+        didSet {
+            UserDefaults.standard.set(showMLFeedback, forKey: "show_ml_feedback")
         }
     }
     
     private init() {
-        load()
-    }
-    
-    private func save() {
-        let settings = SettingsData(
-            currentTheme: currentTheme,
-            timerOption: timerOption,
-            soundEnabled: soundEnabled,
-            hapticFeedbackEnabled: hapticFeedbackEnabled,
-            aiEnabled: aiEnabled,
-            aiDifficulty: aiDifficulty,
-            aiTeam: aiTeam,
-            aiVsAiMode: aiVsAiMode,
-            secondAiDifficulty: secondAiDifficulty
-        )
+        // Učitaj boardSize iz korisničkih podešavanja ili koristi podrazumevanu vrednost
+        self.boardSize = UserDefaults.standard.integer(forKey: "board_size")
+        if self.boardSize < GameSettings.minBoardSize || self.boardSize > GameSettings.maxBoardSize {
+            self.boardSize = GameSettings.defaultBoardSize
+        }
         
-        if let encoded = try? JSONEncoder().encode(settings) {
-            UserDefaults.standard.set(encoded, forKey: "squart_settings")
+        // Učitaj temu iz korisničkih podešavanja ili koristi podrazumevanu vrednost
+        if let themeString = UserDefaults.standard.string(forKey: "theme"),
+           let theme = ThemeType(rawValue: themeString) {
+            self.currentTheme = theme
+        } else {
+            self.currentTheme = .ocean
         }
-    }
-    
-    private func load() {
-        if let data = UserDefaults.standard.data(forKey: "squart_settings"),
-           let settings = try? JSONDecoder().decode(SettingsData.self, from: data) {
-            self.currentTheme = settings.currentTheme
-            self.timerOption = settings.timerOption
-            self.soundEnabled = settings.soundEnabled
-            self.hapticFeedbackEnabled = settings.hapticFeedbackEnabled
-            self.aiEnabled = settings.aiEnabled
-            self.aiDifficulty = settings.aiDifficulty
-            self.aiTeam = settings.aiTeam
-            self.aiVsAiMode = settings.aiVsAiMode
-            self.secondAiDifficulty = settings.secondAiDifficulty
+        
+        // Učitaj timer opciju iz korisničkih podešavanja ili koristi podrazumevanu vrednost
+        let timerValue = UserDefaults.standard.integer(forKey: "timer_option")
+        if let timer = TimerOption(rawValue: timerValue) {
+            self.timerOption = timer
+        } else {
+            self.timerOption = .none
         }
+        
+        // Učitaj podešavanja za zvuk i vibraciju
+        self.soundEnabled = UserDefaults.standard.bool(forKey: "sound_enabled")
+        self.hapticFeedbackEnabled = UserDefaults.standard.bool(forKey: "haptic_feedback_enabled")
+        
+        // Učitaj AI podešavanja
+        self.aiEnabled = UserDefaults.standard.bool(forKey: "ai_enabled")
+        
+        // Učitaj težinu AI-a
+        let aiDifficultyValue = UserDefaults.standard.integer(forKey: "ai_difficulty")
+        if let aiDifficulty = AIDifficulty(rawValue: aiDifficultyValue) {
+            self.aiDifficulty = aiDifficulty
+        } else {
+            self.aiDifficulty = .medium
+        }
+        
+        // Učitaj AI tim
+        if let aiTeamString = UserDefaults.standard.string(forKey: "ai_team") {
+            self.aiTeam = aiTeamString == "blue" ? .blue : .red
+        } else {
+            self.aiTeam = .red
+        }
+        
+        // Učitaj AI vs AI mod
+        self.aiVsAiMode = UserDefaults.standard.bool(forKey: "ai_vs_ai_mode")
+        
+        // Učitaj težinu drugog AI-a
+        let secondAiDifficultyValue = UserDefaults.standard.integer(forKey: "second_ai_difficulty")
+        if let secondAiDifficulty = AIDifficulty(rawValue: secondAiDifficultyValue) {
+            self.secondAiDifficulty = secondAiDifficulty
+        } else {
+            self.secondAiDifficulty = .medium
+        }
+        
+        // Učitaj ML podešavanja
+        self.useMachineLearning = UserDefaults.standard.bool(forKey: "use_machine_learning")
+        self.showMLFeedback = UserDefaults.standard.bool(forKey: "show_ml_feedback")
     }
 }
 
