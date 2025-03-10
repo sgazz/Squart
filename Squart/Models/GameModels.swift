@@ -174,6 +174,12 @@ class Game: ObservableObject {
         guard !isGameOver else { return false }
         
         if board.makeMove(row: row, column: column, player: currentPlayer) {
+            // Snimamo stanje ako je ML uključen i snimanje u toku
+            if useMachineLearning && GameDataCollector.shared.isRecording {
+                GameDataCollector.shared.recordMove(row: row, column: column)
+                GameDataCollector.shared.recordBoardState(board)
+            }
+            
             // Promena igrača
             currentPlayer = currentPlayer == .blue ? .red : .blue
             
@@ -186,6 +192,12 @@ class Game: ObservableObject {
                     blueScore += 1
                 } else {
                     redScore += 1
+                }
+                
+                // Završavamo snimanje ako je ML uključen i snimanje u toku
+                if useMachineLearning && GameDataCollector.shared.isRecording {
+                    let winner = currentPlayer == .red ? Player.blue : Player.red
+                    GameDataCollector.shared.finishRecording(winner: winner)
                 }
             }
             
@@ -218,9 +230,19 @@ class Game: ObservableObject {
         if player == .blue {
             gameEndReason = .blueTimeout
             redScore += 1  // Crveni igrač pobeđuje
+            
+            // Završavamo snimanje ako je ML uključen i snimanje u toku
+            if useMachineLearning && GameDataCollector.shared.isRecording {
+                GameDataCollector.shared.finishRecording(winner: .red)
+            }
         } else {
             gameEndReason = .redTimeout
             blueScore += 1  // Plavi igrač pobeđuje
+            
+            // Završavamo snimanje ako je ML uključen i snimanje u toku
+            if useMachineLearning && GameDataCollector.shared.isRecording {
+                GameDataCollector.shared.finishRecording(winner: .blue)
+            }
         }
     }
     

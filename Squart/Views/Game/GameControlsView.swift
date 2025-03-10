@@ -32,6 +32,7 @@ struct GameControlsView: View {
 struct GameStatusView: View {
     @ObservedObject var game: Game
     @Binding var showConfetti: Bool
+    @ObservedObject var settings = GameSettingsManager.shared
     
     var body: some View {
         HStack {
@@ -62,29 +63,57 @@ struct GameStatusView: View {
                     }
                 }
             } else {
-                Text("Na potezu: \(game.currentPlayer == .blue ? "Plavi" : "Crveni")")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .background(game.currentPlayer == .blue ? Color.blue.opacity(0.3) : Color.red.opacity(0.3))
-                    .cornerRadius(8)
-                    .overlay(
-                        game.aiEnabled ? 
-                        Text(game.aiVsAiMode ? 
-                             "AI (\(game.currentPlayer == .blue ? "plavi" : "crveni")) razmišlja" : 
-                             game.currentPlayer == game.aiTeam ? "AI na potezu" : "Vi ste na potezu")
+                VStack {
+                    Text("Na potezu: \(game.currentPlayer == .blue ? "Plavi" : "Crveni")")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(game.currentPlayer == .blue ? Color.blue.opacity(0.3) : Color.red.opacity(0.3))
+                        .cornerRadius(8)
+                        .overlay(
+                            game.aiEnabled ? 
+                            Text(getAIStatusText())
+                                .font(.caption)
+                                .foregroundColor(.white)
+                                .padding(4)
+                                .background(Color.black.opacity(0.5))
+                                .cornerRadius(4)
+                                .offset(y: 20)
+                            : nil
+                        )
+                    
+                    // ML status indikator (prikazuje se samo ako je ML uključen i treba da se prikaže)
+                    if game.useMachineLearning && settings.showMLFeedback {
+                        Text("ML aktivno")
                             .font(.caption)
                             .foregroundColor(.white)
-                            .padding(4)
-                            .background(Color.black.opacity(0.5))
-                            .cornerRadius(4)
-                            .offset(y: 20)
-                        : nil
-                    )
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.purple.opacity(0.5))
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.purple, lineWidth: 1)
+                            )
+                            .padding(.top, 4)
+                    }
+                }
             }
             Spacer()
             PlayerScoreView(player: .red, score: game.redScore)
+        }
+    }
+    
+    // Tekst za AI status
+    private func getAIStatusText() -> String {
+        if game.aiVsAiMode {
+            let mlTag = game.useMachineLearning ? " (ML)" : ""
+            return "AI\(mlTag) (\(game.currentPlayer == .blue ? "plavi" : "crveni")) razmišlja"
+        } else {
+            return game.currentPlayer == game.aiTeam ? 
+                   "AI\(game.useMachineLearning ? " (ML)" : "") na potezu" : 
+                   "Vi ste na potezu"
         }
     }
     
@@ -420,6 +449,9 @@ struct ApplySettingsSection: View {
 struct MLSection: View {
     @ObservedObject var settings: GameSettingsManager
     @State private var showMLInfo = false
+    @State private var showExportSheet = false
+    @State private var exportURL: URL? = nil
+    @State private var showConfirmClear = false
     
     var body: some View {
         Section(header: Text("Mašinsko učenje (ML)")) {
@@ -433,23 +465,80 @@ struct MLSection: View {
             if settings.useMachineLearning {
                 Toggle("Prikaži ML povratne informacije", isOn: $settings.showMLFeedback)
                 
-                Button("Izvezi podatke za treniranje") {
-                    if let url = GameDataCollector.shared.exportTrainingData() {
-                        // Prikaži opcije za deljenje podataka
-                        print("Podaci izvezeni u: \(url.path)")
+                HStack {
+                    Text("Status ML modela:")
+                    Spacer()
+                    Text(MLPositionEvaluator.shared.isMLReady ? "Aktivan" : "Nije učitan")
+                        .foregroundColor(MLPositionEvaluator.shared.isMLReady ? .green : .gray)
+                }
+                
+                HStack {
+                    Text("Snimljene partije:")
+                    Spacer()
+                    Text("\(GameDataCollector.shared.gameRecords.count)")
+                }
+                
+                Button(action: {
+                    exportURL = GameDataCollector.shared.exportTrainingData()
+                    showExportSheet = exportURL != nil
+                }) {
+                    Label("Izvezi podatke za treniranje", systemImage: "square.and.arrow.up")
+                }
+                .sheet(isPresented: $showExportSheet) {
+                    if let url = exportURL {
+                        NavigationView {
+                            VStack(spacing: 20) {
+                                Text("Podaci su izvezeni")
+                                    .font(.headline)
+                                
+                                Text("Lokacija fajla:")
+                                Text(url.path)
+                                    .font(.system(.body, design: .monospaced))
+                                    .padding(8)
+                                    .background(Color.black.opacity(0.05))
+                                    .cornerRadius(4)
+                                
+                                Text("Koristite ove podatke sa Python skriptom za treniranje ML modela.")
+                                
+                                Spacer()
+                            }
+                            .padding()
+                            .navigationBarItems(trailing: Button("Zatvori") {
+                                showExportSheet = false
+                            })
+                        }
                     }
                 }
                 
-                Button("Očisti podatke treninga") {
-                    GameDataCollector.shared.clearAllGameRecords()
+                Button(action: {
+                    showConfirmClear = true
+                }) {
+                    Label("Očisti podatke treninga", systemImage: "trash")
+                        .foregroundColor(.red)
+                }
+                .alert(isPresented: $showConfirmClear) {
+                    Alert(
+                        title: Text("Obriši podatke za trening"),
+                        message: Text("Da li ste sigurni da želite obrisati sve podatke prikupljene za trening ML modela?"),
+                        primaryButton: .destructive(Text("Obriši")) {
+                            GameDataCollector.shared.clearAllGameRecords()
+                        },
+                        secondaryButton: .cancel(Text("Otkaži"))
+                    )
                 }
                 
-                Button("O mašinskom učenju") {
+                Button(action: {
                     showMLInfo = true
+                }) {
+                    Label("O mašinskom učenju", systemImage: "info.circle")
                 }
                 .sheet(isPresented: $showMLInfo) {
                     MLInfoView()
                 }
+            } else {
+                Text("ML daje AI igraču naprednu sposobnost da uči iz partija i donosi bolje odluke.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
             }
         }
     }
@@ -458,6 +547,8 @@ struct MLSection: View {
 // Prikaz informacija o ML-u
 struct MLInfoView: View {
     @Environment(\.dismiss) var dismiss
+    @State private var trainingStats: String = "Učitavanje..."
+    @State private var isMLReady: Bool = false
     
     var body: some View {
         NavigationView {
@@ -468,6 +559,27 @@ struct MLInfoView: View {
                         .fontWeight(.bold)
                     
                     Text("Squart koristi mašinsko učenje za unapređenje AI igrača. Kada je opcija ML uključena, AI će koristiti neuronsku mrežu za procenu pozicije i donošenje odluka.")
+                    
+                    Text("Trenutni status")
+                        .font(.headline)
+                    
+                    HStack {
+                        Text("ML model:")
+                        Spacer()
+                        Text(isMLReady ? "Spreman" : "Nije dostupan")
+                            .foregroundColor(isMLReady ? .green : .red)
+                            .fontWeight(.bold)
+                    }
+                    .padding(.vertical, 4)
+                    
+                    Text("Statistika treninga")
+                        .font(.headline)
+                    
+                    Text(trainingStats)
+                        .font(.system(.body, design: .monospaced))
+                        .padding(10)
+                        .background(Color.black.opacity(0.05))
+                        .cornerRadius(8)
                     
                     Text("Kako radi")
                         .font(.headline)
@@ -493,6 +605,11 @@ struct MLInfoView: View {
             .navigationBarItems(trailing: Button("Zatvori") {
                 dismiss()
             })
+            .onAppear {
+                // Učitavamo statistiku na pojavi ekrana
+                trainingStats = GameDataCollector.shared.getTrainingStats()
+                isMLReady = MLPositionEvaluator.shared.isMLReady
+            }
         }
     }
 }
