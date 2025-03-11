@@ -52,7 +52,7 @@ struct GameView: View {
                         Button(action: {
                             saveGame()
                         }) {
-                            Text("Sačuvaj")
+                            Text("save".localized)
                                 .foregroundColor(.white)
                                 .padding(.vertical, 8)
                                 .padding(.horizontal, 16)
@@ -65,7 +65,7 @@ struct GameView: View {
                         Button(action: {
                             showingHelpView = true
                         }) {
-                            Text("Uputstvo")
+                            Text("help".localized)
                                 .foregroundColor(.white)
                                 .padding(.vertical, 8)
                                 .padding(.horizontal, 16)
@@ -78,7 +78,7 @@ struct GameView: View {
                         Button(action: {
                             loadGame()
                         }) {
-                            Text("Učitaj")
+                            Text("load".localized)
                                 .foregroundColor(.white)
                                 .padding(.vertical, 8)
                                 .padding(.horizontal, 16)

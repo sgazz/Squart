@@ -142,8 +142,8 @@ struct HelpView: View {
                 )
                 .edgesIgnoringSafeArea(.all)
             )
-            .navigationBarTitle("Uputstvo", displayMode: .inline)
-            .navigationBarItems(trailing: Button("Zatvori") {
+            .navigationBarTitle("help".localized, displayMode: .inline)
+            .navigationBarItems(trailing: Button("close".localized) {
                 dismiss()
             })
             .preferredColorScheme(.dark)

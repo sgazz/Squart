@@ -52,7 +52,11 @@ class Localization: ObservableObject {
             "sunset": "Zalazak sunca",
             "forest": "Šuma",
             "galaxy": "Galaksija",
-            "classic": "Klasična"
+            "classic": "Klasična",
+            "save": "Sačuvaj",
+            "load": "Učitaj",
+            "help": "Uputstvo",
+            "close": "Zatvori"
         ],
         .english: [
             "settings": "Settings",
@@ -96,7 +100,11 @@ class Localization: ObservableObject {
             "sunset": "Sunset",
             "forest": "Forest",
             "galaxy": "Galaxy",
-            "classic": "Classic"
+            "classic": "Classic",
+            "save": "Save",
+            "load": "Load",
+            "help": "Help",
+            "close": "Close"
         ],
         .german: [
             "settings": "Einstellungen",
@@ -140,7 +148,11 @@ class Localization: ObservableObject {
             "sunset": "Sonnenuntergang",
             "forest": "Wald",
             "galaxy": "Galaxie",
-            "classic": "Klassisch"
+            "classic": "Klassisch",
+            "save": "Speichern",
+            "load": "Laden",
+            "help": "Hilfe",
+            "close": "Schließen"
         ],
         .russian: [
             "settings": "Настройки",
@@ -184,7 +196,11 @@ class Localization: ObservableObject {
             "sunset": "Закат",
             "forest": "Лес",
             "galaxy": "Галактика",
-            "classic": "Классический"
+            "classic": "Классический",
+            "save": "Сохранить",
+            "load": "Загрузить",
+            "help": "Помощь",
+            "close": "Закрыть"
         ],
         .chinese: [
             "settings": "设置",
@@ -228,7 +244,11 @@ class Localization: ObservableObject {
             "sunset": "日落",
             "forest": "森林",
             "galaxy": "星系",
-            "classic": "经典"
+            "classic": "经典",
+            "save": "保存",
+            "load": "加载",
+            "help": "帮助",
+            "close": "关闭"
         ]
     ]
     
