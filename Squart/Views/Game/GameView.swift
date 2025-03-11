@@ -7,6 +7,7 @@ struct GameView: View {
     @State private var showingHelpView = false
     @State private var showAchievements = false
     @State private var showingSettings = false
+    @State private var selectedBoardSize: Int = 7
     @ObservedObject private var settings = GameSettingsManager.shared
     @State private var timer: Timer? = nil
     @ObservedObject private var achievementManager = AchievementManager.shared
@@ -23,134 +24,195 @@ struct GameView: View {
             .edgesIgnoringSafeArea(.all)
             
             GeometryReader { geometry in
-                VStack {
-                    Spacer()
-                    
-                    // Status igre i kontrole
-                    VStack(spacing: 16) {
-                        // Rezultat
-                        GameStatusView(game: game)
-                            .padding()
-                            .background(Color.black.opacity(0.2))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                            )
-                            .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
-                        
-                        // Tajmeri i kontrole (ako su aktivni)
-                        if game.timerOption != .none {
-                            ChessClockView(game: game, showingSettings: $showingSettings)
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    Spacer()
-                    
-                    // Tabla za igru sa efektom staklene pozadine
-                    ZStack {
-                        ScrollView([.horizontal, .vertical], showsIndicators: false) {
-                            BoardView(game: game, cellSize: calculateCellSize(for: geometry))
-                                .padding()
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.white.opacity(0.1))
-                                        .blur(radius: 2)
-                                        .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-                                )
-                        }
-                        .blur(radius: game.isGameOver ? 3 : 0)
-                        
-                        // Game Over poruka
-                        if game.isGameOver {
+                Group {
+                    if orientation.isPortrait {
+                        // Postojeći vertikalni raspored
+                        VStack {
+                            Spacer()
+                            
+                            // Status igre i kontrole
                             VStack(spacing: 16) {
-                                Text(gameOverMessage)
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
+                                // Rezultat
+                                GameStatusView(game: game)
+                                    .padding()
+                                    .background(Color.black.opacity(0.2))
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    )
+                                    .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
                                 
-                                Text(winnerMessage)
-                                    .font(.title3)
-                                    .foregroundColor(.white)
-                                
-                                Button(action: {
-                                    withAnimation {
-                                        game.resetGame()
-                                    }
-                                }) {
-                                    Text("new_game".localized)
-                                        .font(.headline)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 24)
-                                        .padding(.vertical, 12)
-                                        .background(Color.blue.opacity(0.3))
-                                        .cornerRadius(8)
+                                // Tajmeri i kontrole (ako su aktivni)
+                                if game.timerOption != .none {
+                                    ChessClockView(game: game, showingSettings: $showingSettings)
                                 }
-                                .padding(.top, 8)
                             }
-                            .padding(24)
-                            .background(Color.black.opacity(0.7))
-                            .cornerRadius(16)
-                            .transition(.opacity)
+                            .padding(.horizontal)
+                            
+                            Spacer()
+                            
+                            // Tabla
+                            gameBoard(geometry: geometry)
+                            
+                            Spacer()
+                            
+                            // Dugmići za čuvanje/učitavanje i uputstvo
+                            bottomButtons
+                                .padding(.horizontal)
+                        }
+                    } else {
+                        // Novi horizontalni raspored
+                        HStack(spacing: 0) {
+                            // Leva strana - plavi igrač
+                            VStack {
+                                Spacer()
+                                
+                                // Rezultat plavog igrača
+                                PlayerScoreView(
+                                    player: .blue,
+                                    score: game.blueScore,
+                                    isActive: !game.isGameOver && game.currentPlayer == .blue,
+                                    isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .blue)
+                                )
+                                .padding()
+                                .background(Color.black.opacity(0.2))
+                                .cornerRadius(12)
+                                
+                                Spacer()
+                                
+                                // Tajmer plavog igrača
+                                if game.timerOption != .none {
+                                    PlayerTimerView(
+                                        remainingTime: game.blueTimeRemaining,
+                                        isActive: !game.isGameOver && game.currentPlayer == .blue,
+                                        player: .blue
+                                    )
+                                }
+                                
+                                Spacer()
+                                
+                                // Leva dugmad
+                                VStack(spacing: 12) {
+                                    Button(action: {
+                                        saveGame()
+                                    }) {
+                                        Text("save".localized)
+                                            .foregroundColor(.white)
+                                            .padding(.vertical, 8)
+                                            .padding(.horizontal, 16)
+                                            .background(Color.blue.opacity(0.3))
+                                            .cornerRadius(8)
+                                    }
+                                    
+                                    Button(action: {
+                                        loadGame()
+                                    }) {
+                                        Text("load".localized)
+                                            .foregroundColor(.white)
+                                            .padding(.vertical, 8)
+                                            .padding(.horizontal, 16)
+                                            .background(Color.green.opacity(0.3))
+                                            .cornerRadius(8)
+                                    }
+                                    
+                                    Button(action: {
+                                        showingHelpView = true
+                                    }) {
+                                        Image(systemName: "questionmark.circle")
+                                            .font(.title2)
+                                            .foregroundColor(.white)
+                                            .padding(.vertical, 8)
+                                            .padding(.horizontal, 16)
+                                            .background(Color.purple.opacity(0.3))
+                                            .cornerRadius(8)
+                                    }
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * 0.2)
+                            .padding(.horizontal)
+                            
+                            // Centralna tabla
+                            gameBoard(geometry: geometry)
+                                .frame(width: geometry.size.width * 0.6)
+                            
+                            // Desna strana - crveni igrač
+                            VStack {
+                                Spacer()
+                                
+                                // Rezultat crvenog igrača
+                                PlayerScoreView(
+                                    player: .red,
+                                    score: game.redScore,
+                                    isActive: !game.isGameOver && game.currentPlayer == .red,
+                                    isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .red)
+                                )
+                                .padding()
+                                .background(Color.black.opacity(0.2))
+                                .cornerRadius(12)
+                                
+                                Spacer()
+                                
+                                // Tajmer crvenog igrača
+                                if game.timerOption != .none {
+                                    PlayerTimerView(
+                                        remainingTime: game.redTimeRemaining,
+                                        isActive: !game.isGameOver && game.currentPlayer == .red,
+                                        player: .red
+                                    )
+                                }
+                                
+                                Spacer()
+                                
+                                // Desna dugmad
+                                VStack(spacing: 12) {
+                                    Button(action: {
+                                        showingSettings = true
+                                    }) {
+                                        Image(systemName: "gearshape.fill")
+                                            .font(.title2)
+                                            .foregroundColor(.white)
+                                            .padding(.vertical, 8)
+                                            .padding(.horizontal, 16)
+                                            .background(Color.white.opacity(0.2))
+                                            .cornerRadius(8)
+                                    }
+                                    
+                                    Button(action: {
+                                        withAnimation {
+                                            game.resetGame()
+                                        }
+                                    }) {
+                                        Image(systemName: "arrow.counterclockwise")
+                                            .font(.title2)
+                                            .foregroundColor(.white)
+                                            .padding(.vertical, 8)
+                                            .padding(.horizontal, 16)
+                                            .background(Color.white.opacity(0.2))
+                                            .cornerRadius(8)
+                                    }
+                                    
+                                    Button(action: {
+                                        showAchievements = true
+                                    }) {
+                                        Image(systemName: "trophy.fill")
+                                            .font(.title2)
+                                            .foregroundColor(.white)
+                                            .padding(.vertical, 8)
+                                            .padding(.horizontal, 16)
+                                            .background(Color.orange.opacity(0.3))
+                                            .cornerRadius(8)
+                                    }
+                                }
+                                
+                                Spacer()
+                            }
+                            .frame(width: geometry.size.width * 0.2)
+                            .padding(.horizontal)
                         }
                     }
-                    
-                    Spacer()
-                    
-                    // Dugmići za čuvanje/učitavanje i uputstvo
-                    HStack {
-                        Button(action: {
-                            saveGame()
-                        }) {
-                            Text("save".localized)
-                                .foregroundColor(.white)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background(Color.blue.opacity(0.3))
-                                .cornerRadius(8)
-                        }
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            showingHelpView = true
-                        }) {
-                            Image(systemName: "questionmark.circle")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background(Color.purple.opacity(0.3))
-                                .cornerRadius(8)
-                        }
-                        
-                        Button(action: {
-                            showAchievements = true
-                        }) {
-                            Image(systemName: "trophy.fill")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background(Color.orange.opacity(0.3))
-                                .cornerRadius(8)
-                        }
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            loadGame()
-                        }) {
-                            Text("load".localized)
-                                .foregroundColor(.white)
-                                .padding(.vertical, 8)
-                                .padding(.horizontal, 16)
-                                .background(Color.green.opacity(0.3))
-                                .cornerRadius(8)
-                        }
-                    }
-                    .padding(.horizontal)
                 }
             }
             
@@ -171,6 +233,7 @@ struct GameView: View {
         }
         .onAppear {
             startTimer()
+            selectedBoardSize = game.board.size
             
             // Inicijalizacija AI ako je uključen u podešavanjima
             if settings.aiEnabled {
@@ -188,7 +251,7 @@ struct GameView: View {
             timer = nil
         }
         .sheet(isPresented: $showingSettings) {
-            SettingsView(selectedSize: .constant(game.board.size), game: game)
+            SettingsView(selectedSize: $selectedBoardSize, game: game)
         }
         .sheet(isPresented: $showingHelpView) {
             HelpView()
@@ -284,6 +347,112 @@ struct GameView: View {
     private var winnerMessage: String {
         let lastPlayer = game.currentPlayer == .blue ? Player.red : Player.blue
         return "\("winner".localized): \(lastPlayer == .blue ? "blue".localized : "red".localized)"
+    }
+    
+    // Izdvojena tabla za igru
+    @ViewBuilder
+    private func gameBoard(geometry: GeometryProxy) -> some View {
+        ZStack {
+            ScrollView([.horizontal, .vertical], showsIndicators: false) {
+                BoardView(game: game, cellSize: calculateCellSize(for: geometry))
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.1))
+                            .blur(radius: 2)
+                            .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
+                    )
+            }
+            .blur(radius: game.isGameOver ? 3 : 0)
+            
+            // Game Over poruka
+            if game.isGameOver {
+                VStack(spacing: 16) {
+                    Text(gameOverMessage)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    
+                    Text(winnerMessage)
+                        .font(.title3)
+                        .foregroundColor(.white)
+                    
+                    Button(action: {
+                        withAnimation {
+                            game.resetGame()
+                        }
+                    }) {
+                        Text("new_game".localized)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(Color.blue.opacity(0.3))
+                            .cornerRadius(8)
+                    }
+                    .padding(.top, 8)
+                }
+                .padding(24)
+                .background(Color.black.opacity(0.7))
+                .cornerRadius(16)
+                .transition(.opacity)
+            }
+        }
+    }
+    
+    // Izdvojena donja dugmad za portrait mod
+    private var bottomButtons: some View {
+        HStack {
+            Button(action: {
+                saveGame()
+            }) {
+                Text("save".localized)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .background(Color.blue.opacity(0.3))
+                    .cornerRadius(8)
+            }
+            
+            Spacer()
+            
+            Button(action: {
+                showingHelpView = true
+            }) {
+                Image(systemName: "questionmark.circle")
+                    .font(.title2)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .background(Color.purple.opacity(0.3))
+                    .cornerRadius(8)
+            }
+            
+            Button(action: {
+                showAchievements = true
+            }) {
+                Image(systemName: "trophy.fill")
+                    .font(.title2)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .background(Color.orange.opacity(0.3))
+                    .cornerRadius(8)
+            }
+            
+            Spacer()
+            
+            Button(action: {
+                loadGame()
+            }) {
+                Text("load".localized)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 16)
+                    .background(Color.green.opacity(0.3))
+                    .cornerRadius(8)
+            }
+        }
     }
 }
 

@@ -127,7 +127,7 @@ class GameSettingsManager: ObservableObject {
     // Konstantne vrednosti
     static let defaultBoardSize = 7
     static let minBoardSize = 5
-    static let maxBoardSize = 30
+    static let maxBoardSize = 20
     static let blockedCellsPercentageRange: ClosedRange<Double> = 0.17...0.19
     static let moveAnimationDuration: Double = 0.3
     static let gameOverAnimationDuration: Double = 0.5
