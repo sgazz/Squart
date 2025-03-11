@@ -5,6 +5,8 @@ struct GameControlsView: View {
     @State private var showingSettings = false
     @State private var selectedSize = GameSettings.defaultBoardSize
     @State private var showConfetti = false
+    @State private var showHelp = false
+    @State private var showAchievements = false
     @ObservedObject private var localization = Localization.shared
     
     var body: some View {
@@ -14,6 +16,22 @@ struct GameControlsView: View {
             
             // Kontrole
             GameButtonsView(game: game, showingSettings: $showingSettings, showConfetti: $showConfetti)
+            
+            HStack(spacing: 20) {
+                Button(action: {
+                    showHelp = true
+                }) {
+                    Image(systemName: "questionmark.circle")
+                        .font(.title2)
+                }
+                
+                Button(action: {
+                    showAchievements = true
+                }) {
+                    Image(systemName: "trophy.fill")
+                        .font(.title2)
+                }
+            }
         }
         .padding()
         .background(Color.black.opacity(0.2))
@@ -25,6 +43,12 @@ struct GameControlsView: View {
         .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
         .sheet(isPresented: $showingSettings) {
             SettingsView(selectedSize: $selectedSize, game: game)
+        }
+        .sheet(isPresented: $showHelp) {
+            HelpView()
+        }
+        .sheet(isPresented: $showAchievements) {
+            AchievementsView()
         }
     }
 }

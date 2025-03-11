@@ -7,6 +7,7 @@ struct GameView: View {
     @State private var showingHelpView = false
     @ObservedObject private var settings = GameSettingsManager.shared
     @State private var timer: Timer? = nil
+    @ObservedObject private var achievementManager = AchievementManager.shared
     
     var body: some View {
         ZStack {
@@ -98,6 +99,18 @@ struct GameView: View {
                 .sheet(isPresented: $showingHelpView) {
                     HelpView()
                 }
+            }
+            
+            // Prikaz animacije za otključavanje postignuća
+            if achievementManager.showUnlockAnimation,
+               let achievement = achievementManager.lastUnlockedAchievement {
+                AchievementUnlockView(
+                    achievement: achievement,
+                    isPresented: .init(
+                        get: { achievementManager.showUnlockAnimation },
+                        set: { achievementManager.showUnlockAnimation = $0 }
+                    )
+                )
             }
         }
         .onRotate { newOrientation in
