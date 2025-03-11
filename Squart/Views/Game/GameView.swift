@@ -13,6 +13,54 @@ struct GameView: View {
     @ObservedObject private var achievementManager = AchievementManager.shared
     @ObservedObject private var localization = Localization.shared
     
+    // Pomoćne promenljive za iPad optimizaciju
+    private var isPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+    
+    private var isInSplitView: Bool {
+        if let window = UIApplication.shared.windows.first,
+           let scene = window.windowScene {
+            return scene.interfaceOrientation.isPortrait && 
+                   window.frame.width < UIScreen.main.bounds.width
+        }
+        return false
+    }
+    
+    private var isInSlideOver: Bool {
+        if let window = UIApplication.shared.windows.first {
+            return window.frame.width < 400
+        }
+        return false
+    }
+    
+    private var effectiveOrientation: UIDeviceOrientation {
+        if isInSplitView || isInSlideOver {
+            return .portrait
+        }
+        return orientation
+    }
+    
+    private func iPadScaleFactor(for geometry: GeometryProxy) -> CGFloat {
+        if !isPad { return 1.0 }
+        
+        let screenWidth = UIScreen.main.bounds.width
+        
+        // Različiti faktori za različite iPad modele
+        switch screenWidth {
+        case 1024: // iPad 9.7" i 10.2"
+            return isInSplitView ? 0.8 : 1.0
+        case 1112: // iPad Pro 10.5"
+            return isInSplitView ? 0.85 : 1.1
+        case 1180: // iPad Pro 11"
+            return isInSplitView ? 0.9 : 1.2
+        case 1366: // iPad Pro 12.9"
+            return isInSplitView ? 0.95 : 1.3
+        default:
+            return 1.0
+        }
+    }
+    
     var body: some View {
         ZStack {
             // Gradijent pozadine baziran na trenutnoj temi
@@ -25,8 +73,8 @@ struct GameView: View {
             
             GeometryReader { geometry in
                 Group {
-                    if orientation.isPortrait {
-                        // Postojeći vertikalni raspored
+                    if effectiveOrientation.isPortrait {
+                        // Postojeći vertikalni raspored sa scale faktorom
                         VStack {
                             Spacer()
                             
@@ -61,8 +109,13 @@ struct GameView: View {
                             bottomButtons
                                 .padding(.horizontal)
                         }
+                        .scaleEffect(isInSlideOver ? 0.8 : 1.0)
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .move(edge: .leading)),
+                            removal: .opacity.combined(with: .move(edge: .trailing))
+                        ))
                     } else {
-                        // Novi horizontalni raspored
+                        // Horizontalni raspored sa prilagođenim širinama
                         HStack(spacing: 0) {
                             // Leva strana - plavi igrač
                             VStack {
@@ -78,6 +131,19 @@ struct GameView: View {
                                 .padding()
                                 .background(Color.black.opacity(0.2))
                                 .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(
+                                            (!game.isGameOver && game.currentPlayer == .blue) ?
+                                                Color.white : Color.clear,
+                                            lineWidth: 2
+                                        )
+                                )
+                                .shadow(
+                                    color: (!game.isGameOver && game.currentPlayer == .blue) ?
+                                        Color.blue.opacity(0.5) : Color.black.opacity(0.3),
+                                    radius: 10
+                                )
                                 
                                 Spacer()
                                 
@@ -88,6 +154,7 @@ struct GameView: View {
                                         isActive: !game.isGameOver && game.currentPlayer == .blue,
                                         player: .blue
                                     )
+                                    .scaleEffect(UIDevice.current.userInterfaceIdiom == .pad ? 1.2 : 1.0)
                                 }
                                 
                                 Spacer()
@@ -128,15 +195,20 @@ struct GameView: View {
                                             .cornerRadius(8)
                                     }
                                 }
+                                .background(Color.black.opacity(0.1))
+                                .cornerRadius(12)
+                                .padding(.horizontal, 8)
                                 
                                 Spacer()
                             }
-                            .frame(width: geometry.size.width * 0.2)
+                            .frame(width: geometry.size.width * (isInSplitView ? 0.25 : 0.2))
                             .padding(.horizontal)
+                            .background(Color.black.opacity(0.05))
+                            .cornerRadius(16)
                             
                             // Centralna tabla
                             gameBoard(geometry: geometry)
-                                .frame(width: geometry.size.width * 0.6)
+                                .frame(width: geometry.size.width * (isInSplitView ? 0.5 : 0.6))
                             
                             // Desna strana - crveni igrač
                             VStack {
@@ -152,6 +224,19 @@ struct GameView: View {
                                 .padding()
                                 .background(Color.black.opacity(0.2))
                                 .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(
+                                            (!game.isGameOver && game.currentPlayer == .red) ?
+                                                Color.white : Color.clear,
+                                            lineWidth: 2
+                                        )
+                                )
+                                .shadow(
+                                    color: (!game.isGameOver && game.currentPlayer == .red) ?
+                                        Color.red.opacity(0.5) : Color.black.opacity(0.3),
+                                    radius: 10
+                                )
                                 
                                 Spacer()
                                 
@@ -162,6 +247,7 @@ struct GameView: View {
                                         isActive: !game.isGameOver && game.currentPlayer == .red,
                                         player: .red
                                     )
+                                    .scaleEffect(UIDevice.current.userInterfaceIdiom == .pad ? 1.2 : 1.0)
                                 }
                                 
                                 Spacer()
@@ -206,12 +292,22 @@ struct GameView: View {
                                             .cornerRadius(8)
                                     }
                                 }
+                                .background(Color.black.opacity(0.1))
+                                .cornerRadius(12)
+                                .padding(.horizontal, 8)
                                 
                                 Spacer()
                             }
-                            .frame(width: geometry.size.width * 0.2)
+                            .frame(width: geometry.size.width * (isInSplitView ? 0.25 : 0.2))
                             .padding(.horizontal)
+                            .background(Color.black.opacity(0.05))
+                            .cornerRadius(16)
                         }
+                        .scaleEffect(iPadScaleFactor(for: geometry))
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .move(edge: .trailing)),
+                            removal: .opacity.combined(with: .move(edge: .leading))
+                        ))
                     }
                 }
             }
@@ -229,7 +325,12 @@ struct GameView: View {
             }
         }
         .onRotate { newOrientation in
-            orientation = newOrientation
+            // Ažuriramo orijentaciju samo ako nismo u Split View ili Slide Over
+            if !isInSplitView && !isInSlideOver {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    orientation = newOrientation
+                }
+            }
         }
         .onAppear {
             startTimer()
@@ -266,19 +367,63 @@ struct GameView: View {
                 dismissButton: .default(Text("OK"))
             )
         }
+        .animation(.easeInOut(duration: 0.3), value: orientation.isPortrait)
     }
     
     private func calculateCellSize(for geometry: GeometryProxy) -> CGFloat {
-        let isPortrait = orientation.isPortrait
-        let availableWidth = geometry.size.width - 40 // padding
-        let availableHeight = geometry.size.height - 200 // controls and spacing
+        let isPortrait = effectiveOrientation.isPortrait
+        
+        // Prilagođeni padding-i za različite iPad modele i modove
+        let horizontalPadding: CGFloat
+        let verticalPadding: CGFloat
+        
+        if isPad {
+            if isInSlideOver {
+                horizontalPadding = 20
+                verticalPadding = 160
+            } else if isInSplitView {
+                horizontalPadding = 40
+                verticalPadding = 180
+            } else {
+                horizontalPadding = 60
+                verticalPadding = 240
+            }
+        } else {
+            horizontalPadding = 40
+            verticalPadding = 200
+        }
+        
+        let availableWidth = geometry.size.width - (isPortrait ? horizontalPadding : geometry.size.width * (isInSplitView ? 0.5 : 0.4))
+        let availableHeight = geometry.size.height - (isPortrait ? verticalPadding : 80)
         
         let maxCellsInRow = CGFloat(game.board.size)
-        let desiredCellSize = isPortrait ? 
-            min(availableWidth / maxCellsInRow, 50) :
-            min(availableHeight / maxCellsInRow, 50)
         
-        return max(desiredCellSize, 30) // minimum cell size
+        // Prilagođene veličine ćelija za različite iPad modove
+        let maxCellSize: CGFloat
+        let minCellSize: CGFloat
+        
+        if isPad {
+            if isInSlideOver {
+                maxCellSize = 45
+                minCellSize = 25
+            } else if isInSplitView {
+                maxCellSize = 50
+                minCellSize = 30
+            } else {
+                maxCellSize = 60
+                minCellSize = 35
+            }
+        } else {
+            maxCellSize = 50
+            minCellSize = 30
+        }
+        
+        let scaleFactor = iPadScaleFactor(for: geometry)
+        let desiredCellSize = isPortrait ? 
+            min(availableWidth / maxCellsInRow, maxCellSize) :
+            min(min(availableHeight / maxCellsInRow, availableWidth / maxCellsInRow), maxCellSize)
+        
+        return max(desiredCellSize, minCellSize) * scaleFactor
     }
     
     private func saveGame() {
