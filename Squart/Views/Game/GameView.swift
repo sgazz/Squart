@@ -5,9 +5,12 @@ struct GameView: View {
     @State private var orientation = UIDevice.current.orientation
     @State private var showingSavedGameAlert = false
     @State private var showingHelpView = false
+    @State private var showAchievements = false
+    @State private var showingSettings = false
     @ObservedObject private var settings = GameSettingsManager.shared
     @State private var timer: Timer? = nil
     @ObservedObject private var achievementManager = AchievementManager.shared
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
         ZStack {
@@ -23,27 +26,74 @@ struct GameView: View {
                 VStack {
                     Spacer()
                     
-                    // Tajmeri za igrače (ako su aktivni)
-                    if game.timerOption != .none {
-                        ChessClockView(game: game)
-                            .padding(.horizontal)
+                    // Status igre i kontrole
+                    VStack(spacing: 16) {
+                        // Rezultat
+                        GameStatusView(game: game)
+                            .padding()
+                            .background(Color.black.opacity(0.2))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                            .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
+                        
+                        // Tajmeri i kontrole (ako su aktivni)
+                        if game.timerOption != .none {
+                            ChessClockView(game: game, showingSettings: $showingSettings)
+                        }
                     }
-                    
-                    GameControlsView(game: game)
-                        .padding(.horizontal)
+                    .padding(.horizontal)
                     
                     Spacer()
                     
                     // Tabla za igru sa efektom staklene pozadine
-                    ScrollView([.horizontal, .vertical], showsIndicators: false) {
-                        BoardView(game: game, cellSize: calculateCellSize(for: geometry))
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.white.opacity(0.1))
-                                    .blur(radius: 2)
-                                    .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-                            )
+                    ZStack {
+                        ScrollView([.horizontal, .vertical], showsIndicators: false) {
+                            BoardView(game: game, cellSize: calculateCellSize(for: geometry))
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.white.opacity(0.1))
+                                        .blur(radius: 2)
+                                        .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
+                                )
+                        }
+                        .blur(radius: game.isGameOver ? 3 : 0)
+                        
+                        // Game Over poruka
+                        if game.isGameOver {
+                            VStack(spacing: 16) {
+                                Text(gameOverMessage)
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.white)
+                                
+                                Text(winnerMessage)
+                                    .font(.title3)
+                                    .foregroundColor(.white)
+                                
+                                Button(action: {
+                                    withAnimation {
+                                        game.resetGame()
+                                    }
+                                }) {
+                                    Text("new_game".localized)
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 24)
+                                        .padding(.vertical, 12)
+                                        .background(Color.blue.opacity(0.3))
+                                        .cornerRadius(8)
+                                }
+                                .padding(.top, 8)
+                            }
+                            .padding(24)
+                            .background(Color.black.opacity(0.7))
+                            .cornerRadius(16)
+                            .transition(.opacity)
+                        }
                     }
                     
                     Spacer()
@@ -66,11 +116,24 @@ struct GameView: View {
                         Button(action: {
                             showingHelpView = true
                         }) {
-                            Text("help".localized)
+                            Image(systemName: "questionmark.circle")
+                                .font(.title2)
                                 .foregroundColor(.white)
                                 .padding(.vertical, 8)
                                 .padding(.horizontal, 16)
                                 .background(Color.purple.opacity(0.3))
+                                .cornerRadius(8)
+                        }
+                        
+                        Button(action: {
+                            showAchievements = true
+                        }) {
+                            Image(systemName: "trophy.fill")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .padding(.vertical, 8)
+                                .padding(.horizontal, 16)
+                                .background(Color.orange.opacity(0.3))
                                 .cornerRadius(8)
                         }
                         
@@ -88,16 +151,6 @@ struct GameView: View {
                         }
                     }
                     .padding(.horizontal)
-                }
-                .alert(isPresented: $showingSavedGameAlert) {
-                    Alert(
-                        title: Text("Igra sačuvana"),
-                        message: Text("Trenutno stanje igre je uspešno sačuvano."),
-                        dismissButton: .default(Text("OK"))
-                    )
-                }
-                .sheet(isPresented: $showingHelpView) {
-                    HelpView()
                 }
             }
             
@@ -133,6 +186,22 @@ struct GameView: View {
         .onDisappear {
             timer?.invalidate()
             timer = nil
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView(selectedSize: .constant(game.board.size), game: game)
+        }
+        .sheet(isPresented: $showingHelpView) {
+            HelpView()
+        }
+        .sheet(isPresented: $showAchievements) {
+            AchievementsView()
+        }
+        .alert(isPresented: $showingSavedGameAlert) {
+            Alert(
+                title: Text("Igra sačuvana"),
+                message: Text("Trenutno stanje igre je uspešno sačuvano."),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
     
@@ -196,11 +265,33 @@ struct GameView: View {
         
         startTimer()
     }
+    
+    // Poruka za kraj igre u zavisnosti od razloga završetka
+    private var gameOverMessage: String {
+        switch game.gameEndReason {
+        case .noValidMoves:
+            return "no_valid_moves".localized
+        case .blueTimeout:
+            return "blue_timeout".localized
+        case .redTimeout:
+            return "red_timeout".localized
+        case .none:
+            return "game_over".localized
+        }
+    }
+    
+    // Poruka o pobedniku
+    private var winnerMessage: String {
+        let lastPlayer = game.currentPlayer == .blue ? Player.red : Player.blue
+        return "\("winner".localized): \(lastPlayer == .blue ? "blue".localized : "red".localized)"
+    }
 }
 
 // Šahovski sat za oba igrača
 struct ChessClockView: View {
     @ObservedObject var game: Game
+    @Binding var showingSettings: Bool
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
         HStack {
@@ -213,6 +304,37 @@ struct ChessClockView: View {
             
             Spacer()
             
+            // Kontrole
+            HStack(spacing: 16) {
+                Button(action: {
+                    showingSettings = true
+                }) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(8)
+                }
+                
+                Button(action: {
+                    withAnimation {
+                        game.resetGame()
+                    }
+                }) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(8)
+                }
+            }
+            
+            Spacer()
+            
             // Tajmer crvenog igrača
             PlayerTimerView(
                 remainingTime: game.redTimeRemaining,
@@ -220,58 +342,6 @@ struct ChessClockView: View {
                 player: .red
             )
         }
-    }
-}
-
-// Prikaz tajmera za jednog igrača
-struct PlayerTimerView: View {
-    let remainingTime: Int
-    let isActive: Bool
-    let player: Player
-    
-    var body: some View {
-        VStack(spacing: 4) {
-            Text(player == .blue ? "PLAVI" : "CRVENI")
-                .font(.caption)
-                .foregroundColor(.white)
-            
-            HStack(spacing: 4) {
-                Image(systemName: "clock")
-                    .foregroundColor(.white)
-                    .opacity(isActive ? 1.0 : 0.5)
-                
-                Text(timeString(from: remainingTime))
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .monospacedDigit()
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(backgroundForPlayer)
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.white.opacity(isActive ? 0.8 : 0.3), lineWidth: isActive ? 2 : 1)
-            )
-        }
-    }
-    
-    private var backgroundForPlayer: Color {
-        let baseColor = player == .blue ? Color.blue : Color.red
-        
-        if remainingTime < 10 {
-            return baseColor.opacity(0.7)
-        } else if remainingTime < 30 {
-            return baseColor.opacity(0.5)
-        } else {
-            return baseColor.opacity(0.3)
-        }
-    }
-    
-    private func timeString(from seconds: Int) -> String {
-        let minutes = max(0, seconds / 60)
-        let remainingSeconds = max(0, seconds % 60)
-        return String(format: "%02d:%02d", minutes, remainingSeconds)
     }
 }
 

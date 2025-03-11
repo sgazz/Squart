@@ -1,174 +1,26 @@
 import SwiftUI
 
-struct GameControlsView: View {
-    @ObservedObject var game: Game
-    @State private var showingSettings = false
-    @State private var selectedSize = GameSettings.defaultBoardSize
-    @State private var showConfetti = false
-    @State private var showHelp = false
-    @State private var showAchievements = false
-    @ObservedObject private var localization = Localization.shared
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // Status igre
-            GameStatusView(game: game, showConfetti: $showConfetti)
-            
-            // Kontrole
-            GameButtonsView(game: game, showingSettings: $showingSettings, showConfetti: $showConfetti)
-            
-            HStack(spacing: 20) {
-                Button(action: {
-                    showHelp = true
-                }) {
-                    Image(systemName: "questionmark.circle")
-                        .font(.title2)
-                }
-                
-                Button(action: {
-                    showAchievements = true
-                }) {
-                    Image(systemName: "trophy.fill")
-                        .font(.title2)
-                }
-            }
-        }
-        .padding()
-        .background(Color.black.opacity(0.2))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
-        .sheet(isPresented: $showingSettings) {
-            SettingsView(selectedSize: $selectedSize, game: game)
-        }
-        .sheet(isPresented: $showHelp) {
-            HelpView()
-        }
-        .sheet(isPresented: $showAchievements) {
-            AchievementsView()
-        }
-    }
-}
-
-// Izdvojena komponenta za prikaz statusa igre
 struct GameStatusView: View {
     @ObservedObject var game: Game
-    @Binding var showConfetti: Bool
     @ObservedObject private var localization = Localization.shared
     
     var body: some View {
         HStack {
-            PlayerScoreView(player: .blue, score: game.blueScore)
-            Spacer()
-            if game.isGameOver {
-                VStack(spacing: 4) {
-                    Text(gameOverMessage)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        
-                    Text(winnerMessage)
-                        .font(.subheadline)
-                        .foregroundColor(.white)
-                }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 16)
-                .background(Color.yellow.opacity(0.3))
-                .cornerRadius(8)
-                .overlay(
-                    showConfetti ? ConfettiView() : nil
-                )
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        withAnimation {
-                            showConfetti = true
-                        }
-                    }
-                }
-            } else {
-                Text(game.aiEnabled ? 
-                     (game.aiVsAiMode ? 
-                      "\("turn".localized): AI \(game.currentPlayer == .blue ? "blue".localized : "red".localized)" : 
-                      (game.currentPlayer == game.aiTeam ? 
-                       "\("turn".localized): AI \(game.aiTeam == .blue ? "blue".localized : "red".localized)" : 
-                       "\("turn".localized): \("your_turn".localized) (\(game.currentPlayer == .blue ? "blue".localized : "red".localized))")) :
-                     "\("turn".localized): \(game.currentPlayer == .blue ? "blue".localized : "red".localized)")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .background(game.currentPlayer == .blue ? Color.blue.opacity(0.3) : Color.red.opacity(0.3))
-                    .cornerRadius(8)
-                    .overlay(
-                        game.aiEnabled && game.isAIThinking ? 
-                        Text("ai_thinking".localized)
-                            .font(.caption)
-                            .foregroundColor(.white)
-                            .padding(4)
-                            .background(Color.black.opacity(0.5))
-                            .cornerRadius(4)
-                            .offset(y: 20) : nil
-                    )
-            }
-            Spacer()
-            PlayerScoreView(player: .red, score: game.redScore)
-        }
-    }
-    
-    // Poruka za kraj igre u zavisnosti od razloga završetka
-    private var gameOverMessage: String {
-        switch game.gameEndReason {
-        case .noValidMoves:
-            return "no_valid_moves".localized
-        case .blueTimeout:
-            return "blue_timeout".localized
-        case .redTimeout:
-            return "red_timeout".localized
-        case .none:
-            return "game_over".localized
-        }
-    }
-    
-    // Poruka o pobedniku
-    private var winnerMessage: String {
-        let lastPlayer = game.currentPlayer == .blue ? Player.red : Player.blue
-        return "\("winner".localized): \(lastPlayer == .blue ? "blue".localized : "red".localized)"
-    }
-}
-
-// Izdvojena komponenta za dugmiće
-struct GameButtonsView: View {
-    @ObservedObject var game: Game
-    @Binding var showingSettings: Bool
-    @Binding var showConfetti: Bool
-    @ObservedObject private var localization = Localization.shared
-    
-    var body: some View {
-        HStack(spacing: 30) {
-            Button(action: {
-                showingSettings = true
-            }) {
-                Text("settings".localized)
-                    .foregroundColor(.white)
-                    .padding(10)
-                    .background(Color.white.opacity(0.2))
-                    .cornerRadius(8)
-            }
+            PlayerScoreView(
+                player: .blue,
+                score: game.blueScore,
+                isActive: !game.isGameOver && game.currentPlayer == .blue,
+                isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .blue)
+            )
             
-            Button(action: {
-                withAnimation {
-                    showConfetti = false
-                    game.resetGame()
-                }
-            }) {
-                Text("new_game".localized)
-                    .foregroundColor(.white)
-                    .padding(10)
-                    .background(Color.white.opacity(0.2))
-                    .cornerRadius(8)
-            }
+            Spacer()
+            
+            PlayerScoreView(
+                player: .red,
+                score: game.redScore,
+                isActive: !game.isGameOver && game.currentPlayer == .red,
+                isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .red)
+            )
         }
     }
 }
@@ -176,94 +28,35 @@ struct GameButtonsView: View {
 struct PlayerScoreView: View {
     let player: Player
     let score: Int
+    let isActive: Bool
+    let isAI: Bool
     
     var body: some View {
         VStack {
-            Rectangle()
-                .fill(player == .blue ? Color.blue : Color.red)
-                .frame(width: 30, height: 30)
-                .cornerRadius(4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color.white, lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.3), radius: 3)
+            ZStack {
+                Rectangle()
+                    .fill(player == .blue ? Color.blue : Color.red)
+                    .frame(width: 30, height: 30)
+                    .cornerRadius(4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.white, lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.3), radius: 3)
+                
+                if isAI {
+                    Image(systemName: "cpu")
+                        .font(.system(size: 16))
+                        .foregroundColor(.white)
+                }
+            }
+            
             Text("\(score)")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
         }
-    }
-}
-
-struct ConfettiView: View {
-    let colors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange]
-    @State private var particles: [ConfettiParticle] = []
-    @State private var isAnimating = false
-    
-    init() {
-        // Kreiraj inicijalne čestice
-        var initialParticles: [ConfettiParticle] = []
-        for _ in 0..<50 {
-            initialParticles.append(ConfettiParticle.random(colors: colors))
-        }
-        _particles = State(initialValue: initialParticles)
-    }
-    
-    var body: some View {
-        ZStack {
-            ForEach(particles.indices, id: \.self) { index in
-                ConfettiParticleView(particle: particles[index], isAnimating: isAnimating)
-            }
-        }
-        .allowsHitTesting(false) // Ignorišemo dodire
-        .onAppear {
-            withAnimation(.easeOut(duration: 1.0)) {
-                isAnimating = true
-            }
-        }
-    }
-}
-
-struct ConfettiParticle {
-    let position: CGPoint
-    let color: Color
-    let rotation: Double
-    let scale: CGFloat
-    
-    static func random(colors: [Color]) -> ConfettiParticle {
-        let randomX = CGFloat.random(in: 0...1)
-        let randomY = CGFloat.random(in: -0.1...0.1)
-        let randomRotation = Double.random(in: 0...360)
-        let randomScale = CGFloat.random(in: 0.4...1.0)
-        let randomColor = colors.randomElement() ?? .blue
-        
-        return ConfettiParticle(
-            position: CGPoint(x: randomX, y: randomY),
-            color: randomColor,
-            rotation: randomRotation,
-            scale: randomScale
-        )
-    }
-}
-
-struct ConfettiParticleView: View {
-    let particle: ConfettiParticle
-    let isAnimating: Bool
-    
-    var body: some View {
-        Rectangle()
-            .fill(particle.color)
-            .frame(width: 5, height: 10)
-            .scaleEffect(particle.scale)
-            .position(
-                x: particle.position.x * UIScreen.main.bounds.width,
-                y: isAnimating ? 
-                    UIScreen.main.bounds.height * (1 + particle.position.y) : 
-                    -10
-            )
-            .rotationEffect(.degrees(isAnimating ? particle.rotation + 360 : particle.rotation))
-            .opacity(isAnimating ? 0 : 1)
+        .padding(8)
     }
 }
 
@@ -500,7 +293,7 @@ struct ApplySettingsSection: View {
 }
 
 #Preview {
-    GameControlsView(game: Game())
+    GameStatusView(game: Game())
         .padding()
         .background(Color.black.opacity(0.8))
 } 

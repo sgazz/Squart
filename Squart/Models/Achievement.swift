@@ -1,7 +1,7 @@
 import Foundation
 
 // Tipovi postignuća
-enum AchievementType: String, Codable {
+enum AchievementType: String, Codable, CaseIterable {
     case firstWin = "first_win"
     case winStreak = "win_streak"
     case beatHardAI = "beat_hard_ai"
