@@ -8,14 +8,14 @@ struct HelpView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     // Glavni naslov
-                    Text("Kako igrati Squart")
+                    Text("how_to_play".localized)
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .padding(.bottom, 8)
                     
                     // Osnovni opis igre
                     Group {
-                        Text("O igri")
+                        Text("about_game".localized)
                             .font(.title2)
                             .fontWeight(.bold)
                         
@@ -28,7 +28,7 @@ struct HelpView: View {
                     
                     // Pravila igre
                     Group {
-                        Text("Pravila igre")
+                        Text("game_rules".localized)
                             .font(.title2)
                             .fontWeight(.bold)
                         
@@ -50,13 +50,13 @@ struct HelpView: View {
                         Text("• Potez je validan samo ako ima dovoljno prostora za ceo žeton (dva polja)")
                             .padding(.bottom, 4)
                         
-                        Text("• Svaki igrač ima ograničeno vreme za celu partiju (kao u šahu). Vreme se meri samo dok je igrač na potezu.")
+                        Text("• Ako je uključeno vremensko ograničenje, svaki igrač ima ograničeno vreme za celu partiju (kao u šahu). Vreme se meri samo dok je igrač na potezu.")
                             .padding(.bottom, 4)
                     }
                     
                     // Kako pobediti
                     Group {
-                        Text("Kako pobediti")
+                        Text("how_to_win".localized)
                             .font(.title2)
                             .fontWeight(.bold)
                         
@@ -68,13 +68,13 @@ struct HelpView: View {
                         Text("1. Dovesti protivnika u situaciju da ne može da odigra validan potez. Pobednik je igrač koji je odigrao poslednji validni potez.")
                             .padding(.bottom, 4)
                         
-                        Text("2. Kada protivniku istekne vreme. Ako igraču istekne vreme na njegovom satu, protivnik je pobednik.")
+                        Text("2. Kada protivniku istekne vreme (ako je uključeno vremensko ograničenje). Ako igraču istekne vreme na njegovom satu, protivnik je pobednik.")
                             .padding(.bottom, 4)
                     }
                     
                     // AI protivnik
                     Group {
-                        Text("AI protivnik")
+                        Text("ai_opponent".localized)
                             .font(.title2)
                             .fontWeight(.bold)
                         
@@ -104,13 +104,16 @@ struct HelpView: View {
                         Text("• U AI vs AI modu, možete izabrati težinu za svakog od AI igrača posebno")
                             .padding(.bottom, 4)
                             
+                        Text("• Napredni AI: Možete aktivirati naprednu veštačku inteligenciju koja koristi sofisticiranije strategije")
+                            .padding(.bottom, 4)
+                            
                         Text("• AI vs AI mod je koristan za učenje strategije i tehnika igre")
                             .padding(.bottom, 4)
                     }
                     
                     // Saveti za igru
                     Group {
-                        Text("Saveti za igru")
+                        Text("game_tips".localized)
                             .font(.title2)
                             .fontWeight(.bold)
                         
@@ -124,6 +127,12 @@ struct HelpView: View {
                             .padding(.bottom, 4)
                         
                         Text("• Obratite pažnju na crna polja - ona mogu biti korisna ili štetna za vašu strategiju")
+                            .padding(.bottom, 4)
+                        
+                        Text("• Kontrola uglova table često donosi prednost u kasnim fazama igre")
+                            .padding(.bottom, 4)
+                        
+                        Text("• Pratite koliko validnih poteza ima protivnik i pokušajte da ih smanjite")
                             .padding(.bottom, 4)
                     }
                 }

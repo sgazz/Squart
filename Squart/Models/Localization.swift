@@ -55,7 +55,13 @@ class Localization: ObservableObject {
             "classic": "Klasična",
             "save": "Sačuvaj",
             "load": "Učitaj",
-            "help": "Uputstvo"
+            "help": "Uputstvo",
+            "how_to_play": "Kako igrati Squart",
+            "about_game": "O igri",
+            "game_rules": "Pravila igre",
+            "how_to_win": "Kako pobediti",
+            "ai_opponent": "AI protivnik",
+            "game_tips": "Saveti za igru"
         ],
         .english: [
             "settings": "Settings",
@@ -102,7 +108,13 @@ class Localization: ObservableObject {
             "classic": "Classic",
             "save": "Save",
             "load": "Load",
-            "help": "Help"
+            "help": "Help",
+            "how_to_play": "How to Play Squart",
+            "about_game": "About the Game",
+            "game_rules": "Game Rules",
+            "how_to_win": "How to Win",
+            "ai_opponent": "AI Opponent",
+            "game_tips": "Game Tips"
         ],
         .german: [
             "settings": "Einstellungen",
@@ -149,7 +161,13 @@ class Localization: ObservableObject {
             "classic": "Klassisch",
             "save": "Speichern",
             "load": "Laden",
-            "help": "Hilfe"
+            "help": "Hilfe",
+            "how_to_play": "Wie man Squart spielt",
+            "about_game": "Über das Spiel",
+            "game_rules": "Spielregeln",
+            "how_to_win": "Wie man gewinnt",
+            "ai_opponent": "KI-Gegner",
+            "game_tips": "Spieltipps"
         ],
         .russian: [
             "settings": "Настройки",
@@ -196,7 +214,13 @@ class Localization: ObservableObject {
             "classic": "Классический",
             "save": "Сохранить",
             "load": "Загрузить",
-            "help": "Помощь"
+            "help": "Помощь",
+            "how_to_play": "Как играть в Squart",
+            "about_game": "Об игре",
+            "game_rules": "Правила игры",
+            "how_to_win": "Как победить",
+            "ai_opponent": "ИИ-противник",
+            "game_tips": "Советы по игре"
         ],
         .chinese: [
             "settings": "设置",
@@ -243,7 +267,13 @@ class Localization: ObservableObject {
             "classic": "经典",
             "save": "保存",
             "load": "加载",
-            "help": "帮助"
+            "help": "帮助",
+            "how_to_play": "如何玩Squart",
+            "about_game": "关于游戏",
+            "game_rules": "游戏规则",
+            "how_to_win": "如何获胜",
+            "ai_opponent": "AI对手",
+            "game_tips": "游戏技巧"
         ]
     ]
     
