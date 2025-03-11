@@ -55,8 +55,7 @@ class Localization: ObservableObject {
             "classic": "Klasična",
             "save": "Sačuvaj",
             "load": "Učitaj",
-            "help": "Uputstvo",
-            "close": "Zatvori"
+            "help": "Uputstvo"
         ],
         .english: [
             "settings": "Settings",
@@ -103,8 +102,7 @@ class Localization: ObservableObject {
             "classic": "Classic",
             "save": "Save",
             "load": "Load",
-            "help": "Help",
-            "close": "Close"
+            "help": "Help"
         ],
         .german: [
             "settings": "Einstellungen",
@@ -151,8 +149,7 @@ class Localization: ObservableObject {
             "classic": "Klassisch",
             "save": "Speichern",
             "load": "Laden",
-            "help": "Hilfe",
-            "close": "Schließen"
+            "help": "Hilfe"
         ],
         .russian: [
             "settings": "Настройки",
@@ -199,8 +196,7 @@ class Localization: ObservableObject {
             "classic": "Классический",
             "save": "Сохранить",
             "load": "Загрузить",
-            "help": "Помощь",
-            "close": "Закрыть"
+            "help": "Помощь"
         ],
         .chinese: [
             "settings": "设置",
@@ -247,8 +243,7 @@ class Localization: ObservableObject {
             "classic": "经典",
             "save": "保存",
             "load": "加载",
-            "help": "帮助",
-            "close": "关闭"
+            "help": "帮助"
         ]
     ]
     
