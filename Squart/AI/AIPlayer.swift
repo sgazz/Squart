@@ -6,6 +6,7 @@ enum AIDifficulty: Int, CaseIterable, Codable {
     case medium = 1
     case hard = 2
     
+    // Ovo ćemo koristiti samo za kompatibilnost sa starim kodom
     var description: String {
         switch self {
         case .easy:
@@ -36,10 +37,13 @@ class AIPlayer {
         // Implementacija zavisi od težine
         switch difficulty {
         case .easy:
+            // Za lak nivo, odmah vraćamo nasumični potez
             return findRandomMove(for: game)
         case .medium:
+            // Za srednji nivo, kraće razmišljamo
             return findMediumMove(for: game)
         case .hard:
+            // Za težak nivo, duže razmišljamo
             return findBestMoveMinMax(for: game)
         }
     }
@@ -140,32 +144,15 @@ class AIPlayer {
         var bestMove: (row: Int, column: Int)? = nil
         var bestScore = Int.min
         
-        // Povećana dubina za srednji nivo (sa 2 na 3)
-        let maxDepth = 3
+        // Smanjujemo dubinu za srednji nivo
+        let maxDepth = 2
         
-        // Dodajemo vremensko ograničenje za razmišljanje (3 sekunde)
-        let maxThinkingTime: TimeInterval = 3.0
+        // Smanjujemo maksimalno vreme za razmišljanje
+        let maxThinkingTime: TimeInterval = 1.0
         let startTime = Date()
         
         // Razmatramo samo deo poteza za bolje performanse
-        let movesToConsider: [((row: Int, column: Int))] = {
-            if validMoves.count > 8 {
-                var bestMoves: [(move: (row: Int, column: Int), score: Int)] = []
-                
-                // Dodajemo poene za ivice i ćoškove za preliminarno rangiranje
-                for move in validMoves {
-                    var score = 0
-                    if isEdgeMove(move, boardSize: game.board.size) { score += 2 }
-                    if isCornerMove(move, boardSize: game.board.size) { score += 3 }
-                    bestMoves.append((move, score))
-                }
-                
-                bestMoves.sort { $0.score > $1.score }
-                return bestMoves.prefix(8).map { $0.move } // Samo 8 najboljih poteza
-            } else {
-                return validMoves
-            }
-        }()
+        let movesToConsider = validMoves.prefix(6)
         
         for move in movesToConsider {
             // Proveravamo da li je isteklo vreme za razmišljanje
@@ -177,7 +164,6 @@ class AIPlayer {
             let clonedGame = cloneGame(game)
             _ = clonedGame.makeMove(row: move.row, column: move.column)
             
-            // Koristimo ograničeni alfa-beta umesto običnog minimax-a za bolje performanse
             let score = limitedAlphaBeta(clonedGame, depth: maxDepth, alpha: Int.min, beta: Int.max, maximizingPlayer: false, originalPlayer: game.currentPlayer)
             
             if score > bestScore {
@@ -292,8 +278,8 @@ class AIPlayer {
             return nil
         }
         
-        // Nasumični faktor za teški nivo - 10% vremena igra slabije
-        if Double.random(in: 0...1) < 0.1 {
+        // Nasumični faktor za teški nivo - 5% vremena igra slabije (smanjeno sa 10%)
+        if Double.random(in: 0...1) < 0.05 {
             return findMediumMove(for: game)
         }
         
@@ -310,32 +296,28 @@ class AIPlayer {
         } else if boardSize > 10 {
             maxDepth = 3
         } else {
-            maxDepth = 3 // Smanjeno sa 4 na 3 za bolje performanse
+            maxDepth = 3
         }
         
-        // Postavljamo maksimalno vreme za razmišljanje (u sekundama)
-        let maxThinkingTime: TimeInterval = 5.0
+        // Smanjujemo maksimalno vreme za razmišljanje
+        let maxThinkingTime: TimeInterval = 2.0
         let startTime = Date()
         
         // Razmatramo samo deo poteza na većim tablama
         let movesToConsider: [((row: Int, column: Int))] = {
-            if validMoves.count > 12 {
+            if validMoves.count > 8 {
                 // Na velikim tablama, razmotrimo samo ivične i nekoliko nasumičnih poteza
                 var edgeMoves = validMoves.filter { isEdgeMove($0, boardSize: boardSize) }
                 let remainingMoves = validMoves.filter { !isEdgeMove($0, boardSize: boardSize) }
                 
-                if edgeMoves.count < 8 {
-                    edgeMoves.append(contentsOf: Array(remainingMoves.shuffled().prefix(8 - edgeMoves.count)))
+                if edgeMoves.count < 6 {
+                    edgeMoves.append(contentsOf: Array(remainingMoves.shuffled().prefix(6 - edgeMoves.count)))
                 }
                 return edgeMoves
             } else {
                 return validMoves
             }
         }()
-        
-        // Definišemo početne alfa i beta vrednosti za alfa-beta odsecanje
-        let alpha = Int.min
-        let beta = Int.max
         
         for move in movesToConsider {
             // Proveravamo da li je isteklo vreme za razmišljanje
@@ -347,8 +329,7 @@ class AIPlayer {
             let clonedGame = cloneGame(game)
             _ = clonedGame.makeMove(row: move.row, column: move.column)
             
-            // Koristimo alfa-beta algoritam umesto običnog minimax-a
-            let score = alphaBetaMinimax(clonedGame, depth: maxDepth, alpha: alpha, beta: beta, maximizingPlayer: false, originalPlayer: game.currentPlayer)
+            let score = alphaBetaMinimax(clonedGame, depth: maxDepth, alpha: Int.min, beta: Int.max, maximizingPlayer: false, originalPlayer: game.currentPlayer)
             
             if score > bestScore {
                 bestScore = score
@@ -357,11 +338,7 @@ class AIPlayer {
         }
         
         // Ako zbog vremenskog ograničenja nismo našli najbolji potez, koristimo srednji nivo
-        if bestMove == nil {
-            return findMediumMove(for: game)
-        }
-        
-        return bestMove
+        return bestMove ?? findMediumMove(for: game)
     }
     
     // Alfa-beta minimax algoritam za evaluaciju poteza u dubinu

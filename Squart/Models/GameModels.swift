@@ -135,6 +135,7 @@ class Game: ObservableObject {
     @Published var aiEnabled: Bool = false
     @Published var aiDifficulty: AIDifficulty = .medium
     private var aiPlayer: AIPlayer?
+    @Published var isAIThinking: Bool = false
     
     // Određuje tim koji igra AI (podrazumevano crveni)
     @Published var aiTeam: Player = .red
@@ -193,7 +194,7 @@ class Game: ObservableObject {
         guard !isGameOver else { return }
         guard timerOption != .none else { return }
         
-        // Umanjujemo vreme trenutnom igraču
+        // Umanjujemo vreme trenutnom igraču (bez obzira da li AI razmišlja)
         if currentPlayer == .blue {
             blueTimeRemaining -= 1
             if blueTimeRemaining <= 0 {
@@ -278,8 +279,24 @@ class Game: ObservableObject {
         } else {
             // U standardnom modu, AI igra samo za svoj tim
             if currentPlayer == aiTeam, let aiPlayer = aiPlayer {
-                if let bestMove = aiPlayer.findBestMove(for: self) {
-                    _ = makeMove(row: bestMove.row, column: bestMove.column)
+                isAIThinking = true
+                
+                // Prebacujemo AI razmišljanje na background thread sa visokim prioritetom
+                DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+                    guard let self = self else { return }
+                    
+                    // AI razmišlja i nalazi najbolji potez
+                    if let bestMove = aiPlayer.findBestMove(for: self) {
+                        // Vraćamo se na main thread za ažuriranje UI
+                        DispatchQueue.main.async {
+                            self.isAIThinking = false
+                            _ = self.makeMove(row: bestMove.row, column: bestMove.column)
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            self.isAIThinking = false
+                        }
+                    }
                 }
             }
         }
@@ -295,13 +312,31 @@ class Game: ObservableObject {
             activeAI = secondAiPlayer
         }
         
-        if let ai = activeAI, let bestMove = ai.findBestMove(for: self) {
-            _ = makeMove(row: bestMove.row, column: bestMove.column)
+        if let ai = activeAI {
+            isAIThinking = true
             
-            // Ako igra nije završena, planiramo sledeći AI potez sa malim odlaganjem
-            if !isGameOver {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    self.makeAIMove()
+            // Prebacujemo AI razmišljanje na background thread sa visokim prioritetom
+            DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+                guard let self = self else { return }
+                
+                // AI razmišlja i nalazi najbolji potez
+                if let bestMove = ai.findBestMove(for: self) {
+                    // Vraćamo se na main thread za ažuriranje UI
+                    DispatchQueue.main.async {
+                        self.isAIThinking = false
+                        _ = self.makeMove(row: bestMove.row, column: bestMove.column)
+                        
+                        // Ako igra nije završena, planiramo sledeći AI potez sa malim odlaganjem
+                        if !self.isGameOver {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                self.makeAIMove()
+                            }
+                        }
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.isAIThinking = false
+                    }
                 }
             }
         }

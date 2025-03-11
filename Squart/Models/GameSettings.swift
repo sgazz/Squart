@@ -54,6 +54,7 @@ enum TimerOption: Int, CaseIterable, Codable {
     case fiveMinutes = 300
     case tenMinutes = 600
     
+    // Ovo ćemo koristiti samo za kompatibilnost sa starim kodom
     var description: String {
         switch self {
         case .none:
@@ -76,6 +77,35 @@ enum TimerOption: Int, CaseIterable, Codable {
     }
 }
 
+// Definicija podržanih jezika
+enum Language: String, CaseIterable, Codable {
+    case serbian = "Srpski"
+    case english = "English"
+    case german = "Deutsch"
+    case russian = "Русский"
+    case chinese = "中文"
+    
+    var code: String {
+        switch self {
+        case .serbian: return "sr"
+        case .english: return "en"
+        case .german: return "de"
+        case .russian: return "ru"
+        case .chinese: return "zh"
+        }
+    }
+    
+    var flag: String {
+        switch self {
+        case .serbian: return "🇷🇸"
+        case .english: return "🇬🇧"
+        case .german: return "🇩🇪"
+        case .russian: return "🇷🇺"
+        case .chinese: return "🇨🇳"
+        }
+    }
+}
+
 // Model podataka za čuvanje podešavanja
 struct SettingsData: Codable {
     let currentTheme: ThemeType
@@ -87,6 +117,7 @@ struct SettingsData: Codable {
     let aiTeam: Player
     let aiVsAiMode: Bool
     let secondAiDifficulty: AIDifficulty
+    let language: Language
 }
 
 // Glavna klasa za podešavanja
@@ -155,6 +186,14 @@ class GameSettingsManager: ObservableObject {
         }
     }
     
+    @Published var language: Language = .serbian {
+        didSet {
+            save()
+            // Obaveštavamo sistem o promeni jezika
+            NotificationCenter.default.post(name: Notification.Name("LanguageChanged"), object: language)
+        }
+    }
+    
     private init() {
         load()
     }
@@ -169,7 +208,8 @@ class GameSettingsManager: ObservableObject {
             aiDifficulty: aiDifficulty,
             aiTeam: aiTeam,
             aiVsAiMode: aiVsAiMode,
-            secondAiDifficulty: secondAiDifficulty
+            secondAiDifficulty: secondAiDifficulty,
+            language: language
         )
         
         if let encoded = try? JSONEncoder().encode(settings) {
@@ -189,6 +229,7 @@ class GameSettingsManager: ObservableObject {
             self.aiTeam = settings.aiTeam
             self.aiVsAiMode = settings.aiVsAiMode
             self.secondAiDifficulty = settings.secondAiDifficulty
+            self.language = settings.language
         }
     }
 }

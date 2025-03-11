@@ -5,6 +5,7 @@ struct GameControlsView: View {
     @State private var showingSettings = false
     @State private var selectedSize = GameSettings.defaultBoardSize
     @State private var showConfetti = false
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
         VStack(spacing: 16) {
@@ -32,6 +33,7 @@ struct GameControlsView: View {
 struct GameStatusView: View {
     @ObservedObject var game: Game
     @Binding var showConfetti: Bool
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
         HStack {
@@ -62,7 +64,13 @@ struct GameStatusView: View {
                     }
                 }
             } else {
-                Text("Na potezu: \(game.currentPlayer == .blue ? "Plavi" : "Crveni")")
+                Text(game.aiEnabled ? 
+                     (game.aiVsAiMode ? 
+                      "\("turn".localized): AI \(game.currentPlayer == .blue ? "blue".localized : "red".localized)" : 
+                      (game.currentPlayer == game.aiTeam ? 
+                       "\("turn".localized): AI \(game.aiTeam == .blue ? "blue".localized : "red".localized)" : 
+                       "\("turn".localized): \("your_turn".localized) (\(game.currentPlayer == .blue ? "blue".localized : "red".localized))")) :
+                     "\("turn".localized): \(game.currentPlayer == .blue ? "blue".localized : "red".localized)")
                     .font(.headline)
                     .foregroundColor(.white)
                     .padding(.vertical, 8)
@@ -70,17 +78,14 @@ struct GameStatusView: View {
                     .background(game.currentPlayer == .blue ? Color.blue.opacity(0.3) : Color.red.opacity(0.3))
                     .cornerRadius(8)
                     .overlay(
-                        game.aiEnabled ? 
-                        Text(game.aiVsAiMode ? 
-                             "AI (\(game.currentPlayer == .blue ? "plavi" : "crveni")) razmišlja" : 
-                             game.currentPlayer == game.aiTeam ? "AI na potezu" : "Vi ste na potezu")
+                        game.aiEnabled && game.isAIThinking ? 
+                        Text("ai_thinking".localized)
                             .font(.caption)
                             .foregroundColor(.white)
                             .padding(4)
                             .background(Color.black.opacity(0.5))
                             .cornerRadius(4)
-                            .offset(y: 20)
-                        : nil
+                            .offset(y: 20) : nil
                     )
             }
             Spacer()
@@ -92,20 +97,20 @@ struct GameStatusView: View {
     private var gameOverMessage: String {
         switch game.gameEndReason {
         case .noValidMoves:
-            return "Nema validnih poteza!"
+            return "no_valid_moves".localized
         case .blueTimeout:
-            return "Isteklo vreme plavom igraču!"
+            return "blue_timeout".localized
         case .redTimeout:
-            return "Isteklo vreme crvenom igraču!"
+            return "red_timeout".localized
         case .none:
-            return "Igra je završena!"
+            return "game_over".localized
         }
     }
     
     // Poruka o pobedniku
     private var winnerMessage: String {
         let lastPlayer = game.currentPlayer == .blue ? Player.red : Player.blue
-        return "Pobednik: \(lastPlayer == .blue ? "Plavi" : "Crveni")"
+        return "\("winner".localized): \(lastPlayer == .blue ? "blue".localized : "red".localized)"
     }
 }
 
@@ -114,13 +119,14 @@ struct GameButtonsView: View {
     @ObservedObject var game: Game
     @Binding var showingSettings: Bool
     @Binding var showConfetti: Bool
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
         HStack(spacing: 30) {
             Button(action: {
                 showingSettings = true
             }) {
-                Text("Podešavanja")
+                Text("settings".localized)
                     .foregroundColor(.white)
                     .padding(10)
                     .background(Color.white.opacity(0.2))
@@ -133,7 +139,7 @@ struct GameButtonsView: View {
                     game.resetGame()
                 }
             }) {
-                Text("Nova igra")
+                Text("new_game".localized)
                     .foregroundColor(.white)
                     .padding(10)
                     .background(Color.white.opacity(0.2))
@@ -242,6 +248,7 @@ struct SettingsView: View {
     @ObservedObject var game: Game
     @ObservedObject var settings = GameSettingsManager.shared
     @Environment(\.dismiss) var dismiss
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
         NavigationView {
@@ -256,10 +263,12 @@ struct SettingsView: View {
                 
                 SoundSection(settings: settings)
                 
+                LanguageSection(settings: settings)
+                
                 ApplySettingsSection(selectedSize: selectedSize, game: game, settings: settings, dismiss: dismiss)
             }
-            .navigationTitle("Podešavanja")
-            .navigationBarItems(trailing: Button("Zatvori") {
+            .navigationTitle("settings".localized)
+            .navigationBarItems(trailing: Button("close".localized) {
                 dismiss()
             })
         }
@@ -269,10 +278,11 @@ struct SettingsView: View {
 // Izdvojena sekcija za veličinu table
 struct BoardSizeSection: View {
     @Binding var selectedSize: Int
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("Veličina table")) {
-            Picker("Veličina", selection: $selectedSize) {
+        Section(header: Text("board_size".localized)) {
+            Picker("board_size".localized, selection: $selectedSize) {
                 ForEach(GameSettings.minBoardSize...GameSettings.maxBoardSize, id: \.self) { size in
                     Text("\(size)x\(size)")
                 }
@@ -284,10 +294,11 @@ struct BoardSizeSection: View {
 // Izdvojena sekcija za temu
 struct ThemeSection: View {
     @ObservedObject var settings: GameSettingsManager
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("Izgled")) {
-            Picker("Tema", selection: $settings.currentTheme) {
+        Section(header: Text("appearance".localized)) {
+            Picker("theme".localized, selection: $settings.currentTheme) {
                 ForEach(ThemeType.allCases, id: \.self) { theme in
                     HStack {
                         RoundedRectangle(cornerRadius: 4)
@@ -297,11 +308,21 @@ struct ThemeSection: View {
                                 endPoint: .trailing
                             ))
                             .frame(width: 50, height: 24)
-                        Text(theme.rawValue)
+                        Text(themeLocalizedName(theme))
                     }
                 }
             }
             .pickerStyle(MenuPickerStyle())
+        }
+    }
+    
+    private func themeLocalizedName(_ theme: ThemeType) -> String {
+        switch theme {
+        case .ocean: return "ocean".localized
+        case .sunset: return "sunset".localized
+        case .forest: return "forest".localized
+        case .galaxy: return "galaxy".localized
+        case .classic: return "classic".localized
         }
     }
 }
@@ -309,15 +330,27 @@ struct ThemeSection: View {
 // Izdvojena sekcija za tajmer
 struct TimerSection: View {
     @ObservedObject var settings: GameSettingsManager
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("Vreme za potez")) {
-            Picker("Ograničenje vremena", selection: $settings.timerOption) {
+        Section(header: Text("time_limit".localized)) {
+            Picker("time_limit_option".localized, selection: $settings.timerOption) {
                 ForEach(TimerOption.allCases, id: \.self) { option in
-                    Text(option.description)
+                    Text(timerOptionLocalizedDescription(option))
                 }
             }
             .pickerStyle(MenuPickerStyle())
+        }
+    }
+    
+    private func timerOptionLocalizedDescription(_ option: TimerOption) -> String {
+        switch option {
+        case .none: return "no_limit".localized
+        case .oneMinute: return "1 \("minute".localized)"
+        case .twoMinutes: return "2 \("minutes".localized)"
+        case .threeMinutes: return "3 \("minutes".localized)"
+        case .fiveMinutes: return "5 \("minutes".localized)"
+        case .tenMinutes: return "10 \("minutes".localized)"
         }
     }
 }
@@ -326,41 +359,50 @@ struct TimerSection: View {
 struct OpponentSection: View {
     @ObservedObject var game: Game
     @ObservedObject var settings: GameSettingsManager
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("Protivnik")) {
-            Toggle("Igraj protiv računara", isOn: $settings.aiEnabled)
+        Section(header: Text("opponent".localized)) {
+            Toggle("play_against_computer".localized, isOn: $settings.aiEnabled)
             
             if settings.aiEnabled {
-                Picker("Težina", selection: $settings.aiDifficulty) {
+                Picker("difficulty".localized, selection: $settings.aiDifficulty) {
                     ForEach(AIDifficulty.allCases, id: \.self) { difficulty in
-                        Text(difficulty.description)
+                        Text(difficultyLocalizedDescription(difficulty))
                     }
                 }
                 .pickerStyle(SegmentedPickerStyle())
                 
-                Picker("AI tim", selection: $settings.aiTeam) {
-                    Text("Plavi").tag(Player.blue)
-                    Text("Crveni").tag(Player.red)
+                Picker("ai_team".localized, selection: $settings.aiTeam) {
+                    Text("blue".localized).tag(Player.blue)
+                    Text("red".localized).tag(Player.red)
                 }
                 .pickerStyle(SegmentedPickerStyle())
                 
-                Toggle("AI vs AI mod", isOn: $settings.aiVsAiMode)
+                Toggle("ai_vs_ai".localized, isOn: $settings.aiVsAiMode)
                 
                 if settings.aiVsAiMode {
-                    Picker("Težina drugog AI", selection: $settings.secondAiDifficulty) {
+                    Picker("second_ai_difficulty".localized, selection: $settings.secondAiDifficulty) {
                         ForEach(AIDifficulty.allCases, id: \.self) { difficulty in
-                            Text(difficulty.description)
+                            Text(difficultyLocalizedDescription(difficulty))
                         }
                     }
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 
-                Text("Prvi na potezu: \(game.startingPlayer == .blue ? "Plavi" : "Crveni")")
+                Text("\("first_move".localized): \(game.startingPlayer == .blue ? "blue".localized : "red".localized)")
                     .font(.footnote)
                     .foregroundColor(.secondary)
                     .padding(.top, 4)
             }
+        }
+    }
+    
+    private func difficultyLocalizedDescription(_ difficulty: AIDifficulty) -> String {
+        switch difficulty {
+        case .easy: return "easy".localized
+        case .medium: return "medium".localized
+        case .hard: return "hard".localized
         }
     }
 }
@@ -368,11 +410,32 @@ struct OpponentSection: View {
 // Izdvojena sekcija za zvuk
 struct SoundSection: View {
     @ObservedObject var settings: GameSettingsManager
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("Zvuk i vibracija")) {
-            Toggle("Zvučni efekti", isOn: $settings.soundEnabled)
-            Toggle("Vibracija", isOn: $settings.hapticFeedbackEnabled)
+        Section(header: Text("sound_vibration".localized)) {
+            Toggle("sound_effects".localized, isOn: $settings.soundEnabled)
+            Toggle("vibration".localized, isOn: $settings.hapticFeedbackEnabled)
+        }
+    }
+}
+
+// Nova sekcija za izbor jezika
+struct LanguageSection: View {
+    @ObservedObject var settings: GameSettingsManager
+    @ObservedObject private var localization = Localization.shared
+    
+    var body: some View {
+        Section(header: Text("language".localized)) {
+            Picker("language".localized, selection: $settings.language) {
+                ForEach(Language.allCases, id: \.self) { language in
+                    HStack {
+                        Text(language.flag)
+                        Text(language.rawValue)
+                    }
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
         }
     }
 }
@@ -383,10 +446,11 @@ struct ApplySettingsSection: View {
     @ObservedObject var game: Game
     @ObservedObject var settings: GameSettingsManager
     var dismiss: DismissAction
+    @ObservedObject private var localization = Localization.shared
     
     var body: some View {
         Section {
-            Button("Primeni i započni novu igru") {
+            Button("apply_start_new".localized) {
                 game.board = GameBoard(size: selectedSize)
                 
                 // Inicijalizacija AI ako je uključen
