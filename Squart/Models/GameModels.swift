@@ -26,9 +26,13 @@ enum Player: Codable {
     }
 }
 
-struct BoardCell: Identifiable {
-    let id = UUID()
+struct BoardCell {
     var type: CellType
+    let row: Int
+    let column: Int
+}
+
+struct Position: Hashable {
     let row: Int
     let column: Int
 }
@@ -36,6 +40,14 @@ struct BoardCell: Identifiable {
 class GameBoard: ObservableObject {
     @Published var cells: [[BoardCell]]
     let size: Int
+    
+    // Кеш за валидне потезе
+    private var validMovesCache: [Player: Set<Position>] = [:]
+    
+    // Поништавамо кеш када се табла промени
+    private func invalidateCache() {
+        validMovesCache.removeAll()
+    }
     
     init(size: Int) {
         self.size = size
@@ -68,25 +80,39 @@ class GameBoard: ObservableObject {
     }
     
     func isValidMove(row: Int, column: Int, player: Player) -> Bool {
-        // Provera osnovnih uslova za početno polje
+        // Прво проверавамо кеш
+        if let cachedMoves = validMovesCache[player] {
+            return cachedMoves.contains(Position(row: row, column: column))
+        }
+        
+        // Ако немамо кеш, правимо нови сет валидних потеза
+        var validMoves = Set<Position>()
+        
+        for r in 0..<size {
+            for c in 0..<size {
+                if checkValidMove(row: r, column: c, player: player) {
+                    validMoves.insert(Position(row: r, column: c))
+                }
+            }
+        }
+        
+        // Чувамо у кешу
+        validMovesCache[player] = validMoves
+        
+        return validMoves.contains(Position(row: row, column: column))
+    }
+    
+    // Помоћна метода која проверава валидност потеза без кеширања
+    private func checkValidMove(row: Int, column: Int, player: Player) -> Bool {
         guard row >= 0 && row < size && column >= 0 && column < size else { return false }
         guard cells[row][column].type == .empty else { return false }
         
         if player.isHorizontal {
-            // Plavi igrač - horizontalno postavljanje (s leva na desno)
-            // Provera desnog polja
-            if column + 1 < size && cells[row][column + 1].type == .empty {
-                return true
-            }
-            return false
-            
+            guard column + 1 < size && cells[row][column + 1].type == .empty else { return false }
+            return true
         } else {
-            // Crveni igrač - vertikalno postavljanje (odozgo prema dole)
-            // Provera donjeg polja
-            if row + 1 < size && cells[row + 1][column].type == .empty {
-                return true
-            }
-            return false
+            guard row + 1 < size && cells[row + 1][column].type == .empty else { return false }
+            return true
         }
     }
     
@@ -96,13 +122,13 @@ class GameBoard: ObservableObject {
         cells[row][column].type = player.cellType
         
         if player.isHorizontal {
-            // Plavi igrač - horizontalno postavljanje (s leva na desno)
             cells[row][column + 1].type = player.cellType
         } else {
-            // Crveni igrač - vertikalno postavljanje (odozgo prema dole)
             cells[row + 1][column].type = player.cellType
         }
         
+        // Поништавамо кеш јер се табла променила
+        invalidateCache()
         return true
     }
     
