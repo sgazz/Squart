@@ -31,6 +31,8 @@ struct SettingsView: View {
     @ObservedObject var settings = GameSettingsManager.shared
     @Environment(\.dismiss) var dismiss
     @ObservedObject private var localization = Localization.shared
+    @State private var showingHelpView = false
+    @State private var showAchievements = false
     
     var body: some View {
         NavigationView {
@@ -47,6 +49,31 @@ struct SettingsView: View {
                 
                 LanguageSection(settings: settings)
                 
+                // Нова секција за Help и Achievements
+                Section {
+                    Button(action: {
+                        showingHelpView = true
+                    }) {
+                        HStack {
+                            Image(systemName: "questionmark.circle")
+                                .foregroundColor(.purple)
+                            Text("help".localized)
+                        }
+                    }
+                    
+                    Button(action: {
+                        showAchievements = true
+                    }) {
+                        HStack {
+                            Image(systemName: "trophy.fill")
+                                .foregroundColor(.orange)
+                            Text("achievements".localized)
+                        }
+                    }
+                } header: {
+                    Text("info".localized)
+                }
+                
                 ResetStatsSection(game: game)
                 
                 ApplySettingsSection(selectedSize: selectedSize, game: game, settings: settings, dismiss: dismiss)
@@ -55,6 +82,12 @@ struct SettingsView: View {
             .navigationBarItems(trailing: Button("close".localized) {
                 dismiss()
             })
+            .sheet(isPresented: $showingHelpView) {
+                HelpView()
+            }
+            .sheet(isPresented: $showAchievements) {
+                AchievementsView()
+            }
         }
     }
 }

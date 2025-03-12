@@ -61,6 +61,7 @@ class Localization: ObservableObject {
             "in_progress": "U toku",
             "locked": "Zaključano",
             "achievement_unlocked": "Postignuće otključano!",
+            "winner_announcement": "POBEDNIK",
             
             // Achievement titles
             "first_win_title": "Prvi trijumf",
@@ -175,6 +176,7 @@ class Localization: ObservableObject {
             "in_progress": "In Progress",
             "locked": "Locked",
             "achievement_unlocked": "Achievement Unlocked!",
+            "winner_announcement": "WINNER",
             
             // Achievement titles
             "first_win_title": "First Win",
@@ -289,6 +291,7 @@ class Localization: ObservableObject {
             "in_progress": "In Bearbeitung",
             "locked": "Gesperrt",
             "achievement_unlocked": "Erfolg entsperrt!",
+            "winner_announcement": "GEWINNER",
             
             // Achievement titles
             "first_win_title": "Erster Sieg",
@@ -403,6 +406,7 @@ class Localization: ObservableObject {
             "in_progress": "В процессе",
             "locked": "Заблокировано",
             "achievement_unlocked": "Постижение разблокировано!",
+            "winner_announcement": "ПОБЕДИТЕЛЬ",
             
             // Achievement titles
             "first_win_title": "Первая победа",
@@ -517,6 +521,7 @@ class Localization: ObservableObject {
             "in_progress": "进行中",
             "locked": "已锁定",
             "achievement_unlocked": "成就已解锁！",
+            "winner_announcement": "获胜者",
             
             // Achievement titles
             "first_win_title": "首次胜利",

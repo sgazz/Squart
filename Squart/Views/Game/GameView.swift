@@ -4,8 +4,10 @@ struct GameView: View {
     @StateObject private var game = Game()
     @State private var orientation = UIDevice.current.orientation
     @State private var showingSavedGameAlert = false
-    @State private var showingHelpView = false
-    @State private var showAchievements = false
+    @State private var showingLoadErrorAlert = false
+    @State private var showingSaveErrorAlert = false
+    @State private var loadErrorMessage = ""
+    @State private var saveErrorMessage = ""
     @State private var showingSettings = false
     @State private var selectedBoardSize: Int = 7
     @ObservedObject private var settings = GameSettingsManager.shared
@@ -13,7 +15,7 @@ struct GameView: View {
     @ObservedObject private var achievementManager = AchievementManager.shared
     @ObservedObject private var localization = Localization.shared
     
-    // Pomoćne promenljive za iPad optimizaciju
+    // Pomocne promenljive za iPad optimizaciju
     private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
     }
@@ -47,7 +49,7 @@ struct GameView: View {
         
         let screenWidth = UIScreen.main.bounds.width
         
-        // Različiti faktori za različite iPad modele
+        // Razliciti faktori za razlicite iPad modele
         switch screenWidth {
         case 1024: // iPad 9.7" i 10.2"
             return isInSplitView ? 0.8 : 1.0
@@ -189,6 +191,7 @@ struct GameView: View {
                                             .foregroundColor(.white)
                                             .padding(.vertical, 8)
                                             .padding(.horizontal, 16)
+                                            .frame(width: 100)
                                             .background(Color.blue.opacity(0.3))
                                             .cornerRadius(8)
                                             .overlay(
@@ -205,6 +208,7 @@ struct GameView: View {
                                             .foregroundColor(.white)
                                             .padding(.vertical, 8)
                                             .padding(.horizontal, 16)
+                                            .frame(width: 100)
                                             .background(Color.green.opacity(0.3))
                                             .cornerRadius(8)
                                             .overlay(
@@ -213,23 +217,6 @@ struct GameView: View {
                                             )
                                     }
                                     .shadow(color: Color.green.opacity(0.3), radius: 3, x: 2, y: 2)
-                                    
-                                    Button(action: {
-                                        showingHelpView = true
-                                    }) {
-                                        Image(systemName: "questionmark.circle")
-                                            .font(.title2)
-                                            .foregroundColor(.white)
-                                            .padding(.vertical, 8)
-                                            .padding(.horizontal, 16)
-                                            .background(Color.purple.opacity(0.3))
-                                            .cornerRadius(8)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                            )
-                                    }
-                                    .shadow(color: Color.purple.opacity(0.3), radius: 3, x: 2, y: 2)
                                 }
                                 .background(Color.black.opacity(0.1))
                                 .cornerRadius(12)
@@ -308,23 +295,6 @@ struct GameView: View {
                                             )
                                     }
                                     .shadow(color: Color.white.opacity(0.3), radius: 3, x: 2, y: 2)
-                                    
-                                    Button(action: {
-                                        showAchievements = true
-                                    }) {
-                                        Image(systemName: "trophy.fill")
-                                            .font(.title2)
-                                            .foregroundColor(.white)
-                                            .padding(.vertical, 8)
-                                            .padding(.horizontal, 16)
-                                            .background(Color.orange.opacity(0.3))
-                                            .cornerRadius(8)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                            )
-                                    }
-                                    .shadow(color: Color.orange.opacity(0.3), radius: 3, x: 2, y: 2)
                                 }
                                 .background(Color.black.opacity(0.1))
                                 .cornerRadius(12)
@@ -388,18 +358,22 @@ struct GameView: View {
         .sheet(isPresented: $showingSettings) {
             SettingsView(selectedSize: $selectedBoardSize, game: game)
         }
-        .sheet(isPresented: $showingHelpView) {
-            HelpView()
-        }
-        .sheet(isPresented: $showAchievements) {
-            AchievementsView()
-        }
         .alert(isPresented: $showingSavedGameAlert) {
             Alert(
-                title: Text("Igra sačuvana"),
-                message: Text("Trenutno stanje igre je uspešno sačuvano."),
+                title: Text("Игра сачувана"),
+                message: Text("Тренутно стање игре је успешно сачувано."),
                 dismissButton: .default(Text("OK"))
             )
+        }
+        .alert("Грешка при чувању", isPresented: $showingSaveErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(saveErrorMessage)
+        }
+        .alert("Грешка при учитавању", isPresented: $showingLoadErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(loadErrorMessage)
         }
         .animation(.easeInOut(duration: 0.3), value: orientation.isPortrait)
     }
@@ -466,16 +440,21 @@ struct GameView: View {
             showingSavedGameAlert = true
             SoundManager.shared.playSound(.win)
         } catch {
-            print("Greška pri čuvanju igre: \(error)")
+            saveErrorMessage = "Грешка при чувању игре: \(error.localizedDescription)"
+            showingSaveErrorAlert = true
         }
     }
     
     private func loadGame() {
         do {
-            // Učitavamo sve sačuvane igre
             let savedGames = try GameStorage.shared.loadAllGames()
             
-            // Uzimamo najnoviju igru (prva u nizu jer su sortirane po vremenu)
+            guard !savedGames.isEmpty else {
+                loadErrorMessage = "Нема сачуваних игара."
+                showingLoadErrorAlert = true
+                return
+            }
+            
             if let latestGame = savedGames.first,
                let loadedGame = try GameStorage.shared.loadGame(forKey: latestGame.key) {
                 game.board = loadedGame.board
@@ -486,14 +465,24 @@ struct GameView: View {
                 game.blueTimeRemaining = loadedGame.blueTimeRemaining
                 game.redTimeRemaining = loadedGame.redTimeRemaining
                 game.timerOption = loadedGame.timerOption
+                game.aiEnabled = loadedGame.aiEnabled
+                game.aiDifficulty = loadedGame.aiDifficulty
+                game.aiTeam = loadedGame.aiTeam
+                game.startingPlayer = loadedGame.startingPlayer
+                game.aiVsAiMode = loadedGame.aiVsAiMode
+                game.secondAiDifficulty = loadedGame.secondAiDifficulty
                 
                 // Inicijalizacija AI ako je uključen
-                if settings.aiEnabled {
-                    game.initializeAI(difficulty: settings.aiDifficulty, team: settings.aiTeam)
+                if loadedGame.aiEnabled {
+                    game.initializeAI(difficulty: loadedGame.aiDifficulty, team: loadedGame.aiTeam)
                 }
+            } else {
+                loadErrorMessage = "Грешка при учитавању игре."
+                showingLoadErrorAlert = true
             }
         } catch {
-            print("Greška pri učitavanju igre: \(error)")
+            loadErrorMessage = "Грешка: \(error.localizedDescription)"
+            showingLoadErrorAlert = true
         }
     }
     
@@ -553,39 +542,29 @@ struct GameView: View {
                             .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
                     )
             }
-            .blur(radius: game.isGameOver ? 3 : 0)
+            .opacity(game.isGameOver ? 0.7 : 1.0) // Благо затамњујемо таблу
             
-            // Game Over poruka
+            // Game Over порука
             if game.isGameOver {
+                let winner = game.currentPlayer == .blue ? Player.red : Player.blue
+                let winnerColor = winner == .blue ? Color.blue : Color.red
+                
                 VStack(spacing: 16) {
-                    Text(gameOverMessage)
-                        .font(.title2)
+                    Text("winner_announcement".localized)
+                        .font(.title)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
-                    
-                    Text(winnerMessage)
-                        .font(.title3)
-                        .foregroundColor(.white)
-                    
-                    Button(action: {
-                        withAnimation {
-                            game.resetGame()
-                        }
-                    }) {
-                        Text("new_game".localized)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.blue.opacity(0.3))
-                            .cornerRadius(8)
-                    }
-                    .padding(.top, 8)
                 }
-                .padding(24)
-                .background(Color.black.opacity(0.7))
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
+                .background(winnerColor.opacity(0.85))
                 .cornerRadius(16)
-                .transition(.opacity)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                )
+                .shadow(color: winnerColor.opacity(0.5), radius: 10)
+                .transition(.scale.combined(with: .opacity))
             }
         }
     }
@@ -600,6 +579,7 @@ struct GameView: View {
                     .foregroundColor(.white)
                     .padding(.vertical, 8)
                     .padding(.horizontal, 16)
+                    .frame(width: 100)
                     .background(Color.blue.opacity(0.3))
                     .cornerRadius(8)
                     .overlay(
@@ -612,48 +592,13 @@ struct GameView: View {
             Spacer()
             
             Button(action: {
-                showingHelpView = true
-            }) {
-                Image(systemName: "questionmark.circle")
-                    .font(.title2)
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .background(Color.purple.opacity(0.3))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                    )
-            }
-            .shadow(color: Color.purple.opacity(0.3), radius: 3, x: 2, y: 2)
-            
-            Button(action: {
-                showAchievements = true
-            }) {
-                Image(systemName: "trophy.fill")
-                    .font(.title2)
-                    .foregroundColor(.white)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-                    .background(Color.orange.opacity(0.3))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                    )
-            }
-            .shadow(color: Color.orange.opacity(0.3), radius: 3, x: 2, y: 2)
-            
-            Spacer()
-            
-            Button(action: {
                 loadGame()
             }) {
                 Text("load".localized)
                     .foregroundColor(.white)
                     .padding(.vertical, 8)
                     .padding(.horizontal, 16)
+                    .frame(width: 100)
                     .background(Color.green.opacity(0.3))
                     .cornerRadius(8)
                     .overlay(

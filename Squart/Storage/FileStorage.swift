@@ -23,18 +23,45 @@ class FileStorage: StorageProtocol {
     // CRUD operacije
     func save<T: Encodable>(_ item: T, forKey key: String) throws {
         let url = fileURL(forKey: key)
-        let data = try JSONEncoder().encode(item)
+        print("Чување у фајл: \(url.path)")
+        
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = .prettyPrinted
+        let data = try encoder.encode(item)
+        
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("JSON за чување: \(jsonString)")
+        }
+        
         try data.write(to: url, options: .atomic)
+        print("Успешно сачувано у фајл")
     }
     
     func load<T: Decodable>(forKey key: String) throws -> T? {
         let url = fileURL(forKey: key)
+        print("Учитавање из фајла: \(url.path)")
         guard fileManager.fileExists(atPath: url.path) else {
+            print("Фајл не постоји на путањи: \(url.path)")
             return nil
         }
         
         let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(T.self, from: data)
+        print("Подаци учитани из фајла, величина: \(data.count) бајтова")
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            if let timestamp = try? container.decode(Double.self) {
+                return Date(timeIntervalSince1970: timestamp)
+            }
+            let dateStr = try container.decode(String.self)
+            if let date = ISO8601DateFormatter().date(from: dateStr) {
+                return date
+            }
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date string \(dateStr)")
+        }
+        return try decoder.decode(T.self, from: data)
     }
     
     func delete(forKey key: String) throws {
@@ -80,9 +107,20 @@ class FileStorage: StorageProtocol {
     
     var allKeys: [String] {
         do {
-            return try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+            guard fileManager.fileExists(atPath: directory.path) else {
+                print("Директоријум не постоји: \(directory.path)")
+                return []
+            }
+            
+            let files = try fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+                .filter { $0.pathExtension == "json" }
                 .map { $0.deletingPathExtension().lastPathComponent }
+                .sorted(by: >)
+            
+            print("Пронађени фајлови: \(files)")
+            return files
         } catch {
+            print("Грешка при читању директоријума: \(error)")
             return []
         }
     }
