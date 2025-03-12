@@ -17,6 +17,7 @@ struct CellView: View {
                     RoundedRectangle(cornerRadius: 4)
                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                 )
+                .shadow(color: Color.black.opacity(0.2), radius: 2, x: 1, y: 1)
             
             // Sadržaj ćelije - žetoni su sada obojeni pravougaonici koji zauzimaju ćeliju
             if cell.type == .blue {
@@ -29,6 +30,7 @@ struct CellView: View {
                             .stroke(Color.white.opacity(0.5), lineWidth: 1)
                             .padding(2)
                     )
+                    .shadow(color: Color.blue.opacity(0.3), radius: 3, x: 2, y: 2)
             } else if cell.type == .red {
                 Rectangle()
                     .fill(Color.red.opacity(0.9))
@@ -39,6 +41,7 @@ struct CellView: View {
                             .stroke(Color.white.opacity(0.5), lineWidth: 1)
                             .padding(2)
                     )
+                    .shadow(color: Color.red.opacity(0.3), radius: 3, x: 2, y: 2)
             }
         }
         .scaleEffect(scale)
@@ -63,11 +66,11 @@ struct CellView: View {
     private var backgroundColor: Color {
         switch cell.type {
         case .empty:
-            return Color.white.opacity(0.08)
+            return Color.white
         case .blocked:
-            return Color.black.opacity(0.7)
+            return Color(red: 0.2, green: 0.2, blue: 0.2)
         case .blue, .red:
-            return Color.white.opacity(0.08)
+            return Color.white
         }
     }
 }

@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		CFA066FD2D80E10400CEB20B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CFA065682D7F7B1300CEB20B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CFA0656F2D7F7B1300CEB20B;
+			remoteInfo = Squart;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		CFA065702D7F7B1300CEB20B /* Squart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Squart.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CFA066F92D80E10400CEB20B /* SquartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SquartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +27,22 @@
 			path = Squart;
 			sourceTree = "<group>";
 		};
+		CFA066FA2D80E10400CEB20B /* SquartTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SquartTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		CFA0656D2D7F7B1300CEB20B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CFA066F62D80E10400CEB20B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				CFA065722D7F7B1300CEB20B /* Squart */,
+				CFA066FA2D80E10400CEB20B /* SquartTests */,
 				CFA065712D7F7B1300CEB20B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				CFA065702D7F7B1300CEB20B /* Squart.app */,
+				CFA066F92D80E10400CEB20B /* SquartTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +95,29 @@
 			productReference = CFA065702D7F7B1300CEB20B /* Squart.app */;
 			productType = "com.apple.product-type.application";
 		};
+		CFA066F82D80E10400CEB20B /* SquartTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CFA066FF2D80E10400CEB20B /* Build configuration list for PBXNativeTarget "SquartTests" */;
+			buildPhases = (
+				CFA066F52D80E10400CEB20B /* Sources */,
+				CFA066F62D80E10400CEB20B /* Frameworks */,
+				CFA066F72D80E10400CEB20B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CFA066FE2D80E10400CEB20B /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				CFA066FA2D80E10400CEB20B /* SquartTests */,
+			);
+			name = SquartTests;
+			packageProductDependencies = (
+			);
+			productName = SquartTests;
+			productReference = CFA066F92D80E10400CEB20B /* SquartTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -83,6 +131,10 @@
 					CFA0656F2D7F7B1300CEB20B = {
 						CreatedOnToolsVersion = 16.2;
 					};
+					CFA066F82D80E10400CEB20B = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = CFA0656F2D7F7B1300CEB20B;
+					};
 				};
 			};
 			buildConfigurationList = CFA0656B2D7F7B1300CEB20B /* Build configuration list for PBXProject "Squart" */;
@@ -91,6 +143,8 @@
 			knownRegions = (
 				en,
 				Base,
+				sr,
+				"zh-Hans",
 			);
 			mainGroup = CFA065672D7F7B1300CEB20B;
 			minimizedProjectReferenceProxies = 1;
@@ -100,12 +154,20 @@
 			projectRoot = "";
 			targets = (
 				CFA0656F2D7F7B1300CEB20B /* Squart */,
+				CFA066F82D80E10400CEB20B /* SquartTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		CFA0656E2D7F7B1300CEB20B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CFA066F72D80E10400CEB20B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +184,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CFA066F52D80E10400CEB20B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		CFA066FE2D80E10400CEB20B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CFA0656F2D7F7B1300CEB20B /* Squart */;
+			targetProxy = CFA066FD2D80E10400CEB20B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		CFA0657C2D7F7B1300CEB20B /* Debug */ = {
@@ -302,6 +379,42 @@
 			};
 			name = Release;
 		};
+		CFA067002D80E10400CEB20B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 83F7KY8L5Y;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Gazza.SquartTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Squart.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Squart";
+			};
+			name = Debug;
+		};
+		CFA067012D80E10400CEB20B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 83F7KY8L5Y;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Gazza.SquartTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Squart.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Squart";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -319,6 +432,15 @@
 			buildConfigurations = (
 				CFA0657F2D7F7B1300CEB20B /* Debug */,
 				CFA065802D7F7B1300CEB20B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CFA066FF2D80E10400CEB20B /* Build configuration list for PBXNativeTarget "SquartTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CFA067002D80E10400CEB20B /* Debug */,
+				CFA067012D80E10400CEB20B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

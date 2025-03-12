@@ -288,6 +288,15 @@ struct ApplySettingsSection: View {
                 dismiss()
             }
             .foregroundColor(.blue)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .background(Color.blue.opacity(0.1))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            )
+            .shadow(color: Color.blue.opacity(0.3), radius: 3, x: 2, y: 2)
         }
     }
 }

@@ -24,6 +24,7 @@ struct PlayerTimerView: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color.white.opacity(isActive ? 0.8 : 0.3), lineWidth: isActive ? 2 : 1)
         )
+        .shadow(color: player == .blue ? Color.blue.opacity(0.3) : Color.red.opacity(0.3), radius: 3, x: 2, y: 2)
     }
     
     private var backgroundForPlayer: Color {

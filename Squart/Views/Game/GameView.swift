@@ -19,16 +19,17 @@ struct GameView: View {
     }
     
     private var isInSplitView: Bool {
-        if let window = UIApplication.shared.windows.first,
-           let scene = window.windowScene {
-            return scene.interfaceOrientation.isPortrait && 
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            return windowScene.interfaceOrientation.isPortrait && 
                    window.frame.width < UIScreen.main.bounds.width
         }
         return false
     }
     
     private var isInSlideOver: Bool {
-        if let window = UIApplication.shared.windows.first {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
             return window.frame.width < 400
         }
         return false
@@ -170,7 +171,12 @@ struct GameView: View {
                                             .padding(.horizontal, 16)
                                             .background(Color.blue.opacity(0.3))
                                             .cornerRadius(8)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            )
                                     }
+                                    .shadow(color: Color.blue.opacity(0.3), radius: 3, x: 2, y: 2)
                                     
                                     Button(action: {
                                         loadGame()
@@ -181,7 +187,12 @@ struct GameView: View {
                                             .padding(.horizontal, 16)
                                             .background(Color.green.opacity(0.3))
                                             .cornerRadius(8)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            )
                                     }
+                                    .shadow(color: Color.green.opacity(0.3), radius: 3, x: 2, y: 2)
                                     
                                     Button(action: {
                                         showingHelpView = true
@@ -193,7 +204,12 @@ struct GameView: View {
                                             .padding(.horizontal, 16)
                                             .background(Color.purple.opacity(0.3))
                                             .cornerRadius(8)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            )
                                     }
+                                    .shadow(color: Color.purple.opacity(0.3), radius: 3, x: 2, y: 2)
                                 }
                                 .background(Color.black.opacity(0.1))
                                 .cornerRadius(12)
@@ -264,7 +280,12 @@ struct GameView: View {
                                             .padding(.horizontal, 16)
                                             .background(Color.white.opacity(0.2))
                                             .cornerRadius(8)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            )
                                     }
+                                    .shadow(color: Color.white.opacity(0.3), radius: 3, x: 2, y: 2)
                                     
                                     Button(action: {
                                         withAnimation {
@@ -278,7 +299,12 @@ struct GameView: View {
                                             .padding(.horizontal, 16)
                                             .background(Color.white.opacity(0.2))
                                             .cornerRadius(8)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            )
                                     }
+                                    .shadow(color: Color.white.opacity(0.3), radius: 3, x: 2, y: 2)
                                     
                                     Button(action: {
                                         showAchievements = true
@@ -290,7 +316,12 @@ struct GameView: View {
                                             .padding(.horizontal, 16)
                                             .background(Color.orange.opacity(0.3))
                                             .cornerRadius(8)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            )
                                     }
+                                    .shadow(color: Color.orange.opacity(0.3), radius: 3, x: 2, y: 2)
                                 }
                                 .background(Color.black.opacity(0.1))
                                 .cornerRadius(12)
@@ -557,7 +588,12 @@ struct GameView: View {
                     .padding(.horizontal, 16)
                     .background(Color.blue.opacity(0.3))
                     .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
             }
+            .shadow(color: Color.blue.opacity(0.3), radius: 3, x: 2, y: 2)
             
             Spacer()
             
@@ -571,7 +607,12 @@ struct GameView: View {
                     .padding(.horizontal, 16)
                     .background(Color.purple.opacity(0.3))
                     .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
             }
+            .shadow(color: Color.purple.opacity(0.3), radius: 3, x: 2, y: 2)
             
             Button(action: {
                 showAchievements = true
@@ -583,7 +624,12 @@ struct GameView: View {
                     .padding(.horizontal, 16)
                     .background(Color.orange.opacity(0.3))
                     .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
             }
+            .shadow(color: Color.orange.opacity(0.3), radius: 3, x: 2, y: 2)
             
             Spacer()
             
@@ -596,7 +642,12 @@ struct GameView: View {
                     .padding(.horizontal, 16)
                     .background(Color.green.opacity(0.3))
                     .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
             }
+            .shadow(color: Color.green.opacity(0.3), radius: 3, x: 2, y: 2)
         }
     }
 }
