@@ -458,28 +458,39 @@ struct GameView: View {
     }
     
     private func saveGame() {
-        GameStorage.shared.saveGame(game)
-        showingSavedGameAlert = true
-        SoundManager.shared.playSound(.win)
+        do {
+            try GameStorage.shared.saveGame(game)
+            showingSavedGameAlert = true
+            SoundManager.shared.playSound(.win)
+        } catch {
+            print("Greška pri čuvanju igre: \(error)")
+        }
     }
     
     private func loadGame() {
-        if let loadedGame = GameStorage.shared.loadGame() {
-            game.board = loadedGame.board
-            game.currentPlayer = loadedGame.currentPlayer
-            game.blueScore = loadedGame.blueScore
-            game.redScore = loadedGame.redScore
-            game.isGameOver = loadedGame.isGameOver
-            game.blueTimeRemaining = loadedGame.blueTimeRemaining
-            game.redTimeRemaining = loadedGame.redTimeRemaining
-            game.timerOption = loadedGame.timerOption
+        do {
+            // Učitavamo sve sačuvane igre
+            let savedGames = try GameStorage.shared.loadAllGames()
             
-            // Inicijalizacija AI ako je uključen
-            if settings.aiEnabled {
-                game.initializeAI(difficulty: settings.aiDifficulty, team: settings.aiTeam)
+            // Uzimamo najnoviju igru (prva u nizu jer su sortirane po vremenu)
+            if let latestGame = savedGames.first,
+               let loadedGame = try GameStorage.shared.loadGame(forKey: latestGame.key) {
+                game.board = loadedGame.board
+                game.currentPlayer = loadedGame.currentPlayer
+                game.blueScore = loadedGame.blueScore
+                game.redScore = loadedGame.redScore
+                game.isGameOver = loadedGame.isGameOver
+                game.blueTimeRemaining = loadedGame.blueTimeRemaining
+                game.redTimeRemaining = loadedGame.redTimeRemaining
+                game.timerOption = loadedGame.timerOption
+                
+                // Inicijalizacija AI ako je uključen
+                if settings.aiEnabled {
+                    game.initializeAI(difficulty: settings.aiDifficulty, team: settings.aiTeam)
+                }
             }
-            
-            SoundManager.shared.playSound(.place)
+        } catch {
+            print("Greška pri učitavanju igre: \(error)")
         }
     }
     
