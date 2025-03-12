@@ -25,41 +25,6 @@ struct GameStatusView: View {
     }
 }
 
-struct PlayerScoreView: View {
-    let player: Player
-    let score: Int
-    let isActive: Bool
-    let isAI: Bool
-    
-    var body: some View {
-        VStack {
-            ZStack {
-                Rectangle()
-                    .fill(player == .blue ? Color.blue : Color.red)
-                    .frame(width: 30, height: 30)
-                    .cornerRadius(4)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Color.white, lineWidth: 1)
-                    )
-                    .shadow(color: Color.black.opacity(0.3), radius: 3)
-                
-                if isAI {
-                    Image(systemName: "cpu")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white)
-                }
-            }
-            
-            Text("\(score)")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-        }
-        .padding(8)
-    }
-}
-
 struct SettingsView: View {
     @Binding var selectedSize: Int
     @ObservedObject var game: Game
@@ -81,6 +46,8 @@ struct SettingsView: View {
                 SoundSection(settings: settings)
                 
                 LanguageSection(settings: settings)
+                
+                ResetStatsSection(game: game)
                 
                 ApplySettingsSection(selectedSize: selectedSize, game: game, settings: settings, dismiss: dismiss)
             }
@@ -253,6 +220,36 @@ struct LanguageSection: View {
                 }
             }
             .pickerStyle(MenuPickerStyle())
+        }
+    }
+}
+
+// Nova sekcija za resetovanje rezultata
+struct ResetStatsSection: View {
+    @ObservedObject var game: Game
+    @ObservedObject private var localization = Localization.shared
+    @State private var showingResetAlert = false
+    
+    var body: some View {
+        Section {
+            Button(action: {
+                showingResetAlert = true
+            }) {
+                HStack {
+                    Image(systemName: "arrow.counterclockwise")
+                        .foregroundColor(.red)
+                    Text("reset_stats".localized)
+                        .foregroundColor(.red)
+                }
+            }
+            .alert("reset_stats".localized, isPresented: $showingResetAlert) {
+                Button("cancel".localized, role: .cancel) { }
+                Button("reset".localized, role: .destructive) {
+                    game.resetStats()
+                }
+            } message: {
+                Text("reset_stats_message".localized)
+            }
         }
     }
 }

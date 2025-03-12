@@ -118,7 +118,11 @@ class Localization: ObservableObject {
             "tips_edges": " Često je bolje igrati na ivicama table nego u sredini, posebno u ranim fazama igre",
             "tips_blocked_fields": " Obratite pažnju na crna polja - ona mogu biti korisna ili štetna za vašu strategiju",
             "tips_corners": " Kontrola uglova table često donosi prednost u kasnim fazama igre",
-            "tips_valid_moves": " Pratite koliko validnih poteza ima protivnik i pokušajte da ih smanjite"
+            "tips_valid_moves": " Pratite koliko validnih poteza ima protivnik i pokušajte da ih smanjite",
+            "reset_stats": "Resetuj rezultate",
+            "reset_stats_message": "Da li ste sigurni da želite da resetujete rezultate? Ova akcija se ne može poništiti.",
+            "reset": "Resetuj",
+            "cancel": "Otkaži"
         ],
         .english: [
             "settings": "Settings",
@@ -228,7 +232,11 @@ class Localization: ObservableObject {
             "tips_edges": " It's often better to play on the edges of the board than in the center, especially in early game",
             "tips_blocked_fields": " Pay attention to black fields - they can be useful or harmful to your strategy",
             "tips_corners": " Control of board corners often brings advantage in late game",
-            "tips_valid_moves": " Keep track of how many valid moves your opponent has and try to reduce them"
+            "tips_valid_moves": " Keep track of how many valid moves your opponent has and try to reduce them",
+            "reset_stats": "Reset Scores",
+            "reset_stats_message": "Are you sure you want to reset the scores? This action cannot be undone.",
+            "reset": "Reset",
+            "cancel": "Cancel"
         ],
         .german: [
             "settings": "Einstellungen",
@@ -338,7 +346,11 @@ class Localization: ObservableObject {
             "tips_edges": " Es ist oft besser, an den Rändern des Spielfelds zu spielen als in der Mitte, besonders in der frühen Spielphase",
             "tips_blocked_fields": " Achten Sie auf schwarze Felder - sie können nützlich oder schädlich für Ihre Strategie sein",
             "tips_corners": " Die Kontrolle über die Ecken des Spielfelds bringt oft Vorteile in der späten Spielphase",
-            "tips_valid_moves": " Behalten Sie im Auge, wie viele gültige Züge Ihr Gegner hat, und versuchen Sie, diese zu reduzieren"
+            "tips_valid_moves": " Behalten Sie im Auge, wie viele gültige Züge Ihr Gegner hat, und versuchen Sie, diese zu reduzieren",
+            "reset_stats": "Ergebnisse zurücksetzen",
+            "reset_stats_message": "Sind Sie sicher, dass Sie die Ergebnisse zurücksetzen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+            "reset": "Zurücksetzen",
+            "cancel": "Abbrechen"
         ],
         .russian: [
             "settings": "Настройки",
@@ -448,7 +460,11 @@ class Localization: ObservableObject {
             "tips_edges": " Часто лучше играть по краям доски, чем в центре, особенно в начале игры",
             "tips_blocked_fields": " Обращайте внимание на черные поля - они могут быть полезны или вредны для вашей стратегии",
             "tips_corners": " Контроль углов доски часто дает преимущество в конце игры",
-            "tips_valid_moves": " Следите за количеством допустимых ходов у противника и старайтесь их уменьшить"
+            "tips_valid_moves": " Следите за количеством допустимых ходов у противника и старайтесь их уменьшить",
+            "reset_stats": "Сбросить результаты",
+            "reset_stats_message": "Вы уверены, что хотите сбросить результаты? Это действие нельзя отменить.",
+            "reset": "Сбросить",
+            "cancel": "Отменить"
         ],
         .chinese: [
             "settings": "设置",
@@ -558,7 +574,11 @@ class Localization: ObservableObject {
             "tips_edges": " 在游戏早期，通常最好在棋盘边缘而不是中心下棋",
             "tips_blocked_fields": " 注意黑色格子 - 它们可能对您的策略有利或有害",
             "tips_corners": " 在游戏后期，控制棋盘角落通常带来优势",
-            "tips_valid_moves": " 跟踪对手有多少有效移动，并尝试减少它们"
+            "tips_valid_moves": " 跟踪对手有多少有效移动，并尝试减少它们",
+            "reset_stats": "重置统计数据",
+            "reset_stats_message": "您确定要重置统计数据吗？此操作无法撤消。",
+            "reset": "重置",
+            "cancel": "取消"
         ]
     ]
     

@@ -62,6 +62,43 @@ struct GameView: View {
         }
     }
     
+    private var playerScoreBackground: some View {
+        Color.black.opacity(0.2)
+    }
+    
+    private var playerScoreOverlay: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+    }
+    
+    private func playerScoreShadow(isActive: Bool, player: Player) -> Color {
+        isActive ? 
+            (player == .blue ? Color.blue : Color.red).opacity(0.5) : 
+            Color.black.opacity(0.3)
+    }
+    
+    private func playerScoreStroke(isActive: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 12)
+            .stroke(isActive ? Color.white : Color.clear, lineWidth: 2)
+    }
+    
+    private func makePlayerScoreView(player: Player, score: Int, isActive: Bool, isAI: Bool) -> some View {
+        PlayerScoreView(
+            player: player,
+            score: score,
+            isActive: isActive,
+            isAI: isAI
+        )
+        .padding()
+        .background(playerScoreBackground)
+        .cornerRadius(12)
+        .overlay(playerScoreStroke(isActive: isActive))
+        .shadow(
+            color: playerScoreShadow(isActive: isActive, player: player),
+            radius: 10
+        )
+    }
+    
     var body: some View {
         ZStack {
             // Gradijent pozadine baziran na trenutnoj temi
@@ -122,28 +159,11 @@ struct GameView: View {
                             VStack {
                                 Spacer()
                                 
-                                // Rezultat plavog igrača
-                                PlayerScoreView(
+                                makePlayerScoreView(
                                     player: .blue,
                                     score: game.blueScore,
                                     isActive: !game.isGameOver && game.currentPlayer == .blue,
                                     isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .blue)
-                                )
-                                .padding()
-                                .background(Color.black.opacity(0.2))
-                                .cornerRadius(12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(
-                                            (!game.isGameOver && game.currentPlayer == .blue) ?
-                                                Color.white : Color.clear,
-                                            lineWidth: 2
-                                        )
-                                )
-                                .shadow(
-                                    color: (!game.isGameOver && game.currentPlayer == .blue) ?
-                                        Color.blue.opacity(0.5) : Color.black.opacity(0.3),
-                                    radius: 10
                                 )
                                 
                                 Spacer()
@@ -230,28 +250,11 @@ struct GameView: View {
                             VStack {
                                 Spacer()
                                 
-                                // Rezultat crvenog igrača
-                                PlayerScoreView(
+                                makePlayerScoreView(
                                     player: .red,
                                     score: game.redScore,
                                     isActive: !game.isGameOver && game.currentPlayer == .red,
                                     isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .red)
-                                )
-                                .padding()
-                                .background(Color.black.opacity(0.2))
-                                .cornerRadius(12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(
-                                            (!game.isGameOver && game.currentPlayer == .red) ?
-                                                Color.white : Color.clear,
-                                            lineWidth: 2
-                                        )
-                                )
-                                .shadow(
-                                    color: (!game.isGameOver && game.currentPlayer == .red) ?
-                                        Color.red.opacity(0.5) : Color.black.opacity(0.3),
-                                    radius: 10
                                 )
                                 
                                 Spacer()

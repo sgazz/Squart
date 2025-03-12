@@ -252,6 +252,11 @@ class Game: ObservableObject {
         }
     }
     
+    func resetStats() {
+        blueScore = 0
+        redScore = 0
+    }
+    
     // AI funkcionalnosti
     
     // Inicijalizacija AI igrača
