@@ -23,8 +23,60 @@ enum AIDifficulty: Int, CaseIterable, Codable {
 class AIPlayer {
     private let difficulty: AIDifficulty
     
+    // Кеш за edge и corner позиције
+    private var edgePositionsCache: [Int: Set<Position>] = [:]
+    private var cornerPositionsCache: [Int: Set<Position>] = [:]
+    
+    // Помоћна структура за позиције
+    private struct Position: Hashable {
+        let row: Int
+        let column: Int
+    }
+    
     init(difficulty: AIDifficulty = .medium) {
         self.difficulty = difficulty
+    }
+    
+    // Иницијализација кеша за таблу одређене величине
+    private func initializeCacheIfNeeded(boardSize: Int) {
+        // Ако већ имамо кеш за ову величину табле, прескачемо
+        if edgePositionsCache[boardSize] != nil {
+            return
+        }
+        
+        var edges = Set<Position>()
+        var corners = Set<Position>()
+        
+        // Додајемо све ивичне позиције
+        for i in 0..<boardSize {
+            edges.insert(Position(row: 0, column: i))
+            edges.insert(Position(row: boardSize - 1, column: i))
+            edges.insert(Position(row: i, column: 0))
+            edges.insert(Position(row: i, column: boardSize - 1))
+        }
+        
+        // Додајемо ћошкове
+        corners.insert(Position(row: 0, column: 0))
+        corners.insert(Position(row: 0, column: boardSize - 1))
+        corners.insert(Position(row: boardSize - 1, column: 0))
+        corners.insert(Position(row: boardSize - 1, column: boardSize - 1))
+        
+        edgePositionsCache[boardSize] = edges
+        cornerPositionsCache[boardSize] = corners
+    }
+    
+    // Оптимизована провера за ивичне потезе
+    private func isEdgeMove(_ move: (row: Int, column: Int), boardSize: Int) -> Bool {
+        initializeCacheIfNeeded(boardSize: boardSize)
+        let position = Position(row: move.row, column: move.column)
+        return edgePositionsCache[boardSize]?.contains(position) ?? false
+    }
+    
+    // Оптимизована провера за ћошкове
+    private func isCornerMove(_ move: (row: Int, column: Int), boardSize: Int) -> Bool {
+        initializeCacheIfNeeded(boardSize: boardSize)
+        let position = Position(row: move.row, column: move.column)
+        return cornerPositionsCache[boardSize]?.contains(position) ?? false
     }
     
     // Glavna funkcija koja određuje najbolji potez za AI
@@ -133,6 +185,21 @@ class AIPlayer {
         return ratedMoves.first?.move
     }
     
+    // Функција за одређивање времена размишљања за средњи ниво
+    private func calculateMediumThinkingTime(boardSize: Int) -> TimeInterval {
+        // Базно време је 1 секунда
+        let baseTime: TimeInterval = 1.0
+        
+        // За мање табле дајемо више времена јер су прорачуни лакши
+        if boardSize <= 8 {
+            return baseTime
+        } else if boardSize <= 12 {
+            return baseTime * 0.6
+        } else {
+            return baseTime * 0.4
+        }
+    }
+
     // Pojednostavljeni minimax za srednji nivo težine
     private func findSimplifiedMinimaxMove(for game: Game) -> (row: Int, column: Int)? {
         let validMoves = getValidMoves(for: game.board, player: game.currentPlayer)
@@ -147,8 +214,8 @@ class AIPlayer {
         // Smanjujemo dubinu za srednji nivo
         let maxDepth = 2
         
-        // Smanjujemo maksimalno vreme za razmišljanje
-        let maxThinkingTime: TimeInterval = 1.0
+        // Користимо динамичко време за размишљање
+        let maxThinkingTime = calculateMediumThinkingTime(boardSize: game.board.size)
         let startTime = Date()
         
         // Razmatramo samo deo poteza za bolje performanse
@@ -234,12 +301,6 @@ class AIPlayer {
         }
     }
     
-    // Proverava da li je potez na ivici table
-    private func isEdgeMove(_ move: (row: Int, column: Int), boardSize: Int) -> Bool {
-        return move.row == 0 || move.row == boardSize - 1 || 
-               move.column == 0 || move.column == boardSize - 1
-    }
-    
     // Broji koliko validnih poteza je blokirano protivniku
     private func countBlockedMoves(_ game: Game, originalPlayer: Player) -> Int {
         let opponent = originalPlayer == .blue ? Player.red : Player.blue
@@ -262,15 +323,22 @@ class AIPlayer {
         return clone
     }
     
-    // Proverava da li je potez u ćošku
-    private func isCornerMove(_ move: (row: Int, column: Int), boardSize: Int) -> Bool {
-        return (move.row == 0 && move.column == 0) ||
-               (move.row == 0 && move.column == boardSize - 1) ||
-               (move.row == boardSize - 1 && move.column == 0) ||
-               (move.row == boardSize - 1 && move.column == boardSize - 1)
+    // Функција за одређивање времена размишљања базирано на величини табле
+    private func calculateThinkingTime(boardSize: Int) -> TimeInterval {
+        // Базно време је 2 секунде
+        let baseTime: TimeInterval = 2.0
+        
+        // За мање табле дајемо више времена јер су прорачуни лакши
+        if boardSize <= 8 {
+            return baseTime
+        } else if boardSize <= 12 {
+            return baseTime * 0.8
+        } else {
+            return baseTime * 0.6
+        }
     }
-    
-    // Napredni AI - koristi minmax algoritam za traženje najboljeg poteza
+
+    // Напредни AI - користи minmax алгоритам за тражење најбољег потеза
     private func findBestMoveMinMax(for game: Game) -> (row: Int, column: Int)? {
         let validMoves = getValidMoves(for: game.board, player: game.currentPlayer)
         
@@ -278,7 +346,7 @@ class AIPlayer {
             return nil
         }
         
-        // Nasumični faktor za teški nivo - 5% vremena igra slabije (smanjeno sa 10%)
+        // Насумични фактор за тешки ниво - 5% времена игра слабије (смањено са 10%)
         if Double.random(in: 0...1) < 0.05 {
             return findMediumMove(for: game)
         }
@@ -286,11 +354,11 @@ class AIPlayer {
         var bestMove: (row: Int, column: Int)? = nil
         var bestScore = Int.min
         
-        // Prilagodimo dubinu prema veličini table
+        // Прилагодимо дубину према величини табле
         let boardSize = game.board.size
         let maxDepth: Int
         
-        // Za veće table koristimo manju dubinu
+        // За веће табле користимо мању дубину
         if boardSize > 15 {
             maxDepth = 2
         } else if boardSize > 10 {
@@ -299,8 +367,8 @@ class AIPlayer {
             maxDepth = 3
         }
         
-        // Smanjujemo maksimalno vreme za razmišljanje
-        let maxThinkingTime: TimeInterval = 2.0
+        // Користимо динамичко време за размишљање
+        let maxThinkingTime = calculateThinkingTime(boardSize: boardSize)
         let startTime = Date()
         
         // Razmatramo samo deo poteza na većim tablama
