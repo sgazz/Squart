@@ -15,8 +15,8 @@ class FileStorage: StorageProtocol {
         self.directory = documentsDirectory.appendingPathComponent(directory)
         
         // Kreiramo direktorijum ako ne postoji
-        if !fileManager.fileExists(atPath: directory.path) {
-            try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        if !fileManager.fileExists(atPath: self.directory.path) {
+            try fileManager.createDirectory(at: self.directory, withIntermediateDirectories: true)
         }
     }
     
