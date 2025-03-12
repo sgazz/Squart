@@ -16,8 +16,10 @@ struct GameState: Codable {
     let startingPlayer: Player
     let aiVsAiMode: Bool
     let secondAiDifficulty: AIDifficulty
+    let timestamp: Date
+    let name: String
     
-    init(from game: Game) {
+    init(from game: Game, name: String = "Automatsko čuvanje") {
         self.boardSize = game.board.size
         self.cells = game.board.cells.map { row in
             row.map { $0.type }
@@ -35,29 +37,83 @@ struct GameState: Codable {
         self.startingPlayer = game.startingPlayer
         self.aiVsAiMode = game.aiVsAiMode
         self.secondAiDifficulty = game.secondAiDifficulty
+        self.timestamp = Date()
+        self.name = name
     }
 }
 
 class GameStorage {
     static let shared = GameStorage()
-    private let defaults = UserDefaults.standard
-    private let gameStateKey = "squart_game_state"
     
-    private init() {}
+    private let defaultsStorage: UserDefaultsStorage
+    private let fileStorage: FileStorage
     
-    func saveGame(_ game: Game) {
-        let gameState = GameState(from: game)
-        if let encoded = try? JSONEncoder().encode(gameState) {
-            defaults.set(encoded, forKey: gameStateKey)
+    private init() {
+        self.defaultsStorage = UserDefaultsStorage()
+        do {
+            self.fileStorage = try FileStorage()
+        } catch {
+            fatalError("Nije moguće inicijalizovati FileStorage: \(error)")
         }
     }
     
-    func loadGame() -> Game? {
-        guard let data = defaults.data(forKey: gameStateKey),
-              let gameState = try? JSONDecoder().decode(GameState.self, from: data) else {
-            return nil
+    // Čuvanje igre
+    func saveGame(_ game: Game, name: String? = nil) throws {
+        let gameState = GameState(from: game, name: name ?? "Automatsko čuvanje")
+        let key = "game_\(Date().timeIntervalSince1970)"
+        
+        // Čuvamo u oba storage-a za redundansu
+        try defaultsStorage.save(gameState, forKey: key)
+        try fileStorage.save(gameState, forKey: key)
+    }
+    
+    // Učitavanje igre
+    func loadGame(forKey key: String) throws -> Game? {
+        // Prvo probamo iz file storage-a
+        if let gameState: GameState = try fileStorage.load(forKey: key) {
+            return createGame(from: gameState)
         }
         
+        // Ako ne uspe, probamo iz defaults storage-a
+        if let gameState: GameState = try defaultsStorage.load(forKey: key) {
+            return createGame(from: gameState)
+        }
+        
+        return nil
+    }
+    
+    // Učitavanje svih sačuvanih igara
+    func loadAllGames() throws -> [(key: String, game: GameState)] {
+        // Kombinujemo igre iz oba storage-a
+        var games = [String: GameState]()
+        
+        // Učitavamo iz file storage-a
+        let fileGames: [String: GameState] = try fileStorage.loadAll(forKeys: fileStorage.allKeys)
+        games.merge(fileGames) { current, _ in current }
+        
+        // Učitavamo iz defaults storage-a
+        let defaultsGames: [String: GameState] = try defaultsStorage.loadAll(forKeys: defaultsStorage.allKeys)
+        games.merge(defaultsGames) { current, _ in current }
+        
+        // Sortiramo po vremenu, najnovije prvo
+        return games.map { ($0.key, $0.value) }
+            .sorted { $0.1.timestamp > $1.1.timestamp }
+    }
+    
+    // Brisanje igre
+    func deleteGame(forKey key: String) throws {
+        try defaultsStorage.delete(forKey: key)
+        try fileStorage.delete(forKey: key)
+    }
+    
+    // Brisanje svih igara
+    func deleteAllGames() throws {
+        try defaultsStorage.clear()
+        try fileStorage.clear()
+    }
+    
+    // Helper metoda za kreiranje Game instance iz GameState
+    private func createGame(from gameState: GameState) -> Game {
         let game = Game(boardSize: gameState.boardSize)
         
         // Rekonstrukcija table
@@ -91,9 +147,5 @@ class GameStorage {
         }
         
         return game
-    }
-    
-    func clearSavedGame() {
-        defaults.removeObject(forKey: gameStateKey)
     }
 } 
