@@ -27,11 +27,6 @@
 			path = Squart;
 			sourceTree = "<group>";
 		};
-		CFA066FA2D80E10400CEB20B /* SquartTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SquartTests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,9 +50,8 @@
 		CFA065672D7F7B1300CEB20B = {
 			isa = PBXGroup;
 			children = (
-				CFA065722D7F7B1300CEB20B /* Squart */,
-				CFA066FA2D80E10400CEB20B /* SquartTests */,
 				CFA065712D7F7B1300CEB20B /* Products */,
+				CFA065722D7F7B1300CEB20B /* Squart */,
 			);
 			sourceTree = "<group>";
 		};
@@ -107,9 +101,6 @@
 			);
 			dependencies = (
 				CFA066FE2D80E10400CEB20B /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				CFA066FA2D80E10400CEB20B /* SquartTests */,
 			);
 			name = SquartTests;
 			packageProductDependencies = (
