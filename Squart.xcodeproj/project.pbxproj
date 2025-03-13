@@ -6,6 +6,17 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		CFF66C252D833EC2003AF4FC /* CHANGELOG.md in Resources */ = {isa = PBXBuildFile; fileRef = CFF66C202D833EC2003AF4FC /* CHANGELOG.md */; };
+		CFF66C262D833EC2003AF4FC /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = CFF66C232D833EC2003AF4FC /* README.md */; };
+		CFF66C272D833EC2003AF4FC /* API.md in Resources */ = {isa = PBXBuildFile; fileRef = CFF66C1F2D833EC2003AF4FC /* API.md */; };
+		CFF66C282D833EC2003AF4FC /* CONTRIBUTING.md in Resources */ = {isa = PBXBuildFile; fileRef = CFF66C222D833EC2003AF4FC /* CONTRIBUTING.md */; };
+		CFF66C292D833EC2003AF4FC /* SECURITY.md in Resources */ = {isa = PBXBuildFile; fileRef = CFF66C242D833EC2003AF4FC /* SECURITY.md */; };
+		CFF66C2A2D833EC2003AF4FC /* CODE_OF_CONDUCT.md in Resources */ = {isa = PBXBuildFile; fileRef = CFF66C212D833EC2003AF4FC /* CODE_OF_CONDUCT.md */; };
+		CFF66C702D83589B003AF4FC /* Tabla_varijacije.md in Resources */ = {isa = PBXBuildFile; fileRef = CFF66C6E2D83589B003AF4FC /* Tabla_varijacije.md */; };
+		CFF66C722D835A33003AF4FC /* Game_mehanike.md in Resources */ = {isa = PBXBuildFile; fileRef = CFF66C712D835A33003AF4FC /* Game_mehanike.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		CFA066FD2D80E10400CEB20B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -17,8 +28,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		CFA065702D7F7B1300CEB20B /* Squart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Squart.app; path = "/Users/sgazza/Documents/XCode/Squart/build/Debug-iphoneos/Squart.app"; sourceTree = "<absolute>"; };
-		CFA066F92D80E10400CEB20B /* SquartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = SquartTests.xctest; path = "/Users/sgazza/Documents/XCode/Squart/build/Debug-iphoneos/Squart.app/PlugIns/SquartTests.xctest"; sourceTree = "<absolute>"; };
+		CFF66C1F2D833EC2003AF4FC /* API.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = API.md; sourceTree = "<group>"; };
+		CFF66C202D833EC2003AF4FC /* CHANGELOG.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CHANGELOG.md; sourceTree = "<group>"; };
+		CFF66C212D833EC2003AF4FC /* CODE_OF_CONDUCT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CODE_OF_CONDUCT.md; sourceTree = "<group>"; };
+		CFF66C222D833EC2003AF4FC /* CONTRIBUTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CONTRIBUTING.md; sourceTree = "<group>"; };
+		CFF66C232D833EC2003AF4FC /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		CFF66C242D833EC2003AF4FC /* SECURITY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SECURITY.md; sourceTree = "<group>"; };
+		CFF66C4B2D8343D6003AF4FC /* IconPreviewTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IconPreviewTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CFF66C552D8343D6003AF4FC /* IconPreviewUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IconPreviewUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CFF66C662D83440E003AF4FC /* Squart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Squart.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CFF66C672D83440E003AF4FC /* SquartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SquartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CFF66C6E2D83589B003AF4FC /* Tabla_varijacije.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Tabla_varijacije.md; sourceTree = "<group>"; };
+		CFF66C712D835A33003AF4FC /* Game_mehanike.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Game_mehanike.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -44,12 +65,33 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CFF66C482D8343D6003AF4FC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CFF66C522D8343D6003AF4FC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		CFA065672D7F7B1300CEB20B = {
 			isa = PBXGroup;
 			children = (
+				CFF66C1F2D833EC2003AF4FC /* API.md */,
+				CFF66C202D833EC2003AF4FC /* CHANGELOG.md */,
+				CFF66C212D833EC2003AF4FC /* CODE_OF_CONDUCT.md */,
+				CFF66C222D833EC2003AF4FC /* CONTRIBUTING.md */,
+				CFF66C232D833EC2003AF4FC /* README.md */,
+				CFF66C6F2D83589B003AF4FC /* Documentation */,
+				CFF66C242D833EC2003AF4FC /* SECURITY.md */,
 				CFA065712D7F7B1300CEB20B /* Products */,
 				CFA065722D7F7B1300CEB20B /* Squart */,
 			);
@@ -58,8 +100,21 @@
 		CFA065712D7F7B1300CEB20B /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				CFF66C4B2D8343D6003AF4FC /* IconPreviewTests.xctest */,
+				CFF66C552D8343D6003AF4FC /* IconPreviewUITests.xctest */,
+				CFF66C662D83440E003AF4FC /* Squart.app */,
+				CFF66C672D83440E003AF4FC /* SquartTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		CFF66C6F2D83589B003AF4FC /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+				CFF66C712D835A33003AF4FC /* Game_mehanike.md */,
+				CFF66C6E2D83589B003AF4FC /* Tabla_varijacije.md */,
+			);
+			path = Documentation;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -84,7 +139,7 @@
 			packageProductDependencies = (
 			);
 			productName = Squart;
-			productReference = CFA065702D7F7B1300CEB20B /* Squart.app */;
+			productReference = CFF66C662D83440E003AF4FC /* Squart.app */;
 			productType = "com.apple.product-type.application";
 		};
 		CFA066F82D80E10400CEB20B /* SquartTests */ = {
@@ -104,8 +159,46 @@
 			packageProductDependencies = (
 			);
 			productName = SquartTests;
-			productReference = CFA066F92D80E10400CEB20B /* SquartTests.xctest */;
+			productReference = CFF66C672D83440E003AF4FC /* SquartTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		CFF66C4A2D8343D6003AF4FC /* IconPreviewTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CFF66C602D8343D6003AF4FC /* Build configuration list for PBXNativeTarget "IconPreviewTests" */;
+			buildPhases = (
+				CFF66C472D8343D6003AF4FC /* Sources */,
+				CFF66C482D8343D6003AF4FC /* Frameworks */,
+				CFF66C492D8343D6003AF4FC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IconPreviewTests;
+			packageProductDependencies = (
+			);
+			productName = IconPreviewTests;
+			productReference = CFF66C4B2D8343D6003AF4FC /* IconPreviewTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		CFF66C542D8343D6003AF4FC /* IconPreviewUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CFF66C632D8343D6003AF4FC /* Build configuration list for PBXNativeTarget "IconPreviewUITests" */;
+			buildPhases = (
+				CFF66C512D8343D6003AF4FC /* Sources */,
+				CFF66C522D8343D6003AF4FC /* Frameworks */,
+				CFF66C532D8343D6003AF4FC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IconPreviewUITests;
+			packageProductDependencies = (
+			);
+			productName = IconPreviewUITests;
+			productReference = CFF66C552D8343D6003AF4FC /* IconPreviewUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -123,6 +216,14 @@
 					CFA066F82D80E10400CEB20B = {
 						CreatedOnToolsVersion = 16.2;
 						TestTargetID = CFA0656F2D7F7B1300CEB20B;
+					};
+					CFF66C4A2D8343D6003AF4FC = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = CFF66C3B2D8343D5003AF4FC;
+					};
+					CFF66C542D8343D6003AF4FC = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = CFF66C3B2D8343D5003AF4FC;
 					};
 				};
 			};
@@ -146,6 +247,8 @@
 			targets = (
 				CFA0656F2D7F7B1300CEB20B /* Squart */,
 				CFA066F82D80E10400CEB20B /* SquartTests */,
+				CFF66C4A2D8343D6003AF4FC /* IconPreviewTests */,
+				CFF66C542D8343D6003AF4FC /* IconPreviewUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -155,10 +258,32 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CFF66C722D835A33003AF4FC /* Game_mehanike.md in Resources */,
+				CFF66C252D833EC2003AF4FC /* CHANGELOG.md in Resources */,
+				CFF66C262D833EC2003AF4FC /* README.md in Resources */,
+				CFF66C702D83589B003AF4FC /* Tabla_varijacije.md in Resources */,
+				CFF66C272D833EC2003AF4FC /* API.md in Resources */,
+				CFF66C282D833EC2003AF4FC /* CONTRIBUTING.md in Resources */,
+				CFF66C292D833EC2003AF4FC /* SECURITY.md in Resources */,
+				CFF66C2A2D833EC2003AF4FC /* CODE_OF_CONDUCT.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CFA066F72D80E10400CEB20B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CFF66C492D8343D6003AF4FC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CFF66C532D8343D6003AF4FC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -176,6 +301,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CFA066F52D80E10400CEB20B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CFF66C472D8343D6003AF4FC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CFF66C512D8343D6003AF4FC /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -406,6 +545,78 @@
 			};
 			name = Release;
 		};
+		CFF66C612D8343D6003AF4FC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 83F7KY8L5Y;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Gazza.IconPreviewTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IconPreview.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/IconPreview";
+			};
+			name = Debug;
+		};
+		CFF66C622D8343D6003AF4FC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 83F7KY8L5Y;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Gazza.IconPreviewTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IconPreview.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/IconPreview";
+			};
+			name = Release;
+		};
+		CFF66C642D8343D6003AF4FC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 83F7KY8L5Y;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Gazza.IconPreviewUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = IconPreview;
+			};
+			name = Debug;
+		};
+		CFF66C652D8343D6003AF4FC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 83F7KY8L5Y;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = Gazza.IconPreviewUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = IconPreview;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -432,6 +643,24 @@
 			buildConfigurations = (
 				CFA067002D80E10400CEB20B /* Debug */,
 				CFA067012D80E10400CEB20B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CFF66C602D8343D6003AF4FC /* Build configuration list for PBXNativeTarget "IconPreviewTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CFF66C612D8343D6003AF4FC /* Debug */,
+				CFF66C622D8343D6003AF4FC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CFF66C632D8343D6003AF4FC /* Build configuration list for PBXNativeTarget "IconPreviewUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CFF66C642D8343D6003AF4FC /* Debug */,
+				CFF66C652D8343D6003AF4FC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

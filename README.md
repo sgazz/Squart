@@ -1,125 +1,87 @@
 # Squart
 
-Squart je logička igra za dva igrača inspirisana igrom TicTacToe, ali sa izmenjenim pravilima.
+Squart је модерна iOS игра инспирисана класичном игром Икс-Окс (Tic-Tac-Toe), али са јединственим заокретом. Уместо традиционалних X и O симбола, играчи постављају хоризонталне и вертикалне жетоне на таблу, стварајући динамичнију и стратешки изазовнију игру.
 
-## O igri
+## 🎮 Карактеристике
 
-U igri Squart, dva igrača naizmenično postavljaju žetone na tablu. Plavi igrač postavlja horizontalne žetone (dva polja širine), a crveni igrač postavlja vertikalne žetone (dva polja visine). Cilj igre je prisiliti protivnika da ostane bez validnih poteza. Pobednik je igrač koji je odigrao poslednji validni potez.
+- **Модеран дизајн**: Чист и минималистички интерфејс са пажљиво одабраним бојама и анимацијама
+- **Више режима игре**:
+  - Игра за два играча на истом уређају
+  - Игра против AI са три нивоа тежине
+  - Онлајн мултиплејер (у развоју)
+- **Паметни AI противник**: Користи напредне алгоритме за процену позиције и предвиђање потеза
+- **Локализација**: Доступно на више језика:
+  - Енглески
+  - Српски
+  - Немачки
+  - Руски
+  - Кинески (поједностављени)
+- **Достигнућа и статистика**: Пратите свој напредак и откључајте достигнућа
+- **Чување игре**: Аутоматско чување недовршених партија
+- **Прилагодљиве опције**: Подешавање величине табле, времена за размишљање и других параметара
 
-## Funkcionalnosti
+## 📱 Системски захтеви
 
-- Tabla različitih veličina (5x5 do 30x30, podrazumevano 7x7)
-- "Crna" polja koja se ne mogu koristiti
-- Horizontalni (plavi) i vertikalni (crveni) žetoni
-- Šahovski tajmer (1 do 10 minuta po igraču)
-- Različite teme (Okean, Zalazak sunca, Šuma, Galaksija, Klasična)
-- Čuvanje i učitavanje partija
-- Zvučni efekti
-- Vibracija (haptički odziv)
-- Animacije za postavljanje žetona
-- Efekat konfeta za pobednika
+- iOS 17.0 или новији
+- iPhone или iPad уређај
+- ~50MB слободног простора
 
-## Kako igrati
+## 🛠 Технички детаљи
 
-- Plavi igrač igra prvi i postavlja žeton horizontalno (polje na koje klikne i polje desno od njega)
-- Crveni igrač postavlja žeton vertikalno (polje na koje klikne i polje ispod njega)
-- Igra se završava kada igrač na potezu nema validni potez ili kada mu istekne vreme
-- Pobednik je igrač koji je odigrao poslednji validni potez
+- Написано у Swift и SwiftUI
+- Користи најновије iOS технологије и дизајн смернице
+- Оптимизовано за перформансе и ефикасно коришћење батерије
+- Подржава Dark Mode
+- Имплементира најбоље праксе за приступачност
 
-## Tehnički detalji
+## 🎯 Правила игре
 
-### Arhitektura
+1. Играчи наизменично постављају жетоне на таблу
+2. Плави играч поставља хоризонталне жетоне
+3. Црвени играч поставља вертикалне жетоне
+4. Циљ је формирати линију од три жетона исте боје
+5. Линија може бити хоризонтална, вертикална или дијагонална
+6. Победник је играч који први формира линију
+7. Игра је нерешена ако се табла попуни без победника
 
-- **SwiftUI** za korisnički interfejs
-- **MVVM** arhitektonski obrazac
-- **Combine** za reaktivno programiranje
-- **CoreData** za lokalno skladištenje
-- **AVFoundation** za zvučne efekte
-- **CoreHaptics** za haptički odziv
+## 🎨 Дизајн
 
-### AI implementacija
+Squart користи минималистички дизајн са фокусом на:
+- Чисте линије и једноставне облике
+- Пажљиво одабрану палету боја
+- Суптилне анимације и прелазе
+- Интуитивну навигацију
+- Јасне визуелне индикаторе
 
-- Tri nivoa težine (lak, srednji, težak)
-- Minimax algoritam sa alfa-beta odsecanjem
-- Dinamička dubina pretrage bazirana na veličini table
-- Keširanje pozicija za optimizaciju
-- Evaluaaciona funkcija sa više parametara
-- Vremensko ograničenje za poteze
+## 🔜 У развоју
 
-### Performanse
+- Онлајн мултиплејер
+- Турнирски режим
+- Додатне варијације табле
+- Више достигнућа
+- Статистика и рангирање
+- Додатне локализације
 
-- Optimizovano za iOS 17+
-- Podrška za sve iPhone i iPad uređaje
-- Efikasno korišćenje memorije
-- Asinhrono učitavanje resursa
-- Optimizovane animacije
+## 🤝 Допринос
 
-### Lokalizacija
+Погледајте [CONTRIBUTING.md](CONTRIBUTING.md) за детаље о томе како можете допринети пројекту.
 
-- Podržani jezici:
-  - Srpski (ћирилица)
-  - Engleski
-  - Kineski (pojednostavljeni)
-- Podrška za RTL jezike
-- Lokalizovani resursi
+## 📄 Лиценца
 
-### Testiranje
+Овај пројекат је лиценциран под MIT лиценцом - погледајте [LICENSE](LICENSE) фајл за детаље.
 
-- Unit testovi za logiku igre
-- UI testovi za interakciju
-- Testovi performansi
-- Integracioni testovi
-- Testovi pristupačnosti
+## 🔒 Безбедност
 
-## Razvoj
+За информације о безбедности и пријављивању рањивости, погледајте [SECURITY.md](SECURITY.md).
 
-### Pre-uslovi
+## 📝 Промене
 
-- Xcode 15.0+
-- iOS 17.0+
-- Swift 5.9+
-- Git
+За листу промена и историју верзија, погледајте [CHANGELOG.md](CHANGELOG.md).
 
-### Instalacija
+## 👥 Аутори
 
-1. Klonirajte repozitorijum
-```bash
-git clone https://github.com/yourusername/squart.git
-```
+- Стефан Гажа - Иницијални развој и дизајн
 
-2. Otvorite projekat
-```bash
-cd squart
-open Squart.xcodeproj
-```
+## 📫 Контакт
 
-3. Izgradite i pokrenite
-```bash
-xcodebuild -scheme Squart -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
-```
-
-### API dokumentacija
-
-Pogledajte [API.md](API.md) za detaljnu dokumentaciju.
-
-## Doprinos
-
-Molimo pogledajte [CONTRIBUTING.md](CONTRIBUTING.md) za detalje o procesu za podnošenje pull request-ova.
-
-## Bezbednost
-
-Za bezbednosne smernice, pogledajte [SECURITY.md](SECURITY.md).
-
-## Kodni kod
-
-Ovaj projekat prati Contributor Covenant kodni kod. Pogledajte [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) za detalje.
-
-## Licenca
-
-Ovaj projekat je licenciran pod MIT licencom - pogledajte [LICENSE](LICENSE) fajl za detalje.
-
-## Kontakt
-
-- Email: contact@squart.app
-- Twitter: [@SquartGame](https://twitter.com/SquartGame)
-- Website: [https://squart.app](https://squart.app) 
+За питања и сугестије, отворите issue у GitHub репозиторијуму или пошаљите email на [email@example.com]. 
