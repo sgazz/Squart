@@ -45,11 +45,9 @@ struct GameState: Codable {
 class GameStorage {
     static let shared = GameStorage()
     
-    private let defaultsStorage: UserDefaultsStorage
     private let fileStorage: FileStorage
     
     private init() {
-        self.defaultsStorage = UserDefaultsStorage()
         do {
             self.fileStorage = try FileStorage()
         } catch {
@@ -64,8 +62,6 @@ class GameStorage {
         print("Чување игре под кључем: \(key)")
         print("Стање игре: величина табле=\(gameState.boardSize), тренутни играч=\(gameState.currentPlayer), AI=\(gameState.aiEnabled)")
         
-        // Čuvamo u oba storage-a za redundansu
-        try defaultsStorage.save(gameState, forKey: key)
         try fileStorage.save(gameState, forKey: key)
     }
     
@@ -73,21 +69,13 @@ class GameStorage {
     func loadGame(forKey key: String) throws -> Game? {
         print("Учитавање игре са кључем: \(key)")
         
-        // Prvo probamo iz file storage-a
         if let gameState: GameState = try fileStorage.load(forKey: key) {
             print("Игра успешно учитана из FileStorage")
             print("Учитано стање: величина табле=\(gameState.boardSize), тренутни играч=\(gameState.currentPlayer), AI=\(gameState.aiEnabled)")
             return createGame(from: gameState)
         }
         
-        // Ako ne uspe, probamo iz defaults storage-a
-        if let gameState: GameState = try defaultsStorage.load(forKey: key) {
-            print("Игра успешно учитана из UserDefaults")
-            print("Учитано стање: величина табле=\(gameState.boardSize), тренутни играч=\(gameState.currentPlayer), AI=\(gameState.aiEnabled)")
-            return createGame(from: gameState)
-        }
-        
-        print("Игра није пронађена ни у једном складишту")
+        print("Игра није пронађена")
         return nil
     }
     
@@ -95,21 +83,11 @@ class GameStorage {
     func loadAllGames() throws -> [(key: String, game: GameState)] {
         print("Учитавање свих сачуваних игара...")
         
-        // Kombinujemo igre iz oba storage-a
-        var games = [String: GameState]()
-        
         do {
-            // Učitavamo iz file storage-a
             let fileGames: [String: GameState] = try fileStorage.loadAll(forKeys: fileStorage.allKeys)
             print("Пронађено \(fileGames.count) игара у FileStorage")
-            games.merge(fileGames) { current, _ in current }
             
-            // Učitavamo iz defaults storage-a
-            let defaultsGames: [String: GameState] = try defaultsStorage.loadAll(forKeys: defaultsStorage.allKeys)
-            print("Пронађено \(defaultsGames.count) игара у UserDefaults")
-            games.merge(defaultsGames) { current, _ in current }
-            
-            let sortedGames = games.map { ($0.key, $0.value) }
+            let sortedGames = fileGames.map { ($0.key, $0.value) }
                 .sorted { $0.1.timestamp > $1.1.timestamp }
             print("Укупно пронађено \(sortedGames.count) игара")
             
@@ -122,13 +100,11 @@ class GameStorage {
     
     // Brisanje igre
     func deleteGame(forKey key: String) throws {
-        try defaultsStorage.delete(forKey: key)
         try fileStorage.delete(forKey: key)
     }
     
     // Brisanje svih igara
     func deleteAllGames() throws {
-        try defaultsStorage.clear()
         try fileStorage.clear()
     }
     
