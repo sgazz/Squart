@@ -17,8 +17,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		CFA065702D7F7B1300CEB20B /* Squart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Squart.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		CFA066F92D80E10400CEB20B /* SquartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SquartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CFA065702D7F7B1300CEB20B /* Squart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Squart.app; path = "/Users/sgazza/Documents/XCode/Squart/build/Debug-iphoneos/Squart.app"; sourceTree = "<absolute>"; };
+		CFA066F92D80E10400CEB20B /* SquartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = SquartTests.xctest; path = "/Users/sgazza/Documents/XCode/Squart/build/Debug-iphoneos/Squart.app/PlugIns/SquartTests.xctest"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -58,8 +58,6 @@
 		CFA065712D7F7B1300CEB20B /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CFA065702D7F7B1300CEB20B /* Squart.app */,
-				CFA066F92D80E10400CEB20B /* SquartTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -136,6 +134,8 @@
 				Base,
 				sr,
 				"zh-Hans",
+				de,
+				ru,
 			);
 			mainGroup = CFA065672D7F7B1300CEB20B;
 			minimizedProjectReferenceProxies = 1;

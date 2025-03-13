@@ -1,0 +1,67 @@
+// Game
+"New Game" = "Neues Spiel";
+"Resume Game" = "Spiel fortsetzen";
+"Settings" = "Einstellungen";
+"Tutorial" = "Tutorial";
+"About" = "Über";
+
+// Game Settings
+"Board Size" = "Brettgröße";
+"Timer" = "Timer";
+"Sound Effects" = "Soundeffekte";
+"Vibration" = "Vibration";
+"Theme" = "Thema";
+"Language" = "Sprache";
+
+// Themes
+"Ocean" = "Ozean";
+"Sunset" = "Sonnenuntergang";
+"Forest" = "Wald";
+"Galaxy" = "Galaxie";
+"Classic" = "Klassisch";
+
+// Game Status
+"Blue's Turn" = "Blau ist am Zug";
+"Red's Turn" = "Rot ist am Zug";
+"Game Over" = "Spiel vorbei";
+"Blue Wins!" = "Blau gewinnt!";
+"Red Wins!" = "Rot gewinnt!";
+"Draw" = "Unentschieden";
+
+// AI Difficulty
+"AI Difficulty" = "KI-Schwierigkeit";
+"Easy" = "Leicht";
+"Medium" = "Mittel";
+"Hard" = "Schwer";
+
+// Actions
+"Save Game" = "Spiel speichern";
+"Load Game" = "Spiel laden";
+"Restart" = "Neustart";
+"Undo" = "Rückgängig";
+"Main Menu" = "Hauptmenü";
+"Confirm" = "Bestätigen";
+"Cancel" = "Abbrechen";
+
+// Messages
+"Are you sure?" = "Sind Sie sicher?";
+"This will end the current game." = "Dies beendet das aktuelle Spiel.";
+"Game saved successfully!" = "Spiel erfolgreich gespeichert!";
+"Error saving game" = "Fehler beim Speichern";
+"Game loaded successfully!" = "Spiel erfolgreich geladen!";
+"Error loading game" = "Fehler beim Laden";
+
+// Tutorial
+"Welcome to Squart!" = "Willkommen bei Squart!";
+"Blue places horizontal pieces" = "Blau platziert horizontale Steine";
+"Red places vertical pieces" = "Rot platziert vertikale Steine";
+"Win by blocking your opponent" = "Gewinnen Sie, indem Sie Ihren Gegner blockieren";
+"Got it!" = "Verstanden!";
+
+// About
+"Version" = "Version";
+"Created by" = "Erstellt von";
+"Contact" = "Kontakt";
+"Website" = "Webseite";
+"Privacy Policy" = "Datenschutzerklärung";
+"Terms of Service" = "Nutzungsbedingungen"; 
