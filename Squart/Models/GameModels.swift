@@ -261,17 +261,26 @@ class Game: ObservableObject {
         blueTimeRemaining = timerOption.rawValue
         redTimeRemaining = timerOption.rawValue
         
-        // AI logika nakon resetovanja igre
+        // Poništavamo sve tekuće operacije AI-a
+        isAIThinking = false
+        
+        // AI logika nakon resetovanja igre - sa odloženim izvršavanjem
         if aiEnabled {
-            // Za AI vs AI mod, uvek pokrećemo AI potez, bez obzira koji igrač je trenutno
-            if aiVsAiMode {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            print("Igra resetovana, AI je \(aiEnabled ? "uključen" : "isključen"), AI vs AI mod: \(aiVsAiMode)")
+            
+            // Odložimo pokretanje AI-a da bismo dali vremena UI-u da se ažurira
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                // Provera da nije igra u međuvremenu završena iz nekog razloga
+                guard !self.isGameOver else { return }
+                
+                // Za AI vs AI mod, uvek pokrećemo AI potez, bez obzira koji igrač je trenutno
+                if self.aiVsAiMode {
+                    print("Pokretanje AI vs AI igre...")
                     self.makeAIMove()
                 }
-            }
-            // Za standardni mod, pokrećemo AI potez samo ako je AI tim na potezu
-            else if currentPlayer == aiTeam {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                // Za standardni mod, pokrećemo AI potez samo ako je AI tim na potezu
+                else if self.currentPlayer == self.aiTeam {
+                    print("Pokretanje AI poteza nakon resetovanja igre...")
                     self.makeAIMove()
                 }
             }
@@ -292,24 +301,41 @@ class Game: ObservableObject {
         aiTeam = team
         aiPlayer = AIPlayer(difficulty: difficulty)
         
-        // Inicijalizacija drugog AI igrača ako je AI vs AI mod uključen
+        // Provera podešavanja AI vs AI moda
         if GameSettingsManager.shared.aiVsAiMode {
             aiVsAiMode = true
             secondAiDifficulty = GameSettingsManager.shared.secondAiDifficulty
             secondAiPlayer = AIPlayer(difficulty: secondAiDifficulty)
+            print("AI vs AI mod inicijalizovan - Prvi AI: \(difficulty), Drugi AI: \(secondAiDifficulty)")
+        } else {
+            aiVsAiMode = false
+            secondAiPlayer = nil
+            print("Standardni AI mod inicijalizovan - AI tim: \(team), težina: \(difficulty)")
+        }
+        
+        // Ako je AI vs AI mod i igra je u toku, pokrenimo AI odmah
+        if aiVsAiMode && !isGameOver {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.makeAIMove()
+            }
         }
     }
     
     // Metoda za AI potez
     func makeAIMove() {
-        guard aiEnabled, !isGameOver else { return }
+        guard aiEnabled, !isGameOver else { 
+            print("AI potez preskočen: aiEnabled=\(aiEnabled), isGameOver=\(isGameOver)")
+            return 
+        }
         
         if aiVsAiMode {
-            // U AI vs AI modu, uvek imamo AI igrača
+            // U AI vs AI modu, uvek imamo AI igrača za oba tima
+            print("AI vs AI: AI \(currentPlayer == .blue ? "plavi" : "crveni") razmišlja...")
             makeAIMoveForCurrentPlayer()
         } else {
             // U standardnom modu, AI igra samo za svoj tim
             if currentPlayer == aiTeam, let aiPlayer = aiPlayer {
+                print("Standardni mod: AI za \(aiTeam == .blue ? "plavi" : "crveni") tim razmišlja...")
                 isAIThinking = true
                 
                 // Prebacujemo AI razmišljanje na background thread sa visokim prioritetom
@@ -326,15 +352,20 @@ class Game: ObservableObject {
                     } else {
                         DispatchQueue.main.async {
                             self.isAIThinking = false
+                            print("AI nije uspeo da pronađe validan potez.")
                         }
                     }
                 }
+            } else if currentPlayer != aiTeam {
+                print("Čekanje na ljudski potez za \(currentPlayer == .blue ? "plavi" : "crveni") tim...")
             }
         }
     }
     
     // Pomoćna metoda za AI vs AI mod
     private func makeAIMoveForCurrentPlayer() {
+        guard !isGameOver else { return }
+        
         let activeAI: AIPlayer?
         
         if currentPlayer == aiTeam {
@@ -355,21 +386,40 @@ class Game: ObservableObject {
                     // Vraćamo se na main thread za ažuriranje UI
                     DispatchQueue.main.async {
                         self.isAIThinking = false
-                        _ = self.makeMove(row: bestMove.row, column: bestMove.column)
+                        let moveSuccessful = self.makeMove(row: bestMove.row, column: bestMove.column)
                         
                         // Ako igra nije završena, planiramo sledeći AI potez sa malim odlaganjem
                         if !self.isGameOver {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                                 self.makeAIMove()
                             }
+                        } else {
+                            print("AI vs AI igra završena. Pobednik: \(self.currentPlayer == .blue ? "crveni" : "plavi")")
                         }
                     }
                 } else {
                     DispatchQueue.main.async {
                         self.isAIThinking = false
+                        print("AI nije mogao da pronađe validan potez.")
+                        
+                        // Čak i ako AI ne može da nađe potez, proveri da li postoje validni potezi
+                        if self.board.hasValidMoves(for: self.currentPlayer) {
+                            // Ako postoje validni potezi, pokušajmo ponovo sa kratkim odlaganjem
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                self.makeAIMove()
+                            }
+                        } else {
+                            // Ako nema validnih poteza, završi igru
+                            if !self.isGameOver {
+                                self.isGameOver = true
+                                self.gameEndReason = .noValidMoves
+                            }
+                        }
                     }
                 }
             }
+        } else {
+            print("Nema aktivnog AI igrača za trenutnog igrača: \(currentPlayer)")
         }
     }
 } 

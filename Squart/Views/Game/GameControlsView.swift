@@ -298,23 +298,25 @@ struct ApplySettingsSection: View {
     var body: some View {
         Section {
             Button("apply_start_new".localized) {
+                // Постави нову таблу са одабраном величином
                 game.board = GameBoard(size: selectedSize)
                 
-                // Inicijalizacija AI ako je uključen
+                // Исклључи AI прво да би избегли проблеме током ресета
+                game.aiEnabled = false
+                
+                // Ресет игре без AI логике прво
+                game.resetGame()
+                
+                // Онда иницијализуј AI ако је укључен
                 if settings.aiEnabled {
+                    // Прво постави сва подешавања
                     game.aiVsAiMode = settings.aiVsAiMode
                     game.secondAiDifficulty = settings.secondAiDifficulty
-                    game.initializeAI(difficulty: settings.aiDifficulty, team: settings.aiTeam)
                     
-                    // Za AI vs AI mod, odmah pokrećemo igru ako je AI na potezu
-                    if game.aiVsAiMode {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            game.makeAIMove()
-                        }
-                    }
+                    // Затим иницијализуј AI
+                    game.initializeAI(difficulty: settings.aiDifficulty, team: settings.aiTeam)
                 }
                 
-                game.resetGame()
                 dismiss()
             }
             .foregroundColor(.blue)
