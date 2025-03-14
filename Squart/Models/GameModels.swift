@@ -153,10 +153,25 @@ class Game: ObservableObject {
             
             currentPlayer = currentPlayer == .blue ? .red : .blue
             
-            if isAIGame && !isGameOver {
-                if currentPlayer == .red && !isSecondAITurn {
-                    isSecondAITurn = true
-                    makeAIMoveForCurrentPlayer()
+            // Resetujemo isSecondAITurn kada se vrati na plavog igrača
+            if currentPlayer == .blue {
+                isSecondAITurn = false
+            }
+            
+            // U AI vs AI modu, treba automatski da pokrenemo sledeći AI potez nakon promene igrača
+            if aiVsAiMode && !isGameOver {
+                // Odložimo malo potez za bolji vizuelni efekat
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    guard let self = self, !self.isGameOver else { return }
+                    self.makeAIMove()
+                }
+            }
+            // U standardnom AI modu, pokrećemo AI potez samo ako je AI na potezu
+            else if aiEnabled && currentPlayer == aiTeam && !isGameOver {
+                // Odložimo malo potez za bolji vizuelni efekat
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    guard let self = self, !self.isGameOver else { return }
+                    self.makeAIMove()
                 }
             }
             
@@ -216,6 +231,7 @@ class Game: ObservableObject {
         
         // Poništavamo sve tekuće operacije AI-a
         isAIThinking = false
+        isSecondAITurn = false // Resetujemo isSecondAITurn
         
         // Ресет система за учење
         consideredMoves.removeAll()
@@ -261,11 +277,13 @@ class Game: ObservableObject {
         // Provera podešavanja AI vs AI moda
         if GameSettingsManager.shared.aiVsAiMode {
             aiVsAiMode = true
+            isAIGame = true // Postavlja se isAIGame na true kada je AI vs AI
             secondAiDifficulty = GameSettingsManager.shared.secondAiDifficulty
             secondAiPlayer = AIPlayer(difficulty: secondAiDifficulty)
             print("AI vs AI mod inicijalizovan - Prvi AI: \(difficulty), Drugi AI: \(secondAiDifficulty)")
         } else {
             aiVsAiMode = false
+            isAIGame = false
             secondAiPlayer = nil
             print("Standardni AI mod inicijalizovan - AI tim: \(team), težina: \(difficulty)")
         }
@@ -365,15 +383,33 @@ class Game: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             
+            // Koristimo odgovarajućeg AI igrača u zavisnosti od trenutnog igrača
             let difficulty = self.currentPlayer == .blue ? self.aiDifficulty : self.secondAiDifficulty
             let aiPlayer = self.currentPlayer == .blue ? self.aiPlayer : self.secondAiPlayer
             
             if let aiPlayer = aiPlayer {
+                print("AI igrač \(self.currentPlayer == .blue ? "plavi" : "crveni") razmišlja sa težinom: \(difficulty)")
+                
+                // Kratka pauza za UI pre nego što AI odigra potez
+                Thread.sleep(forTimeInterval: 0.5)
+                
                 let move = aiPlayer.makeMove(for: self, difficulty: difficulty)
                 
                 DispatchQueue.main.async {
+                    print("AI igrač \(self.currentPlayer == .blue ? "plavi" : "crveni") odigrao potez na: (\(move.row), \(move.column))")
+                    
+                    // Ako je uključena opcija za AI razmišljanje, prikažemo razmatrane poteze
+                    if self.showAIThinking {
+                        self.consideredMoves = [(move.row, move.column, 0)]
+                    }
+                    
                     _ = self.makeMove(row: move.row, column: move.column)
                     self.showAIThinking = false
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.showAIThinking = false
+                    print("Nema AI igrača za \(self.currentPlayer == .blue ? "plavog" : "crvenog") igrača")
                 }
             }
         }
