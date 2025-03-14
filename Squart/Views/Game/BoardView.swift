@@ -61,22 +61,37 @@ struct BoardView: View {
     }
     
     private func handleCellTap(row: Int, column: Int) {
-        guard !game.isGameOver else { return }
+        guard !game.isGameOver else { 
+            print("handleCellTap: Игра је завршена, додир игнорисан")
+            return 
+        }
+        
+        print("handleCellTap: Покушај додира на позицији (\(row), \(column))")
+        print("handleCellTap: Тренутни тип ћелије: \(game.board.cells[row][column].type)")
+        print("handleCellTap: Тренутни играч: \(game.currentPlayer == .blue ? "плави" : "црвени")")
+        print("handleCellTap: AI мод: \(game.aiEnabled), AI vs AI: \(game.aiVsAiMode), AI тим: \(game.aiTeam == .blue ? "плави" : "црвени")")
         
         if game.aiEnabled && game.aiVsAiMode {
+            print("handleCellTap: AI vs AI мод је активан, додир игнорисан")
             return
         }
         
         if game.aiEnabled && game.currentPlayer == game.aiTeam {
+            print("handleCellTap: На потезу је AI тим, додир игнорисан")
             return
         }
         
-        if game.makeMove(row: row, column: column) {
+        let result = game.makeMove(row: row, column: column)
+        print("handleCellTap: Резултат потеза: \(result ? "успешно" : "неуспешно")")
+        
+        if result {
             SoundManager.shared.playSound(.place)
             SoundManager.shared.triggerHaptic()
             
             if game.aiEnabled && !game.isGameOver {
+                print("handleCellTap: Планирање AI потеза за 0.5 секунди")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    print("handleCellTap: Покретање AI потеза")
                     game.makeAIMove()
                 }
             }

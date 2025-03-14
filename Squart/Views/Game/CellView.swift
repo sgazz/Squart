@@ -93,6 +93,9 @@ struct CellView: View, Equatable {
                 )
                 .scaleEffect(scale)
                 .rotationEffect(.degrees(rotation))
+                .onTapGesture {
+                    print("Тапнуто на токен: тип=\(cell.type), позиција=\(cell.row),\(cell.column)")
+                }
         }
     }
     

@@ -305,16 +305,18 @@ struct ApplySettingsSection: View {
                     game.aiVsAiMode = settings.aiVsAiMode
                     game.secondAiDifficulty = settings.secondAiDifficulty
                     game.initializeAI(difficulty: settings.aiDifficulty, team: settings.aiTeam)
-                    
-                    // Za AI vs AI mod, odmah pokrećemo igru ako je AI na potezu
-                    if game.aiVsAiMode {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            game.makeAIMove()
-                        }
+                }
+                
+                // Resetovanje igre
+                game.resetGame()
+                
+                // Za AI vs AI mod, odmah pokrećemo igru nakon resetovanja
+                if settings.aiEnabled && game.aiVsAiMode {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        game.makeAIMove()
                     }
                 }
                 
-                game.resetGame()
                 dismiss()
             }
             .foregroundColor(.blue)
