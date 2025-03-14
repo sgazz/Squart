@@ -39,8 +39,10 @@ struct BoardView: View {
     }
     
     private func makeCellView(row: Int, column: Int) -> some View {
-        CellView(
-            cell: game.board.cells[row][column],
+        let cell = game.board.cells[row][column]
+        let boardCell = BoardCell(type: cell.type, row: cell.row, column: cell.column)
+        return CellView(
+            cell: boardCell,
             size: cellSize,
             isFirstCellOfToken: isFirstCellOfToken(row: row, column: column),
             tokenOrientation: tokenOrientation(row: row, column: column)

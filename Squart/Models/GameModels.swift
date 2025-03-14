@@ -26,122 +26,16 @@ enum Player: Codable {
     }
 }
 
+/// Struktura za ćelije na tabli koja se koristi u UI-u
 struct BoardCell {
     var type: CellType
-    let row: Int
-    let column: Int
-}
-
-struct Position: Hashable {
-    let row: Int
-    let column: Int
-}
-
-class GameBoard: ObservableObject {
-    @Published var cells: [[BoardCell]]
-    let size: Int
+    var row: Int
+    var column: Int
     
-    // Кеш за валидне потезе
-    private var validMovesCache: [Player: Set<Position>] = [:]
-    
-    // Поништавамо кеш када се табла промени
-    private func invalidateCache() {
-        validMovesCache.removeAll()
-    }
-    
-    init(size: Int) {
-        self.size = size
-        self.cells = []
-        
-        // Inicijalizacija prazne table
-        for row in 0..<size {
-            var rowCells: [BoardCell] = []
-            for column in 0..<size {
-                rowCells.append(BoardCell(type: .empty, row: row, column: column))
-            }
-            cells.append(rowCells)
-        }
-        
-        // Dodavanje blokiranih (crnih) polja (17-19% od ukupnog broja polja)
-        let totalCells = size * size
-        let blockedCount = Int(Double(totalCells) * Double.random(in: 0.17...0.19))
-        var blockedPositions = Set<Int>()
-        
-        while blockedPositions.count < blockedCount {
-            let position = Int.random(in: 0..<totalCells)
-            blockedPositions.insert(position)
-        }
-        
-        for position in blockedPositions {
-            let row = position / size
-            let column = position % size
-            cells[row][column].type = .blocked
-        }
-    }
-    
-    func isValidMove(row: Int, column: Int, player: Player) -> Bool {
-        // Прво проверавамо кеш
-        if let cachedMoves = validMovesCache[player] {
-            return cachedMoves.contains(Position(row: row, column: column))
-        }
-        
-        // Ако немамо кеш, правимо нови сет валидних потеза
-        var validMoves = Set<Position>()
-        
-        for r in 0..<size {
-            for c in 0..<size {
-                if checkValidMove(row: r, column: c, player: player) {
-                    validMoves.insert(Position(row: r, column: c))
-                }
-            }
-        }
-        
-        // Чувамо у кешу
-        validMovesCache[player] = validMoves
-        
-        return validMoves.contains(Position(row: row, column: column))
-    }
-    
-    // Помоћна метода која проверава валидност потеза без кеширања
-    private func checkValidMove(row: Int, column: Int, player: Player) -> Bool {
-        guard row >= 0 && row < size && column >= 0 && column < size else { return false }
-        guard cells[row][column].type == .empty else { return false }
-        
-        if player.isHorizontal {
-            guard column + 1 < size && cells[row][column + 1].type == .empty else { return false }
-            return true
-        } else {
-            guard row + 1 < size && cells[row + 1][column].type == .empty else { return false }
-            return true
-        }
-    }
-    
-    func makeMove(row: Int, column: Int, player: Player) -> Bool {
-        guard isValidMove(row: row, column: column, player: player) else { return false }
-        
-        cells[row][column].type = player.cellType
-        
-        if player.isHorizontal {
-            cells[row][column + 1].type = player.cellType
-        } else {
-            cells[row + 1][column].type = player.cellType
-        }
-        
-        // Поништавамо кеш јер се табла променила
-        invalidateCache()
-        return true
-    }
-    
-    // Helper funkcija za proveru da li postoje validni potezi za igrača
-    func hasValidMoves(for player: Player) -> Bool {
-        for row in 0..<size {
-            for column in 0..<size {
-                if isValidMove(row: row, column: column, player: player) {
-                    return true
-                }
-            }
-        }
-        return false
+    init(type: CellType, row: Int, column: Int) {
+        self.type = type
+        self.row = row
+        self.column = column
     }
 }
 
@@ -160,7 +54,9 @@ class Game: ObservableObject {
     // AI podrška
     @Published var aiEnabled: Bool = false
     @Published var aiDifficulty: AIDifficulty = .medium
+    @Published var secondAiDifficulty: AIDifficulty = .medium
     private var aiPlayer: AIPlayer?
+    private var secondAiPlayer: AIPlayer?
     @Published var isAIThinking: Bool = false
     
     // Određuje tim koji igra AI (podrazumevano crveni)
@@ -168,12 +64,13 @@ class Game: ObservableObject {
     
     // Podrška za drugi AI u AI vs AI modu
     @Published var aiVsAiMode: Bool = false
-    @Published var secondAiDifficulty: AIDifficulty = .medium
-    private var secondAiPlayer: AIPlayer?
+    @Published var isAIGame = false
+    @Published var isSecondAITurn = false
     
     // Opcija za vizualizaciju AI "razmišljanja"
-    @Published var showAIThinking: Bool = false
-    @Published var aiConsideredMoves: [(move: (row: Int, column: Int), score: Int)] = []
+    @Published var showAIThinking = false
+    @Published var consideredMoves: [(row: Int, column: Int, score: Int)] = []
+    @Published var aiConsideredMoves: [(move: Position, score: Int)] = []
     
     // Praćenje koji igrač je prvi na potezu (za naizmenično smenjivanje)
     @Published var startingPlayer: Player = .blue
@@ -188,8 +85,20 @@ class Game: ObservableObject {
     
     @Published var gameEndReason: GameEndReason = .none
     
-    // Додајемо нове променљиве за праћење размотрених потеза АИ-а
-    @Published var consideredMoves: [(row: Int, column: Int, score: Int)] = []
+    // Pobednik igre
+    @Published var winner: Player?
+    
+    // Lista AI igrača
+    private var aiPlayers: [AIPlayer] {
+        var players: [AIPlayer] = []
+        if let aiPlayer = aiPlayer {
+            players.append(aiPlayer)
+        }
+        if let secondAiPlayer = secondAiPlayer {
+            players.append(secondAiPlayer)
+        }
+        return players
+    }
     
     init(boardSize: Int = 7) {
         self.board = GameBoard(size: boardSize)
@@ -199,27 +108,61 @@ class Game: ObservableObject {
         self.redTimeRemaining = timerOpt.rawValue
     }
     
+    /// Kreira kopiju trenutnog stanja igre
+    func clone() -> Game {
+        let clonedGame = Game(boardSize: board.size)
+        clonedGame.board = board.clone()
+        clonedGame.currentPlayer = currentPlayer
+        clonedGame.blueScore = blueScore
+        clonedGame.redScore = redScore
+        clonedGame.isGameOver = isGameOver
+        clonedGame.blueTimeRemaining = blueTimeRemaining
+        clonedGame.redTimeRemaining = redTimeRemaining
+        clonedGame.timerOption = timerOption
+        clonedGame.aiEnabled = aiEnabled
+        clonedGame.aiDifficulty = aiDifficulty
+        clonedGame.secondAiDifficulty = secondAiDifficulty
+        clonedGame.aiTeam = aiTeam
+        clonedGame.aiVsAiMode = aiVsAiMode
+        clonedGame.isAIGame = isAIGame
+        clonedGame.isSecondAITurn = isSecondAITurn
+        clonedGame.showAIThinking = showAIThinking
+        clonedGame.consideredMoves = consideredMoves
+        clonedGame.startingPlayer = startingPlayer
+        clonedGame.gameEndReason = gameEndReason
+        clonedGame.winner = winner
+        return clonedGame
+    }
+    
     func makeMove(row: Int, column: Int) -> Bool {
         guard !isGameOver else { return false }
         
-        if board.makeMove(row: row, column: column, player: currentPlayer) {
-            // Promena igrača
+        if board.isValidMove(row: row, column: column, player: currentPlayer) {
+            board.makeMove(row: row, column: column, player: currentPlayer)
+            
+            if let winningPlayer = board.checkForWinner() {
+                winner = winningPlayer
+                isGameOver = true
+                return true
+            }
+            
+            if board.isFull() {
+                isGameOver = true
+                return true
+            }
+            
             currentPlayer = currentPlayer == .blue ? .red : .blue
             
-            // Provera da li sledeći igrač ima validne poteze
-            if !board.hasValidMoves(for: currentPlayer) {
-                isGameOver = true
-                gameEndReason = .noValidMoves
-                // Pobeđuje prethodni igrač (onaj koji je upravo odigrao potez)
-                if currentPlayer == .red { // ako je sledeći crveni, znači da je plavi pobedio
-                    blueScore += 1
-                } else {
-                    redScore += 1
+            if isAIGame && !isGameOver {
+                if currentPlayer == .red && !isSecondAITurn {
+                    isSecondAITurn = true
+                    makeAIMoveForCurrentPlayer()
                 }
             }
             
             return true
         }
+        
         return false
     }
     
@@ -247,9 +190,11 @@ class Game: ObservableObject {
         if player == .blue {
             gameEndReason = .blueTimeout
             redScore += 1  // Crveni igrač pobeđuje
+            winner = .red
         } else {
             gameEndReason = .redTimeout
             blueScore += 1  // Plavi igrač pobeđuje
+            winner = .blue
         }
     }
     
@@ -351,7 +296,7 @@ class Game: ObservableObject {
                 isAIThinking = true
                 
                 // Čistimo prethodno razmatrane poteze
-                aiConsideredMoves.removeAll()
+                consideredMoves.removeAll()
                 
                 // Prebacujemo AI razmišljanje na background thread sa visokim prioritetom
                 DispatchQueue.global(qos: .userInteractive).async { [weak self] in
@@ -365,7 +310,7 @@ class Game: ObservableObject {
                             
                             // Čuvamo razmatrne poteze za vizualizaciju ako je opcija uključena
                             if self.showAIThinking {
-                                self.aiConsideredMoves = aiPlayer.consideredMoves
+                                self.consideredMoves = [(bestMove.row, bestMove.column, 0)]
                             }
                             
                             _ = self.makeMove(row: bestMove.row, column: bestMove.column)
@@ -413,32 +358,22 @@ class Game: ObservableObject {
     }
     
     func makeAIMoveForCurrentPlayer() {
-        // Ресетујемо размотрене потезе
-        consideredMoves.removeAll()
+        guard !isGameOver else { return }
         
-        // Омогућавамо праћење размишљања
-        if showAIThinking {
-            objectWillChange.send()
-        }
+        showAIThinking = true
         
-        // Покрећемо АИ размишљање у позадини да не блокирамо UI
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self, !self.isGameOver else { return }
+            guard let self = self else { return }
             
-            // Проналазимо најбољи потез
-            var aiPlayer = self.aiPlayers[self.currentPlayer == .blue ? 0 : 1]
-            let difficulty = self.aiDifficulty[self.currentPlayer == .blue ? 0 : 1]
-            let bestMove = aiPlayer.makeMove(for: self, difficulty: difficulty)
+            let difficulty = self.currentPlayer == .blue ? self.aiDifficulty : self.secondAiDifficulty
+            let aiPlayer = self.currentPlayer == .blue ? self.aiPlayer : self.secondAiPlayer
             
-            // Примењујемо потез у главној нити
-            DispatchQueue.main.async {
-                guard let self = self, !self.isGameOver else { return }
+            if let aiPlayer = aiPlayer {
+                let move = aiPlayer.makeMove(for: self, difficulty: difficulty)
                 
-                // Правимо потез
-                if bestMove.row >= 0 && bestMove.column >= 0 {
-                    self.makeMove(row: bestMove.row, column: bestMove.column)
-                } else {
-                    print("АИ није могао да одлучи о потезу!")
+                DispatchQueue.main.async {
+                    _ = self.makeMove(row: move.row, column: move.column)
+                    self.showAIThinking = false
                 }
             }
         }

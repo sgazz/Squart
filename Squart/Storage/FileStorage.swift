@@ -23,7 +23,7 @@ class FileStorage: StorageProtocol {
     // CRUD operacije
     func save<T: Encodable>(_ item: T, forKey key: String) throws {
         let url = fileURL(forKey: key)
-        print("Чување у фајл: \(url.path)")
+        print("Čuvanje u fajl: \(url.path)")
         
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -31,11 +31,11 @@ class FileStorage: StorageProtocol {
         let data = try encoder.encode(item)
         
         if let jsonString = String(data: data, encoding: .utf8) {
-            print("JSON за чување: \(jsonString)")
+            print("JSON za čuvanje: \(jsonString)")
         }
         
         try data.write(to: url, options: .atomic)
-        print("Успешно сачувано у фајл")
+        print("Uspešno sačuvano u fajl")
     }
     
     func load<T: Decodable>(forKey key: String) throws -> T? {

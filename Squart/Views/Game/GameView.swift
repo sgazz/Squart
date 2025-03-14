@@ -365,12 +365,12 @@ struct GameView: View {
                 dismissButton: .default(Text("OK"))
             )
         }
-        .alert("Грешка при чувању", isPresented: $showingSaveErrorAlert) {
+        .alert("Greška pri čuvanju", isPresented: $showingSaveErrorAlert) {
             Button("OK", role: .cancel) { }
         } message: {
             Text(saveErrorMessage)
         }
-        .alert("Грешка при учитавању", isPresented: $showingLoadErrorAlert) {
+        .alert("Greška pri učitavanju", isPresented: $showingLoadErrorAlert) {
             Button("OK", role: .cancel) { }
         } message: {
             Text(loadErrorMessage)
@@ -447,16 +447,7 @@ struct GameView: View {
     
     private func loadGame() {
         do {
-            let savedGames = try GameStorage.shared.loadAllGames()
-            
-            guard !savedGames.isEmpty else {
-                loadErrorMessage = "Нема сачуваних игара."
-                showingLoadErrorAlert = true
-                return
-            }
-            
-            if let latestGame = savedGames.first,
-               let loadedGame = try GameStorage.shared.loadGame(forKey: latestGame.key) {
+            if let loadedGame = GameStorage.shared.loadGame() {
                 game.board = loadedGame.board
                 game.currentPlayer = loadedGame.currentPlayer
                 game.blueScore = loadedGame.blueScore
@@ -477,7 +468,7 @@ struct GameView: View {
                     game.initializeAI(difficulty: loadedGame.aiDifficulty, team: loadedGame.aiTeam)
                 }
             } else {
-                loadErrorMessage = "Грешка при учитавању игре."
+                loadErrorMessage = "Нема сачуваних игара или је дошло до грешке при учитавању."
                 showingLoadErrorAlert = true
             }
         } catch {

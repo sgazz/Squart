@@ -98,12 +98,14 @@ struct BoardSizeSection: View {
     @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("board_size".localized)) {
+        Section {
             Picker("board_size".localized, selection: $selectedSize) {
                 ForEach(GameSettings.minBoardSize...GameSettings.maxBoardSize, id: \.self) { size in
                     Text("\(size)x\(size)")
                 }
             }
+        } header: {
+            Text("board_size".localized)
         }
     }
 }
@@ -114,7 +116,7 @@ struct ThemeSection: View {
     @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("appearance".localized)) {
+        Section {
             Picker("theme".localized, selection: $settings.currentTheme) {
                 ForEach(ThemeType.allCases, id: \.self) { theme in
                     HStack {
@@ -130,6 +132,8 @@ struct ThemeSection: View {
                 }
             }
             .pickerStyle(MenuPickerStyle())
+        } header: {
+            Text("appearance".localized)
         }
     }
     
@@ -150,13 +154,15 @@ struct TimerSection: View {
     @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("time_limit".localized)) {
+        Section {
             Picker("time_limit_option".localized, selection: $settings.timerOption) {
                 ForEach(TimerOption.allCases, id: \.self) { option in
                     Text(timerOptionLocalizedDescription(option))
                 }
             }
             .pickerStyle(MenuPickerStyle())
+        } header: {
+            Text("time_limit".localized)
         }
     }
     
@@ -179,7 +185,7 @@ struct OpponentSection: View {
     @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("opponent".localized)) {
+        Section {
             Toggle("play_against_computer".localized, isOn: $settings.aiEnabled)
             
             if settings.aiEnabled {
@@ -223,6 +229,8 @@ struct OpponentSection: View {
                     .foregroundColor(.secondary)
                     .padding(.top, 4)
             }
+        } header: {
+            Text("opponent".localized)
         }
     }
     
@@ -241,9 +249,11 @@ struct SoundSection: View {
     @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("sound_vibration".localized)) {
+        Section {
             Toggle("sound_effects".localized, isOn: $settings.soundEnabled)
             Toggle("vibration".localized, isOn: $settings.hapticFeedbackEnabled)
+        } header: {
+            Text("sound_vibration".localized)
         }
     }
 }
@@ -254,7 +264,7 @@ struct LanguageSection: View {
     @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        Section(header: Text("language".localized)) {
+        Section {
             Picker("language".localized, selection: $settings.language) {
                 ForEach(Language.allCases, id: \.self) { language in
                     HStack {
@@ -264,6 +274,8 @@ struct LanguageSection: View {
                 }
             }
             .pickerStyle(MenuPickerStyle())
+        } header: {
+            Text("language".localized)
         }
     }
 }

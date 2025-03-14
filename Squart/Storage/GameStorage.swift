@@ -1,147 +1,82 @@
 import Foundation
 
+// MARK: - Move Suggestion
+struct MoveSuggestion: Codable {
+    let row: Int
+    let column: Int
+    let score: Int
+}
+
+// MARK: - Game State
 struct GameState: Codable {
     let boardSize: Int
     let cells: [[CellType]]
     let currentPlayer: Player
-    let blueScore: Int
-    let redScore: Int
     let isGameOver: Bool
-    let timerOption: TimerOption
-    let blueTimeRemaining: Int
-    let redTimeRemaining: Int
-    let aiEnabled: Bool
+    let winner: Player?
     let aiDifficulty: AIDifficulty
-    let aiTeam: Player
-    let startingPlayer: Player
-    let aiVsAiMode: Bool
     let secondAiDifficulty: AIDifficulty
-    let timestamp: Date
-    let name: String
+    let isAIGame: Bool
+    let isSecondAITurn: Bool
+    let showAIThinking: Bool
+    let consideredMoves: [MoveSuggestion]
     
-    init(from game: Game, name: String = "Automatsko čuvanje") {
+    init(from game: Game) {
         self.boardSize = game.board.size
-        self.cells = game.board.cells.map { row in
-            row.map { $0.type }
-        }
+        self.cells = game.board.getCellTypeArray()
         self.currentPlayer = game.currentPlayer
-        self.blueScore = game.blueScore
-        self.redScore = game.redScore
         self.isGameOver = game.isGameOver
-        self.timerOption = game.timerOption
-        self.blueTimeRemaining = game.blueTimeRemaining
-        self.redTimeRemaining = game.redTimeRemaining
-        self.aiEnabled = game.aiEnabled
+        self.winner = game.winner
         self.aiDifficulty = game.aiDifficulty
-        self.aiTeam = game.aiTeam
-        self.startingPlayer = game.startingPlayer
-        self.aiVsAiMode = game.aiVsAiMode
         self.secondAiDifficulty = game.secondAiDifficulty
-        self.timestamp = Date()
-        self.name = name
+        self.isAIGame = game.isAIGame
+        self.isSecondAITurn = game.isSecondAITurn
+        self.showAIThinking = game.showAIThinking
+        self.consideredMoves = game.consideredMoves.map { MoveSuggestion(row: $0.row, column: $0.column, score: $0.score) }
     }
 }
 
+// MARK: - Game Storage
 class GameStorage {
     static let shared = GameStorage()
+    private let defaults = UserDefaults.standard
+    private let gameStateKey = "savedGameState"
     
-    private let fileStorage: FileStorage
+    private init() {}
     
-    private init() {
-        do {
-            self.fileStorage = try FileStorage()
-        } catch {
-            fatalError("Nije moguće inicijalizovati FileStorage: \(error)")
+    func saveGame(_ game: Game) {
+        let gameState = GameState(from: game)
+        if let encoded = try? JSONEncoder().encode(gameState) {
+            defaults.set(encoded, forKey: gameStateKey)
         }
     }
     
-    // Čuvanje igre
-    func saveGame(_ game: Game, name: String? = nil) throws {
-        let gameState = GameState(from: game, name: name ?? "Automatsko čuvanje")
-        let key = "game_\(Date().timeIntervalSince1970)"
-        print("Чување игре под кључем: \(key)")
-        print("Стање игре: величина табле=\(gameState.boardSize), тренутни играч=\(gameState.currentPlayer), AI=\(gameState.aiEnabled)")
-        
-        try fileStorage.save(gameState, forKey: key)
-    }
-    
-    // Učitavanje igre
-    func loadGame(forKey key: String) throws -> Game? {
-        print("Учитавање игре са кључем: \(key)")
-        
-        if let gameState: GameState = try fileStorage.load(forKey: key) {
-            print("Игра успешно учитана из FileStorage")
-            print("Учитано стање: величина табле=\(gameState.boardSize), тренутни играч=\(gameState.currentPlayer), AI=\(gameState.aiEnabled)")
-            return createGame(from: gameState)
+    func loadGame() -> Game? {
+        guard let data = defaults.data(forKey: gameStateKey),
+              let gameState = try? JSONDecoder().decode(GameState.self, from: data) else {
+            return nil
         }
         
-        print("Игра није пронађена")
-        return nil
-    }
-    
-    // Učitavanje svih sačuvanih igara
-    func loadAllGames() throws -> [(key: String, game: GameState)] {
-        print("Учитавање свих сачуваних игара...")
-        
-        do {
-            let fileGames: [String: GameState] = try fileStorage.loadAll(forKeys: fileStorage.allKeys)
-            print("Пронађено \(fileGames.count) игара у FileStorage")
-            
-            let sortedGames = fileGames.map { ($0.key, $0.value) }
-                .sorted { $0.1.timestamp > $1.1.timestamp }
-            print("Укупно пронађено \(sortedGames.count) игара")
-            
-            return sortedGames
-        } catch {
-            print("Грешка при учитавању игара: \(error)")
-            throw error
-        }
-    }
-    
-    // Brisanje igre
-    func deleteGame(forKey key: String) throws {
-        try fileStorage.delete(forKey: key)
-    }
-    
-    // Brisanje svih igara
-    func deleteAllGames() throws {
-        try fileStorage.clear()
-    }
-    
-    // Helper metoda za kreiranje Game instance iz GameState
-    private func createGame(from gameState: GameState) -> Game {
         let game = Game(boardSize: gameState.boardSize)
-        
-        // Rekonstrukcija table
-        for (row, rowCells) in gameState.cells.enumerated() {
-            for (column, cellType) in rowCells.enumerated() {
-                if row < game.board.cells.count && column < game.board.cells[row].count {
-                    game.board.cells[row][column].type = cellType
-                }
+        game.board.cells = gameState.cells.enumerated().map { row, rowCells in
+            rowCells.enumerated().map { col, cellType in
+                Cell(type: cellType, row: row, column: col)
             }
         }
-        
         game.currentPlayer = gameState.currentPlayer
-        game.blueScore = gameState.blueScore
-        game.redScore = gameState.redScore
         game.isGameOver = gameState.isGameOver
-        game.timerOption = gameState.timerOption
-        game.blueTimeRemaining = gameState.blueTimeRemaining
-        game.redTimeRemaining = gameState.redTimeRemaining
-        
-        // Rekonstrukcija AI podešavanja
-        game.aiEnabled = gameState.aiEnabled
+        game.winner = gameState.winner
         game.aiDifficulty = gameState.aiDifficulty
-        game.aiTeam = gameState.aiTeam
-        game.startingPlayer = gameState.startingPlayer
-        game.aiVsAiMode = gameState.aiVsAiMode
         game.secondAiDifficulty = gameState.secondAiDifficulty
-        
-        // Inicijalizacija AI ako je potrebno
-        if game.aiEnabled {
-            game.initializeAI(difficulty: game.aiDifficulty, team: gameState.aiTeam)
-        }
+        game.isAIGame = gameState.isAIGame
+        game.isSecondAITurn = gameState.isSecondAITurn
+        game.showAIThinking = gameState.showAIThinking
+        game.consideredMoves = gameState.consideredMoves.map { (row: $0.row, column: $0.column, score: $0.score) }
         
         return game
+    }
+    
+    func clearSavedGame() {
+        defaults.removeObject(forKey: gameStateKey)
     }
 } 
