@@ -609,6 +609,27 @@ struct GameView: View {
             .shadow(color: Color.green.opacity(0.3), radius: 3, x: 2, y: 2)
         }
     }
+    
+    func initGameWithSettings() {
+        // Kopiramo AI podešavanja
+        game.aiEnabled = settings.aiEnabled
+        game.aiDifficulty = settings.aiDifficulty
+        game.aiTeam = settings.aiTeam
+        game.aiVsAiMode = settings.aiVsAiMode
+        game.secondAiDifficulty = settings.secondAiDifficulty
+        game.showAIThinking = settings.showAIThinking
+        
+        // Postavljamo tajmer
+        game.timerOption = settings.timerOption
+        
+        // Resetujemo igru
+        game.resetGame()
+        
+        // Inicijalizujemo AI ako je potrebno
+        if settings.aiEnabled {
+            game.initializeAI(difficulty: settings.aiDifficulty, team: settings.aiTeam)
+        }
+    }
 }
 
 // Šahovski sat za oba igrača

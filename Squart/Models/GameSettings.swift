@@ -117,6 +117,7 @@ struct SettingsData: Codable {
     let aiTeam: Player
     let aiVsAiMode: Bool
     let secondAiDifficulty: AIDifficulty
+    let showAIThinking: Bool
     let language: Language
 }
 
@@ -186,6 +187,12 @@ class GameSettingsManager: ObservableObject {
         }
     }
     
+    @Published var showAIThinking: Bool = false {
+        didSet {
+            save()
+        }
+    }
+    
     @Published var language: Language = .serbian {
         didSet {
             save()
@@ -199,7 +206,7 @@ class GameSettingsManager: ObservableObject {
     }
     
     private func save() {
-        let settings = SettingsData(
+        let settingsData = SettingsData(
             currentTheme: currentTheme,
             timerOption: timerOption,
             soundEnabled: soundEnabled,
@@ -209,27 +216,35 @@ class GameSettingsManager: ObservableObject {
             aiTeam: aiTeam,
             aiVsAiMode: aiVsAiMode,
             secondAiDifficulty: secondAiDifficulty,
+            showAIThinking: showAIThinking,
             language: language
         )
         
-        if let encoded = try? JSONEncoder().encode(settings) {
+        // Kodiranje u JSON i čuvanje
+        if let encoded = try? JSONEncoder().encode(settingsData) {
             UserDefaults.standard.set(encoded, forKey: "squart_settings")
         }
     }
     
     private func load() {
+        // Učitavanje iz UserDefaults-a ako postoji
         if let data = UserDefaults.standard.data(forKey: "squart_settings"),
-           let settings = try? JSONDecoder().decode(SettingsData.self, from: data) {
-            self.currentTheme = settings.currentTheme
-            self.timerOption = settings.timerOption
-            self.soundEnabled = settings.soundEnabled
-            self.hapticFeedbackEnabled = settings.hapticFeedbackEnabled
-            self.aiEnabled = settings.aiEnabled
-            self.aiDifficulty = settings.aiDifficulty
-            self.aiTeam = settings.aiTeam
-            self.aiVsAiMode = settings.aiVsAiMode
-            self.secondAiDifficulty = settings.secondAiDifficulty
-            self.language = settings.language
+           let decoded = try? JSONDecoder().decode(SettingsData.self, from: data) {
+            
+            self.currentTheme = decoded.currentTheme
+            self.timerOption = decoded.timerOption
+            self.soundEnabled = decoded.soundEnabled
+            self.hapticFeedbackEnabled = decoded.hapticFeedbackEnabled
+            self.aiEnabled = decoded.aiEnabled
+            self.aiDifficulty = decoded.aiDifficulty
+            self.aiTeam = decoded.aiTeam
+            self.aiVsAiMode = decoded.aiVsAiMode
+            self.secondAiDifficulty = decoded.secondAiDifficulty
+            self.showAIThinking = decoded.showAIThinking
+            self.language = decoded.language
+            
+            // Postavljamo jezik aplikacije
+            Localization.shared.currentLanguage = decoded.language
         }
     }
 }

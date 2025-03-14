@@ -207,6 +207,17 @@ struct OpponentSection: View {
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 
+                // Opcija za vizualizaciju "razmišljanja" AI-a
+                Toggle("Prikaži AI 'razmišljanje'", isOn: $settings.showAIThinking)
+                
+                if settings.showAIThinking {
+                    Text("Ova opcija prikazuje topografsku mapu poteza koje AI razmatra i njihove ocene")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 2)
+                }
+                
                 Text("\("first_move".localized): \(game.startingPlayer == .blue ? "blue".localized : "red".localized)")
                     .font(.footnote)
                     .foregroundColor(.secondary)

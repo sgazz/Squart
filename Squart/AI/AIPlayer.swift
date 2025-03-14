@@ -20,6 +20,40 @@ enum AIDifficulty: Int, CaseIterable, Codable {
     }
 }
 
+// MARK: - Struktura za tabelu transformacija
+/// Ključ za heširanje stanja igre za tabelu transformacija
+struct TranspositionKey: Hashable {
+    let boardState: [[CellType]]
+    let currentPlayer: Player
+    
+    init(game: Game) {
+        var state: [[CellType]] = []
+        for row in 0..<game.board.size {
+            var rowState: [CellType] = []
+            for col in 0..<game.board.size {
+                rowState.append(game.board.cells[row][col].type)
+            }
+            state.append(rowState)
+        }
+        self.boardState = state
+        self.currentPlayer = game.currentPlayer
+    }
+}
+
+/// Vrednost koja se čuva u tabeli transformacija
+struct TranspositionValue {
+    let score: Int
+    let depth: Int
+    let type: TranspositionValueType
+}
+
+/// Tip vrednosti u tabeli transformacija
+enum TranspositionValueType {
+    case exact      // Tačna vrednost
+    case lowerBound // Donja granica (alfa)
+    case upperBound // Gornja granica (beta)
+}
+
 // MARK: - AI Player
 /// Implementira logiku AI igrača za igru Squart
 /// 
@@ -31,28 +65,36 @@ enum AIDifficulty: Int, CaseIterable, Codable {
 /// - Keširanje za optimizaciju performansi
 class AIPlayer {
     // MARK: - Properties
-    private let difficulty: AIDifficulty
+    /// Težina AI igrača
+    let difficulty: AIDifficulty
     
     // MARK: - Performance Tracking
-    private var evaluationCount: Int = 0
-    private var cacheHitCount: Int = 0
-    private var lastMoveTime: TimeInterval = 0
+    private(set) var evaluationCount: Int = 0
+    private(set) var cacheHitCount: Int = 0
+    private(set) var lastMoveTime: TimeInterval = 0
     
     // MARK: - Caching
     /// Keš za edge i corner pozicije za različite veličine table
     private var edgePositionsCache: [Int: Set<Position>] = [:]
     private var cornerPositionsCache: [Int: Set<Position>] = [:]
+    private var centerPositionsCache: [Int: Set<Position>] = [:]
+    
+    // Tabela transformacija za mehanizam učenja i optimizaciju
+    private var transpositionTable: [String: Int] = [:]
+    
+    // Tragovi za vizualizaciju razmišljanja
+    private(set) var consideredMoves: [(row: Int, column: Int, score: Int)] = []
     
     // MARK: - Helper Types
-    /// Pomоćna struktura za predstavljanje pozicije na tabli
+    /// Pomoćna struktura za predstavljanje pozicije na tabli
     private struct Position: Hashable {
         let row: Int
         let column: Int
     }
     
     // MARK: - Initialization
-    /// Inicijalizuje novi AI igrač sa određenim nivoom težine
-    /// - Parameter difficulty: Nivo težine AI igrača (default: .medium)
+    /// Inicijalizuje novog AI igrača
+    /// - Parameter difficulty: Težina AI igrača
     init(difficulty: AIDifficulty = .medium) {
         self.difficulty = difficulty
         print("AI igrač inicijalizovan sa težinom: \(difficulty.description)")
@@ -62,30 +104,40 @@ class AIPlayer {
     /// Inicijalizuje keš za tablu određene veličine ako već ne postoji
     /// - Parameter boardSize: Veličina table za koju se inicijalizuje keš
     private func initializeCacheIfNeeded(boardSize: Int) {
-        // Ако већ имамо кеш за ову величину табле, прескачемо
+        // Ako već imamo keš za ovu veličinu table, ne radimo ništa
         if edgePositionsCache[boardSize] != nil {
             return
         }
         
         var edges = Set<Position>()
         var corners = Set<Position>()
+        var centers = Set<Position>()
         
-        // Додајемо све ивичне позиције
         for i in 0..<boardSize {
-            edges.insert(Position(row: 0, column: i))
-            edges.insert(Position(row: boardSize - 1, column: i))
-            edges.insert(Position(row: i, column: 0))
-            edges.insert(Position(row: i, column: boardSize - 1))
+            for j in 0..<boardSize {
+                let position = Position(row: i, column: j)
+                
+                // Ćoškovi
+                if (i == 0 && j == 0) ||
+                   (i == 0 && j == boardSize - 1) ||
+                   (i == boardSize - 1 && j == 0) ||
+                   (i == boardSize - 1 && j == boardSize - 1) {
+                    corners.insert(position)
+                }
+                // Ivice
+                else if i == 0 || i == boardSize - 1 || j == 0 || j == boardSize - 1 {
+                    edges.insert(position)
+                }
+                // Centar
+                else if i >= boardSize/3 && i < boardSize*2/3 && j >= boardSize/3 && j < boardSize*2/3 {
+                    centers.insert(position)
+                }
+            }
         }
-        
-        // Додајемо ћошкове
-        corners.insert(Position(row: 0, column: 0))
-        corners.insert(Position(row: 0, column: boardSize - 1))
-        corners.insert(Position(row: boardSize - 1, column: 0))
-        corners.insert(Position(row: boardSize - 1, column: boardSize - 1))
         
         edgePositionsCache[boardSize] = edges
         cornerPositionsCache[boardSize] = corners
+        centerPositionsCache[boardSize] = centers
     }
     
     // MARK: - Position Evaluation
@@ -119,6 +171,7 @@ class AIPlayer {
         // Resetujemo brojače
         evaluationCount = 0
         cacheHitCount = 0
+        consideredMoves.removeAll()
         let startTime = Date()
         
         // Ako je igra završena, nema validnih poteza
@@ -141,19 +194,12 @@ class AIPlayer {
         lastMoveTime = Date().timeIntervalSince(startTime)
         
         // Poboljšano logovanje statistike
-        let cacheHitRate = Double(cacheHitCount) / Double(max(1, evaluationCount)) * 100
         let movesPerSecond = Double(evaluationCount) / lastMoveTime
         
         print("\n=== AI Performanse (\(difficulty.description)) ===")
         print("Vreme razmišljanja: \(String(format: "%.3f", lastMoveTime))s")
         print("Broj evaluacija: \(evaluationCount)")
-        print("Broj keš pogodaka: \(cacheHitCount)")
-        print("Procent keš pogodaka: \(String(format: "%.1f", cacheHitRate))%")
         print("Evaluacije po sekundi: \(String(format: "%.0f", movesPerSecond))")
-        if let move = move {
-            print("Izabrani potez: (\(move.row), \(move.column))")
-        }
-        print("===============================\n")
         
         return move
     }
@@ -161,7 +207,8 @@ class AIPlayer {
     // MARK: - Strategy Implementation
     /// Implementira strategiju za laki nivo (nasumični potezi)
     private func findRandomMove(for game: Game) -> (row: Int, column: Int)? {
-        return getValidMoves(for: game.board, player: game.currentPlayer).randomElement()
+        let validMoves = getValidMoves(for: game.board, player: game.currentPlayer)
+        return validMoves.randomElement()
     }
     
     /// Prikuplja sve validne poteze za trenutnog igrača
@@ -279,54 +326,59 @@ class AIPlayer {
         let maxThinkingTime = calculateThinkingTime(boardSize: boardSize)
         let startTime = Date()
         
-        // Optimizacija za velike table
-        let movesToConsider: [((row: Int, column: Int))] = {
-            if validMoves.count > 8 {
-                // Na velikim tablama, razmotrimo samo strateški važne poteze
-                var strategicMoves: [(row: Int, column: Int)] = []
-                
-                // Dodajemo ivične poteze
-                strategicMoves.append(contentsOf: validMoves.filter { move in isEdgeMove(move, boardSize: boardSize) })
-                
-                // Dodajemo ćoškove ako su dostupni
-                strategicMoves.append(contentsOf: validMoves.filter { move in isCornerMove(move, boardSize: boardSize) })
-                
-                // Dodajemo poteze u centru za veće table
-                if boardSize >= 7 {
-                    strategicMoves.append(contentsOf: validMoves.filter { move in
-                        move.row >= boardSize/3 && move.row < boardSize*2/3 &&
-                        move.column >= boardSize/3 && move.column < boardSize*2/3
-                    })
-                }
-                
-                // Ako nemamo dovoljno strateških poteza, dodajemo nasumične
-                if strategicMoves.count < 6 {
-                    let remainingMoves = validMoves.filter { move in !strategicMoves.contains(where: { $0.row == move.row && $0.column == move.column }) }
-                    strategicMoves.append(contentsOf: Array(remainingMoves.shuffled().prefix(6 - strategicMoves.count)))
-                }
-                
-                return strategicMoves
-            } else {
-                return validMoves
-            }
-        }()
+        // Optimizaciја: избегавамо стварање свих могућих потеза на почетку
+        // Уместо тога, динамично ћемо их генерисати и сортирати по потенцијалу
+        var possibleMoves: [(row: Int, column: Int, potentialValue: Int)] = []
         
-        for move in movesToConsider {
-            // Proveravamo da li je isteklo vreme za razmišljanje
-            if Date().timeIntervalSince(startTime) > maxThinkingTime {
-                print("AI: Prekinuto razmišljanje zbog vremenskog ograničenja")
-                break
+        // Проналазимо све могуће потезе и процењујемо њихов потенцијал
+        for row in 0..<boardSize {
+            for column in 0..<boardSize {
+                if game.board.cells[row][column].type == .empty {
+                    var tempBoard = game.board
+                    _ = tempBoard.placeMark(at: Position(row: row, column: column), for: game.currentPlayer)
+                    let potentialValue = evaluateBoard(board: tempBoard, player: game.currentPlayer)
+                    possibleMoves.append((row: row, column: column, potentialValue: potentialValue))
+                }
+            }
+        }
+        
+        // Сортирамо потезе тако да прво оцењујемо најобећавајуће
+        if game.currentPlayer == .blue {
+            possibleMoves.sort { $0.potentialValue > $1.potentialValue } // За максимизујућег играча, већи потенцијал прво
+        } else {
+            possibleMoves.sort { $0.potentialValue < $1.potentialValue } // За минимизујућег играча, мањи потенцијал прво
+        }
+        
+        for moveInfo in possibleMoves {
+            let move = moveInfo.move
+            var tempBoard = game.board
+            _ = tempBoard.placeMark(at: Position(row: move.row, column: move.column), for: game.currentPlayer)
+            
+            // Додајемо бонус из историје учења
+            var bonusFromHistory = moveInfo.potentialValue
+            
+            // Ограничавамо утицај историје - не може превазићи вредност гарантоване победе/пораза
+            bonusFromHistory = min(bonusFromHistory, 500)
+            bonusFromHistory = max(bonusFromHistory, -500)
+            
+            // Израчунавамо резултат за овај потез путем minimax алгоритма
+            let score: Int
+            if game.currentPlayer == .blue {
+                score = alphaBetaMinimax(board: tempBoard, depth: maxDepth - 1, alpha: Int.min, beta: Int.max, isMaximizingPlayer: false) + bonusFromHistory
+                if score > bestScore {
+                    bestScore = score
+                    bestMove = move
+                }
+            } else {
+                score = alphaBetaMinimax(board: tempBoard, depth: maxDepth - 1, alpha: Int.min, beta: Int.max, isMaximizingPlayer: true) - bonusFromHistory
+                if score < bestScore {
+                    bestScore = score
+                    bestMove = move
+                }
             }
             
-            let clonedGame = cloneGame(game)
-            _ = clonedGame.makeMove(row: move.row, column: move.column)
-            
-            let score = alphaBetaMinimax(clonedGame, depth: maxDepth, alpha: Int.min, beta: Int.max, maximizingPlayer: false, originalPlayer: game.currentPlayer)
-            
-            if score > bestScore {
-                bestScore = score
-                bestMove = move
-            }
+            // Додајемо овај потез у листу размотрених потеза
+            consideredMoves.append((row: move.row, column: move.column, score: score))
         }
         
         // Ako zbog vremenskog ograničenja nismo našli najbolji potez, koristimo srednji nivo
@@ -407,32 +459,14 @@ class AIPlayer {
     // MARK: - Time Management
     /// Izračunava vreme razmišljanja za teški nivo
     private func calculateThinkingTime(boardSize: Int) -> TimeInterval {
-        // Базно време је 2 секунде
-        let baseTime: TimeInterval = 2.0
-        
-        // За мање табле дајемо више времена јер су прорачуни лакши
-        if boardSize <= 8 {
-            return baseTime
-        } else if boardSize <= 12 {
-            return baseTime * 0.8
-        } else {
-            return baseTime * 0.6
-        }
+        // Prilagođeno vreme za različite veličine table
+        return min(1.0 + Double(boardSize) * 0.05, 3.0)
     }
     
     /// Izračunava vreme razmišljanja za srednji nivo
     private func calculateMediumThinkingTime(boardSize: Int) -> TimeInterval {
-        // Базно време је 1 секунда
-        let baseTime: TimeInterval = 1.0
-        
-        // За мање табле дајемо више времена јер су прорачуни лакши
-        if boardSize <= 8 {
-            return baseTime
-        } else if boardSize <= 12 {
-            return baseTime * 0.6
-        } else {
-            return baseTime * 0.4
-        }
+        // Kraće vreme za srednji nivo
+        return min(0.5 + Double(boardSize) * 0.03, 1.5)
     }
     
     // MARK: - Helper Functions
@@ -590,58 +624,322 @@ class AIPlayer {
     }
     
     /// Alfa-beta minimax algoritam za evaluaciju poteza u dubinu
-    private func alphaBetaMinimax(_ game: Game, depth: Int, alpha: Int, beta: Int, maximizingPlayer: Bool, originalPlayer: Player) -> Int {
-        // Bazni slučaj: dostigli smo maksimalnu dubinu ili igra je završena
-        if depth == 0 || game.isGameOver {
-            return evaluatePosition(game, originalPlayer: originalPlayer)
+    private func alphaBetaMinimax(board: GameBoard, depth: Int, alpha: Int, beta: Int, isMaximizingPlayer: Bool) -> Int {
+        // Увећавамо бројач чворова и тренутну дубину
+        nodes += 1
+        currentDepth = max(currentDepth, initialDepth - depth)
+        
+        // Креирамо хеш кључ за транспозициону табелу
+        let boardKey = createBoardHash(for: board)
+        
+        // Проверавамо да ли смо већ израчунали вредност за ово стање
+        if let cachedScore = transpositionTable[boardKey] {
+            return cachedScore
         }
         
-        let currentPlayer = game.currentPlayer
-        let validMoves = getValidMoves(for: game.board, player: currentPlayer)
-        
-        // Ako nema validnih poteza, igra je završena
-        if validMoves.isEmpty {
-            // Trenutni igrač je izgubio (nema validnih poteza)
-            let playerWon = currentPlayer != originalPlayer
-            return playerWon ? 1000 : -1000
-        }
-        
-        if maximizingPlayer {
-            var value = Int.min
-            var currentAlpha = alpha
+        // Проверавамо да ли смо достигли максималну дубину или крај игре
+        if depth == 0 || board.checkForWinner() != nil || board.isFull() {
+            let score = evaluateBoard(board: board, player: isMaximizingPlayer ? .red : .blue)
             
-            for move in validMoves {
-                let clonedGame = cloneGame(game)
-                _ = clonedGame.makeMove(row: move.row, column: move.column)
-                
-                value = max(value, alphaBetaMinimax(clonedGame, depth: depth - 1, alpha: currentAlpha, beta: beta, maximizingPlayer: false, originalPlayer: originalPlayer))
-                
-                if value >= beta {
-                    break // Beta odsecanje
+            // Чувамо резултат у транспозиционој табели
+            transpositionTable[boardKey] = score
+            
+            return score
+        }
+        
+        // Оптимизација: избегавамо стварање свих могућих потеза на почетку
+        // Уместо тога, динамично ћемо их генерисати и сортирати по потенцијалу
+        var possibleMoves: [(row: Int, column: Int, potentialValue: Int)] = []
+        
+        // Проналазимо све могуће потезе и процењујемо њихов потенцијал
+        for row in 0..<board.size {
+            for column in 0..<board.size {
+                if board.cells[row][column].type == .empty {
+                    var tempBoard = board
+                    _ = tempBoard.placeMark(at: Position(row: row, column: column), for: isMaximizingPlayer ? .blue : .red)
+                    let potentialValue = evaluateBoard(board: tempBoard, player: isMaximizingPlayer ? .blue : .red)
+                    possibleMoves.append((row: row, column: column, potentialValue: potentialValue))
                 }
-                
-                currentAlpha = max(currentAlpha, value)
             }
-            
-            return value
+        }
+        
+        // Сортирамо потезе тако да прво оцењујемо најобећавајуће
+        if isMaximizingPlayer {
+            possibleMoves.sort { $0.potentialValue > $1.potentialValue } // За максимизујућег играча, већи потенцијал прво
         } else {
-            var value = Int.max
-            var currentBeta = beta
+            possibleMoves.sort { $0.potentialValue < $1.potentialValue } // За минимизујућег играча, мањи потенцијал прво
+        }
+        
+        var currentAlpha = alpha
+        var currentBeta = beta
+        
+        if isMaximizingPlayer {
+            var maxEval = Int.min
             
-            for move in validMoves {
-                let clonedGame = cloneGame(game)
-                _ = clonedGame.makeMove(row: move.row, column: move.column)
+            for move in possibleMoves {
+                var tempBoard = board
+                _ = tempBoard.placeMark(at: Position(row: move.row, column: move.column), for: .blue)
                 
-                value = min(value, alphaBetaMinimax(clonedGame, depth: depth - 1, alpha: alpha, beta: currentBeta, maximizingPlayer: true, originalPlayer: originalPlayer))
+                let eval = alphaBetaMinimax(board: tempBoard, depth: depth - 1, alpha: currentAlpha, beta: currentBeta, isMaximizingPlayer: false)
+                maxEval = max(maxEval, eval)
+                currentAlpha = max(currentAlpha, eval)
                 
-                if value <= alpha {
-                    break // Alfa odsecanje
+                if currentBeta <= currentAlpha {
+                    break // Beta одсецање
                 }
-                
-                currentBeta = min(currentBeta, value)
             }
             
-            return value
+            // Чувамо резултат у транспозиционој табели
+            transpositionTable[boardKey] = maxEval
+            
+            return maxEval
+        } else {
+            var minEval = Int.max
+            
+            for move in possibleMoves {
+                var tempBoard = board
+                _ = tempBoard.placeMark(at: Position(row: move.row, column: move.column), for: .red)
+                
+                let eval = alphaBetaMinimax(board: tempBoard, depth: depth - 1, alpha: currentAlpha, beta: currentBeta, isMaximizingPlayer: true)
+                minEval = min(minEval, eval)
+                currentBeta = min(currentBeta, eval)
+                
+                if currentBeta <= currentAlpha {
+                    break // Alpha одсецање
+                }
+            }
+            
+            // Чувамо резултат у транспозиционој табели
+            transpositionTable[boardKey] = minEval
+            
+            return minEval
         }
+    }
+    
+    // MARK: - Pomoćna funkcija za ređanje poteza
+    /// Ređa poteze po potencijalnom kvalitetu za bolju efikasnost alfa-beta odsecanja
+    private func sortMoves(_ moves: [(row: Int, column: Int)], game: Game, player: Player) -> [(row: Int, column: Int)] {
+        var scoredMoves: [(move: (row: Int, column: Int), score: Int)] = []
+        
+        for move in moves {
+            var score = 0
+            
+            // Bonus za ivice
+            if isEdgeMove(move, boardSize: game.board.size) {
+                score += 3
+            }
+            
+            // Bonus za ćoškove
+            if isCornerMove(move, boardSize: game.board.size) {
+                score += 5
+            }
+            
+            // Bonus za centar
+            if game.board.size >= 7 &&
+               move.row >= game.board.size/3 && move.row < game.board.size*2/3 &&
+               move.column >= game.board.size/3 && move.column < game.board.size*2/3 {
+                score += 2
+            }
+            
+            scoredMoves.append((move: move, score: score))
+        }
+        
+        // Sortiramo poteze po skorovima (najviši prvo)
+        scoredMoves.sort { $0.score > $1.score }
+        
+        // Vraćamo samo poteze
+        return scoredMoves.map { $0.move }
+    }
+    
+    /// Čišćenje tabele transformacija kako ne bi zauzimala previše memorije
+    func clearTranspositionTable() {
+        transpositionTable.removeAll()
+    }
+    
+    // MARK: - New Method
+    mutating func findBestMove(on board: GameBoard, for player: Player, considerDepth: Int) -> (row: Int, column: Int, score: Int) {
+        self.nodes = 0
+        self.currentDepth = 0
+        
+        // Креирамо листу могућих потеза
+        var possibleMoves: [(row: Int, column: Int)] = []
+        for row in 0..<board.size {
+            for column in 0..<board.size {
+                if board.cells[row][column].type == .empty {
+                    possibleMoves.append((row: row, column: column))
+                }
+            }
+        }
+        
+        // Додајемо учење из историје ако имамо претходне потезе
+        var evaluatedMoves = AILearningManager.evaluateMovesBasedOnHistory(
+            moves: possibleMoves,
+            boardState: board.getCellTypeArray(),
+            player: player
+        )
+        
+        // Примењујемо minimax алгоритам за сваки могући потез
+        var bestMove: (row: Int, column: Int, score: Int) = (-1, -1, player == .blue ? Int.min : Int.max)
+        var alpha = Int.min
+        var beta = Int.max
+        
+        // Сортирамо потезе на основу бонуса из историје
+        evaluatedMoves.sort { $0.bonus > $1.bonus }
+        
+        for moveInfo in evaluatedMoves {
+            let move = moveInfo.move
+            var tempBoard = board
+            _ = tempBoard.placeMark(at: Position(row: move.row, column: move.column), for: player)
+            
+            // Додајемо бонус из историје учења
+            var bonusFromHistory = moveInfo.bonus
+            
+            // Ограничавамо утицај историје - не може превазићи вредност гарантоване победе/пораза
+            bonusFromHistory = min(bonusFromHistory, 500)
+            bonusFromHistory = max(bonusFromHistory, -500)
+            
+            // Израчунавамо резултат за овај потез путем minimax алгоритма
+            let score: Int
+            if player == .blue {
+                score = alphaBetaMinimax(board: tempBoard, depth: considerDepth - 1, alpha: alpha, beta: beta, isMaximizingPlayer: false) + bonusFromHistory
+                if score > bestMove.score {
+                    bestMove = (move.row, move.column, score)
+                }
+                alpha = max(alpha, score)
+            } else {
+                score = alphaBetaMinimax(board: tempBoard, depth: considerDepth - 1, alpha: alpha, beta: beta, isMaximizingPlayer: true) - bonusFromHistory
+                if score < bestMove.score {
+                    bestMove = (move.row, move.column, score)
+                }
+                beta = min(beta, score)
+            }
+            
+            // Додајемо овај потез у листу размотрених потеза
+            Game.shared.consideredMoves.append((row: move.row, column: move.column, score: score))
+        }
+        
+        // Памтимо најбољи потез у историји учења
+        if bestMove.row >= 0 && bestMove.column >= 0 {
+            AILearningManager.recordMove(
+                row: bestMove.row,
+                column: bestMove.column,
+                player: player,
+                boardState: board.getCellTypeArray(),
+                score: bestMove.score
+            )
+        }
+        
+        print("AI је размотрио \(nodes) чворова пре избора потеза \(bestMove.row), \(bestMove.column) са оценом \(bestMove.score)")
+        return bestMove
+    }
+    
+    // Оптимизовани minimax алгоритам са alpha-beta одсецањем и транспозиционом табелом
+    private func alphaBetaMinimax(board: GameBoard, depth: Int, alpha: Int, beta: Int, isMaximizingPlayer: Bool) -> Int {
+        // Увећавамо бројач чворова и тренутну дубину
+        nodes += 1
+        currentDepth = max(currentDepth, initialDepth - depth)
+        
+        // Креирамо хеш кључ за транспозициону табелу
+        let boardKey = createBoardHash(for: board)
+        
+        // Проверавамо да ли смо већ израчунали вредност за ово стање
+        if let cachedScore = transpositionTable[boardKey] {
+            return cachedScore
+        }
+        
+        // Проверавамо да ли смо достигли максималну дубину или крај игре
+        if depth == 0 || board.checkForWinner() != nil || board.isFull() {
+            let score = evaluateBoard(board: board, player: isMaximizingPlayer ? .red : .blue)
+            
+            // Чувамо резултат у транспозиционој табели
+            transpositionTable[boardKey] = score
+            
+            return score
+        }
+        
+        // Оптимизација: избегавамо стварање свих могућих потеза на почетку
+        // Уместо тога, динамично ћемо их генерисати и сортирати по потенцијалу
+        var possibleMoves: [(row: Int, column: Int, potentialValue: Int)] = []
+        
+        // Проналазимо све могуће потезе и процењујемо њихов потенцијал
+        for row in 0..<board.size {
+            for column in 0..<board.size {
+                if board.cells[row][column].type == .empty {
+                    var tempBoard = board
+                    _ = tempBoard.placeMark(at: Position(row: row, column: column), for: isMaximizingPlayer ? .blue : .red)
+                    let potentialValue = evaluateBoard(board: tempBoard, player: isMaximizingPlayer ? .blue : .red)
+                    possibleMoves.append((row: row, column: column, potentialValue: potentialValue))
+                }
+            }
+        }
+        
+        // Сортирамо потезе тако да прво оцењујемо најобећавајуће
+        if isMaximizingPlayer {
+            possibleMoves.sort { $0.potentialValue > $1.potentialValue } // За максимизујућег играча, већи потенцијал прво
+        } else {
+            possibleMoves.sort { $0.potentialValue < $1.potentialValue } // За минимизујућег играча, мањи потенцијал прво
+        }
+        
+        var currentAlpha = alpha
+        var currentBeta = beta
+        
+        if isMaximizingPlayer {
+            var maxEval = Int.min
+            
+            for move in possibleMoves {
+                var tempBoard = board
+                _ = tempBoard.placeMark(at: Position(row: move.row, column: move.column), for: .blue)
+                
+                let eval = alphaBetaMinimax(board: tempBoard, depth: depth - 1, alpha: currentAlpha, beta: currentBeta, isMaximizingPlayer: false)
+                maxEval = max(maxEval, eval)
+                currentAlpha = max(currentAlpha, eval)
+                
+                if currentBeta <= currentAlpha {
+                    break // Beta одсецање
+                }
+            }
+            
+            // Чувамо резултат у транспозиционој табели
+            transpositionTable[boardKey] = maxEval
+            
+            return maxEval
+        } else {
+            var minEval = Int.max
+            
+            for move in possibleMoves {
+                var tempBoard = board
+                _ = tempBoard.placeMark(at: Position(row: move.row, column: move.column), for: .red)
+                
+                let eval = alphaBetaMinimax(board: tempBoard, depth: depth - 1, alpha: currentAlpha, beta: currentBeta, isMaximizingPlayer: true)
+                minEval = min(minEval, eval)
+                currentBeta = min(currentBeta, eval)
+                
+                if currentBeta <= currentAlpha {
+                    break // Alpha одсецање
+                }
+            }
+            
+            // Чувамо резултат у транспозиционој табели
+            transpositionTable[boardKey] = minEval
+            
+            return minEval
+        }
+    }
+    
+    // Функција за креирање хеш кључа за стање табле
+    private func createBoardHash(for board: GameBoard) -> String {
+        var hashKey = ""
+        for row in 0..<board.size {
+            for column in 0..<board.size {
+                let cell = board.cells[row][column]
+                switch cell.type {
+                case .empty: hashKey += "E"
+                case .blocked: hashKey += "B"
+                case .blue: hashKey += "L"
+                case .red: hashKey += "R"
+                }
+            }
+        }
+        return hashKey
     }
 } 
