@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squart AI Аналитика</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        h1, h2 {
+            color: #1a73e8;
+            margin-top: 0;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a73e8;
+        }
+        .stat-label {
+            color: #5f6368;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Squart AI Аналитика у реалном времену</h1>
+        
+        <div class="dashboard">
+            <div class="card full-width">
+                <h2>Тренутна анализа</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="depth">0</div>
+                        <div class="stat-label">Дубина претраге</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="nodes">0</div>
+                        <div class="stat-label">Истражени чворови</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="time">0ms</div>
+                        <div class="stat-label">Време анализе</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="branching">0</div>
+                        <div class="stat-label">Фактор гранања</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Ефикасност претраге</h2>
+                <div id="pruningChart"></div>
+            </div>
+            
+            <div class="card">
+                <h2>Дистрибуција оцена</h2>
+                <div id="evaluationChart"></div>
+            </div>
+            
+            <div class="card full-width">
+                <h2>Историја анализе</h2>
+                <div id="historyChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let evaluationHistory = [];
+        let nodeHistory = [];
+        let timeHistory = [];
+        
+        const ws = new WebSocket('ws://localhost:8080');
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            updateDashboard(data);
+        };
+        
+        function updateDashboard(data) {
+            // Ажурирамо статистику
+            document.getElementById('depth').textContent = data.searchDepth;
+            document.getElementById('nodes').textContent = data.nodesExplored.toLocaleString();
+            document.getElementById('time').textContent = `${(data.timeSpent * 1000).toFixed(0)}ms`;
+            document.getElementById('branching').textContent = data.branchingFactor.toFixed(2);
+            
+            // Додајемо нове податке у историју
+            evaluationHistory.push(data.evaluationScore);
+            nodeHistory.push(data.nodesExplored);
+            timeHistory.push(data.timeSpent * 1000);
+            
+            // Задржавамо последњих 50 уноса
+            if (evaluationHistory.length > 50) {
+                evaluationHistory.shift();
+                nodeHistory.shift();
+                timeHistory.shift();
+            }
+            
+            // Ажурирамо графиконе
+            updatePruningChart(data);
+            updateEvaluationChart();
+            updateHistoryChart();
+        }
+        
+        function updatePruningChart(data) {
+            const total = data.nodesExplored;
+            const pruned = data.alphaCutoffs + data.betaCutoffs;
+            
+            const pruningData = [{
+                values: [pruned, total - pruned],
+                labels: ['Одсечени чворови', 'Истражени чворови'],
+                type: 'pie'
+            }];
+            
+            Plotly.newPlot('pruningChart', pruningData);
+        }
+        
+        function updateEvaluationChart() {
+            const trace = {
+                x: evaluationHistory,
+                type: 'histogram',
+                nbinsx: 20,
+                marker: {
+                    color: '#1a73e8'
+                }
+            };
+            
+            const layout = {
+                margin: { t: 0, b: 30, l: 30, r: 30 },
+                bargap: 0.05
+            };
+            
+            Plotly.newPlot('evaluationChart', [trace], layout);
+        }
+        
+        function updateHistoryChart() {
+            const trace1 = {
+                y: nodeHistory,
+                name: 'Чворови',
+                type: 'scatter'
+            };
+            
+            const trace2 = {
+                y: timeHistory,
+                name: 'Време (ms)',
+                type: 'scatter',
+                yaxis: 'y2'
+            };
+            
+            const layout = {
+                margin: { t: 0, b: 30, l: 50, r: 50 },
+                showlegend: true,
+                yaxis: { title: 'Број чворова' },
+                yaxis2: {
+                    title: 'Време (ms)',
+                    overlaying: 'y',
+                    side: 'right'
+                }
+            };
+            
+            Plotly.newPlot('historyChart', [trace1, trace2], layout);
+        }
+    </script>
+</body>
+</html> 

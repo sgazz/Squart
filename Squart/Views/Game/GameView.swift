@@ -327,6 +327,15 @@ struct GameView: View {
                     )
                 )
             }
+            
+            // AI Thinking Overlay
+            if game.isAIThinking {
+                AIThinkingView(
+                    progress: game.aiThinkingProgress,
+                    player: game.currentPlayer
+                )
+                .transition(.scale.combined(with: .opacity))
+            }
         }
         .onRotate { newOrientation in
             // Ažuriramo orijentaciju samo ako nismo u Split View ili Slide Over
@@ -376,6 +385,7 @@ struct GameView: View {
             Text(loadErrorMessage)
         }
         .animation(.easeInOut(duration: 0.3), value: orientation.isPortrait)
+        .animation(.easeInOut, value: game.isAIThinking)
     }
     
     private func calculateCellSize(for geometry: GeometryProxy) -> CGFloat {

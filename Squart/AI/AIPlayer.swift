@@ -2,29 +2,16 @@ import Foundation
 
 // MARK: - AI Difficulty Levels
 /// Definiše različite nivoe težine za AI igrača
-enum AIDifficulty: Int, CaseIterable, Codable {
-    case easy = 0
-    case medium = 1
-    case hard = 2
+enum AIDifficulty: String, CaseIterable {
+    case easy = "Лако"
+    case medium = "Средње"
+    case hard = "Тешко"
     
-    /// Opis težine na srpskom jeziku
-    var description: String {
+    var maxDepth: Int {
         switch self {
-        case .easy:
-            return "Lako"
-        case .medium:
-            return "Srednje"
-        case .hard:
-            return "Teško"
-        }
-    }
-    
-    /// Dubina pretrage za minimax algoritam
-    var depth: Int {
-        switch self {
-        case .easy: return 1
-        case .medium: return 2
-        case .hard: return 3
+        case .easy: return 2
+        case .medium: return 3
+        case .hard: return 4
         }
     }
 }
@@ -41,6 +28,10 @@ enum AIDifficulty: Int, CaseIterable, Codable {
 class AIPlayer {
     // MARK: - Properties
     private let difficulty: AIDifficulty
+    private let aiTeam: Player
+    private let cache: AICache
+    private let evaluator: AIEvaluator
+    private let search: AISearch
     
     // MARK: - Performance Tracking
     private var evaluationCount: Int = 0
@@ -59,7 +50,7 @@ class AIPlayer {
     
     // MARK: - Cancellation Support
     /// Заставица која означава да ли је размишљање отказано
-    private var isCancelled: Bool = false
+    private var cancellationFlag: Bool = false
     
     // MARK: - Helper Types
     /// Pomоćna struktura za predstavljanje pozicije na tabli
@@ -71,9 +62,19 @@ class AIPlayer {
     // MARK: - Initialization
     /// Inicijalizuje novi AI igrač sa određenim nivoom težine
     /// - Parameter difficulty: Nivo težine AI igrača (default: .medium)
-    init(difficulty: AIDifficulty = .medium) {
+    init(difficulty: AIDifficulty, aiTeam: Player) {
         self.difficulty = difficulty
-        print("AI igrač inicijalizovan sa težinom: \(difficulty.description)")
+        self.aiTeam = aiTeam
+        
+        print("AI igrač inicijalizovan sa težinom: \(difficulty.rawValue)")
+        
+        self.cache = AICache(maxSize: 1000000)
+        self.evaluator = AIEvaluator()
+        self.search = AISearch(
+            maxDepth: difficulty.maxDepth,
+            evaluator: evaluator,
+            cache: cache
+        )
     }
     
     // MARK: - Cache Management
@@ -166,65 +167,20 @@ class AIPlayer {
     /// Određuje najbolji potez za AI igrača
     /// - Parameter game: Trenutno stanje igre
     /// - Returns: Tuple sa redom i kolonom najboljeg poteza, ili nil ako nema validnih poteza
-    func findBestMove(for game: Game) -> (row: Int, column: Int)? {
-        evaluationCount = 0
-        cacheHitCount = 0
-        transpositionTable.removeAll()
+    func findBestMove(for game: Game) -> Position? {
+        print("AIPlayer: Тражим најбољи потез за \(aiTeam == .blue ? "плавог" : "црвеног") играча")
         
-        let startTime = Date()
-        
-        // Прво проверавамо да ли је игра већ завршена
-        if game.isGameOver {
-            print("AI.findBestMove: Игра је већ завршена, нема валидних потеза")
+        if game.currentPlayer != aiTeam {
+            print("AIPlayer: Није AI на потезу")
             return nil
         }
         
-        // Одмах добијамо све валидне потезе да бисмо знали да ли их уопште има
-        let validMoves = getValidMoves(for: game.board, player: game.currentPlayer)
+        let move = search.findBestMove(for: game)
         
-        if validMoves.isEmpty {
-            print("AI.findBestMove: Нема валидних потеза за играча \(game.currentPlayer == .blue ? "плави" : "црвени")")
-            return nil
-        }
-        
-        // За сигурност одмах узимамо један насумични валидни потез као резерву
-        let safetyMove = validMoves.randomElement()
-        print("AI.findBestMove: Сигурносни потез припремљен: \(safetyMove?.row ?? -1), \(safetyMove?.column ?? -1)")
-        
-        var move: (row: Int, column: Int)?
-        
-        // Узимамо стратегију на основу нивоа тежине
-        switch difficulty {
-        case .easy:
-            print("AI.findBestMove: Користим логику за лак ниво")
-            move = findEasyMove(for: game)
-        case .medium:
-            print("AI.findBestMove: Користим логику за средњи ниво")
-            move = findMediumMove(for: game)
-        case .hard:
-            print("AI.findBestMove: Користим логику за тежак ниво")
-            move = findBestMoveMinMax(for: game)
-        }
-        
-        // Ако стратегија није успела да нађе потез, враћамо сигурносни потез
-        if move == nil {
-            print("AI.findBestMove: Изабрана стратегија није нашла потез, користим сигурносни потез")
-            move = safetyMove
-        }
-        
-        let endTime = Date()
-        let timeElapsed = endTime.timeIntervalSince(startTime)
-        
-        // Статистике за праћење перформанси
-        print("AI.findBestMove: Евалуација завршена за \(String(format: "%.3f", timeElapsed))s")
-        print("AI.findBestMove: Број евалуација: \(evaluationCount)")
-        
-        if evaluationCount > 0 {
-            let cacheHitRate = Double(cacheHitCount) / Double(evaluationCount) * 100.0
-            print("AI.findBestMove: Cache погоци: \(cacheHitCount) (\(String(format: "%.1f", cacheHitRate))%)")
-            
-            let movesPerSecond = Double(evaluationCount) / timeElapsed
-            print("AI.findBestMove: Потеза по секунди: \(String(format: "%.1f", movesPerSecond))")
+        if let move = move {
+            print("AIPlayer: Нашао сам најбољи потез: (\(move.row), \(move.column))")
+        } else {
+            print("AIPlayer: Нема валидних потеза")
         }
         
         return move
@@ -233,12 +189,12 @@ class AIPlayer {
     // MARK: - Strategy Implementation
     /// Implementira strategiju za lak nivo (uglavnom nasumično sa malo strategije)
     private func findEasyMove(for game: Game) -> (row: Int, column: Int)? {
-        print("findEasyMove: Тражим лак потез за играча \(game.currentPlayer == .blue ? "плави" : "црвени")")
+        print("findEasyMove: Тражим лак потез за играча \(aiTeam == .blue ? "плави" : "црвени")")
         
-        let validMoves = getValidMoves(for: game.board, player: game.currentPlayer)
+        let validMoves = getValidMoves(for: game.board, player: aiTeam)
         
         if validMoves.isEmpty {
-            print("findEasyMove: Нема валидних потеза за играча \(game.currentPlayer == .blue ? "плави" : "црвени")")
+            print("findEasyMove: Нема валидних потеза за играча \(aiTeam == .blue ? "плави" : "црвени")")
             return nil
         }
         
@@ -299,7 +255,7 @@ class AIPlayer {
         }
         
         // Додатна провера валидности
-        if !game.board.isValidMove(row: bestMove!.row, column: bestMove!.column, player: game.currentPlayer) {
+        if !game.board.isValidMove(row: bestMove!.row, column: bestMove!.column, player: aiTeam) {
             print("findEasyMove: УПОЗОРЕЊЕ - Изабрани потез није валидан! Враћам сигурносни потез.")
             return safetyMove
         }
@@ -328,10 +284,10 @@ class AIPlayer {
     // MARK: - Medium Level Strategy
     /// Implementira strategiju za srednji nivo (kombinacija strategije i nasumičnosti)
     private func findMediumMove(for game: Game) -> (row: Int, column: Int)? {
-        print("findMediumMove: Тражим потез средњег нивоа за играча \(game.currentPlayer == .blue ? "плави" : "црвени")")
+        print("findMediumMove: Тражим потез средњег нивоа за играча \(aiTeam == .blue ? "плави" : "црвени")")
         
         let board = game.board
-        let currentPlayer = game.currentPlayer
+        let currentPlayer = aiTeam
         let validMoves = getValidMoves(for: game.board, player: currentPlayer)
         
         if validMoves.isEmpty {
@@ -345,28 +301,26 @@ class AIPlayer {
         
         print("findMediumMove: Пронађено \(validMoves.count) валидних потеза")
         
-        // Насумични елемент који одређује да ли ћемо играти стратегијски или насумично
-        // 25% времена играмо насумично (повећано са 10% за бржу игру)
-        if Double.random(in: 0...1) < 0.25 {
-            print("findMediumMove: Играм насумично (25% шанса)")
+        // Смањујемо шансу за насумичан потез на 10%
+        if Double.random(in: 0...1) < 0.1 {
+            print("findMediumMove: Играм насумично (10% шанса)")
             return safetyMove
         }
         
-        // Смањујемо учесталост коришћења минимакс алгоритма
-        // 20% случајева користимо једноставни минимакс (смањено са 40%)
-        if Double.random(in: 0...1) < 0.2 {
-            print("findMediumMove: Користим поједностављени minimax (20% шанса)")
+        // Повећавамо шансу за коришћење минимакса на 50%
+        if Double.random(in: 0...1) < 0.5 {
+            print("findMediumMove: Користим поједностављени minimax (50% шанса)")
             let startTime = Date()
-            let maxTime: TimeInterval = 1.0 // Ограничено на максимално 1 секунду
+            let maxTime: TimeInterval = 2.0 // Повећавамо на 2 секунде
             
-            // Ограничавамо број потеза за анализу
-            let movesToConsider = validMoves.count > 5 ? Array(validMoves.prefix(5)) : validMoves
+            // Разматрамо више потеза
+            let movesToConsider = validMoves.count > 8 ? Array(validMoves.prefix(8)) : validMoves
             
             var bestMove: (row: Int, column: Int)? = nil
             var bestScore = Int.min
             
             for move in movesToConsider {
-                // Прекидамо ако је потрошено више од 70% времена
+                // Прекидамо ако је истекло време за размишљање
                 if Date().timeIntervalSince(startTime) > maxTime * 0.7 {
                     print("findMediumMove: Прекидам minimax анализу јер је истекло време")
                     break
@@ -377,8 +331,17 @@ class AIPlayer {
                     continue
                 }
                 
-                // Користимо упрошћену евалуацију ради брзине
-                let score = evaluatePosition(clonedGame, originalPlayer: currentPlayer)
+                // Користимо дубљу претрагу
+                let score = alphaBetaMinimax(
+                    game: clonedGame,
+                    depth: difficulty.maxDepth - 1,
+                    alpha: Int.min,
+                    beta: Int.max,
+                    maximizingPlayer: false,
+                    originalPlayer: currentPlayer,
+                    startTime: startTime,
+                    maxThinkingTime: maxTime
+                )
                 
                 if score > bestScore {
                     bestScore = score
@@ -389,9 +352,6 @@ class AIPlayer {
             if let miniMaxMove = bestMove {
                 print("findMediumMove: Minimax потез: (\(miniMaxMove.row), \(miniMaxMove.column))")
                 return miniMaxMove
-            } else {
-                print("findMediumMove: Нисам нашао добар потез, враћам сигурносни потез")
-                return safetyMove
             }
         }
         
@@ -464,7 +424,7 @@ class AIPlayer {
         print("findMediumMove: Најбољи потез: \(bestMove.row), \(bestMove.column)")
         
         // Додатна провера - да ли је изабрани потез валидан
-        if !game.board.isValidMove(row: bestMove.row, column: bestMove.column, player: game.currentPlayer) {
+        if !game.board.isValidMove(row: bestMove.row, column: bestMove.column, player: aiTeam) {
             print("findMediumMove: УПОЗОРЕЊЕ - Изабрани потез није валидан према табли!")
             return safetyMove
         }
@@ -472,15 +432,36 @@ class AIPlayer {
         return bestMove
     }
     
+    // MARK: - Search Depth Management
+    /// Izračunava оптималну дубину претраге на основу величине табле
+    private func calculateSearchDepth(boardSize: Int) -> Int {
+        // Базна дубина зависи од тежине
+        var depth = difficulty.maxDepth
+        
+        // Прилагођавамо дубину на основу величине табле
+        switch boardSize {
+        case 4...6: // Мале табле
+            depth += 2 // Можемо дубље да претражујемо
+        case 7...8: // Средње табле
+            depth += 1
+        case 9...10: // Веће табле
+            depth = max(depth - 1, 4) // Смањујемо дубину али не испод 4
+        default:
+            depth = max(depth - 2, 3) // За веома велике табле, још више смањујемо
+        }
+        
+        return depth
+    }
+    
     // MARK: - Hard Level Strategy
     /// Implementira strategiju za teški nivo (minimax sa alfa-beta odsecanjem)
     private func findBestMoveMinMax(for game: Game) -> (row: Int, column: Int)? {
-        print("findBestMoveMinMax: Тражим најбољи потез за играча \(game.currentPlayer == .blue ? "плави" : "црвени")")
+        print("findBestMoveMinMax: Тражим најбољи потез за играча \(aiTeam == .blue ? "плави" : "црвени")")
         
         // Ресетујемо индикатор отказивања
         resetCancelFlag()
         
-        let validMoves = getValidMoves(for: game.board, player: game.currentPlayer)
+        let validMoves = getValidMoves(for: game.board, player: aiTeam)
         print("findBestMoveMinMax: Пронађено \(validMoves.count) валидних потеза")
         
         if validMoves.isEmpty {
@@ -492,111 +473,65 @@ class AIPlayer {
         let safetyMove = validMoves.randomElement()
         print("findBestMoveMinMax: Сигурносни потез припремљен: \(safetyMove?.row ?? -1), \(safetyMove?.column ?? -1)")
         
-        // Додајемо случајни фактор - 5% времена играмо слабије да би игра била интересантнија
-        if Double.random(in: 0...1) < 0.05 {
-            print("findBestMoveMinMax: Намерно играм слабије (5% шанса)")
-            return findMediumMove(for: game)
-        }
-        
-        // Одређујемо максималну дубину на основу величине табле
-        // Мање табле = већа дубина, веће табле = мања дубина
+        // Одређујемо максималну дубину на основу величине табле и фазе игре
         let boardSize = game.board.size
         let maxDepth: Int
+        let remainingMoves = validMoves.count
+        let totalCells = boardSize * boardSize
+        let gameProgress = Double(totalCells - remainingMoves) / Double(totalCells)
         
         switch boardSize {
-        case 4...5: // Мале табле
-            maxDepth = 6
-        case 6: // Средња табла
-            maxDepth = 5
-        case 7: // Стандардна табла
-            maxDepth = 4
-        case 8...9: // Велике табле
-            maxDepth = 3
-        default: // Веома велике табле или веома мале
-            maxDepth = boardSize <= 3 ? 7 : 2
+        case 4...6: // Мале табле
+            maxDepth = gameProgress > 0.7 ? 7 : 6 // Дубља претрага у завршници
+        case 7...8: // Средње табле
+            maxDepth = gameProgress > 0.7 ? 5 : 4
+        case 9...10: // Веће табле
+            maxDepth = gameProgress > 0.7 ? 4 : 3
+        default:
+            maxDepth = gameProgress > 0.7 ? 3 : 2
         }
         
         print("findBestMoveMinMax: Користим максималну дубину \(maxDepth) за таблу величине \(boardSize)")
         
-        // Одређујемо максимално време за размишљање на основу величине табле
-        let maxThinkingTime: TimeInterval
-        
-        switch boardSize {
-        case 4...5: // Мале табле - више времена није потребно
-            maxThinkingTime = 3.0
-        case 6: // Средња табла
-            maxThinkingTime = 4.0
-        case 7: // Стандардна табла
-            maxThinkingTime = 5.0
-        case 8...9: // Велике табле
-            maxThinkingTime = 6.0
-        default: // Веома велике табле или веома мале
-            maxThinkingTime = boardSize <= 3 ? 2.0 : 8.0
-        }
-        
+        // Одређујемо максимално време за размишљање
+        let maxThinkingTime = calculateThinkingTime(boardSize: boardSize)
         print("findBestMoveMinMax: Максимално време размишљања: \(maxThinkingTime) секунди")
         
-        // Време почетка размишљања
         let startTime = Date()
         
-        // За веће табле ограничавамо разматрање потеза на стратешке позиције
-        // (ћошкове, ивице, итд.) ради бољих перформанси
+        // За веће табле, фокусирамо се на стратешке потезе
         var strategicMoves = validMoves
         
-        if boardSize >= 7 && validMoves.count > 15 {
+        if boardSize >= 7 {
             // Издвајамо стратешке потезе
             let edgeMoves = validMoves.filter { isEdgeMove($0, boardSize: boardSize) }
             let cornerMoves = validMoves.filter { isCornerMove($0, boardSize: boardSize) }
             
-            // Додајемо потезе у центру табле (за веће табле)
+            // Додајемо потезе у центру табле
             let centerMoves = validMoves.filter { move in
-                move.row >= boardSize/3 && move.row < boardSize*2/3 &&
-                move.column >= boardSize/3 && move.column < boardSize*2/3
+                let centerStart = boardSize/3
+                let centerEnd = boardSize - centerStart
+                return move.row >= centerStart && move.row < centerEnd &&
+                       move.column >= centerStart && move.column < centerEnd
             }
-            
-            print("findBestMoveMinMax: Стратешки потези - ивице: \(edgeMoves.count), углови: \(cornerMoves.count), центар: \(centerMoves.count)")
             
             // Бирамо ограничени број стратешких потеза
-            let maxMovesToConsider = 12 // Лимитирамо број потеза за разматрање
+            let maxMovesToConsider = min(10, validMoves.count) // Максимално 10 потеза
             
-            // Приоритет:
-            // 1. Углови (сви)
-            // 2. Ивице (до лимита)
-            // 3. Центар (до лимита)
-            // 4. Остатак (до лимита)
-            
-            // Креирамо скуп стратешких потеза
             var consideredMoves = Set<Position>()
             
-            // Додајемо све угаоне потезе
+            // Приоритет потеза:
+            // 1. Углови (сви)
             for move in cornerMoves {
                 consideredMoves.insert(Position(row: move.row, column: move.column))
-            }
-            
-            // Додајемо ивичне потезе док не достигнемо лимит
-            for move in edgeMoves {
                 if consideredMoves.count >= maxMovesToConsider {
                     break
                 }
-                consideredMoves.insert(Position(row: move.row, column: move.column))
             }
             
-            // Додајемо централне потезе док не достигнемо лимит
-            for move in centerMoves {
-                if consideredMoves.count >= maxMovesToConsider {
-                    break
-                }
-                consideredMoves.insert(Position(row: move.row, column: move.column))
-            }
-            
-            // Ако и даље немамо довољно потеза, додајемо насумичне преостале потезе
+            // 2. Ивице (до лимита)
             if consideredMoves.count < maxMovesToConsider {
-                // Мешамо преостале потезе да бисмо добили разнолико понашање
-                let remainingMoves = validMoves.filter { move in
-                    !consideredMoves.contains(Position(row: move.row, column: move.column))
-                }.shuffled()
-                
-                for move in remainingMoves {
+                for move in edgeMoves {
                     if consideredMoves.count >= maxMovesToConsider {
                         break
                     }
@@ -604,44 +539,49 @@ class AIPlayer {
                 }
             }
             
-            // Претварамо скуп позиција назад у низ потеза
-            strategicMoves = consideredMoves.map { ($0.row, $0.column) }
+            // 3. Центар (до лимита)
+            if consideredMoves.count < maxMovesToConsider {
+                for move in centerMoves {
+                    if consideredMoves.count >= maxMovesToConsider {
+                        break
+                    }
+                    consideredMoves.insert(Position(row: move.row, column: move.column))
+                }
+            }
             
-            print("findBestMoveMinMax: Разматрам \(strategicMoves.count) стратешких потеза од укупно \(validMoves.count)")
+            // Филтрирамо потезе које ћемо разматрати
+            strategicMoves = validMoves.filter { move in
+                consideredMoves.contains(Position(row: move.row, column: move.column))
+            }
         }
         
-        var bestMove: (row: Int, column: Int)? = nil
         var bestScore = Int.min
+        var bestMove: (row: Int, column: Int)? = nil
         
         // Анализирамо сваки потез
         for move in strategicMoves {
-            // Прекидамо ако је затражено отказивање
-            if checkCancellation() {
+            if isCancelled() {
                 print("findBestMoveMinMax: Размишљање отказано")
                 return safetyMove
             }
             
-            // Прекидамо анализу ако смо потрошили више од 95% времена
             if Date().timeIntervalSince(startTime) > maxThinkingTime * 0.95 {
-                print("findBestMoveMinMax: Прекидам анализу јер се приближавамо временском ограничењу")
+                print("findBestMoveMinMax: Прекидам анализу због временског ограничења")
                 break
             }
             
             let clonedGame = cloneGame(game)
-            
             if !clonedGame.makeMove(row: move.row, column: move.column) {
-                // Прескачемо ако је потез неважећи
                 continue
             }
             
-            // Зовемо alphaBetaMinimax са редукованом дубином за бржи одзив
             let score = alphaBetaMinimax(
-                game: clonedGame, 
-                depth: maxDepth - 1, 
-                alpha: Int.min, 
-                beta: Int.max, 
+                game: clonedGame,
+                depth: maxDepth - 1,
+                alpha: Int.min,
+                beta: Int.max,
                 maximizingPlayer: false,
-                originalPlayer: game.currentPlayer,
+                originalPlayer: aiTeam,
                 startTime: startTime,
                 maxThinkingTime: maxThinkingTime
             )
@@ -653,28 +593,14 @@ class AIPlayer {
                 bestMove = move
                 print("findBestMoveMinMax: Нови најбољи потез: (\(move.row), \(move.column)) са оценом \(score)")
             }
-            
-            // Ако је истекло 90% времена, прекидамо и враћамо најбољи досадашњи потез
-            if Date().timeIntervalSince(startTime) > maxThinkingTime * 0.9 {
-                print("findBestMoveMinMax: Досегнуто 90% временског ограничења, прекидам анализу")
-                break
-            }
         }
         
-        // Ако нисмо успели да нађемо најбољи потез или је затражено отказивање, враћамо сигурносни потез
-        if bestMove == nil || checkCancellation() {
-            print("findBestMoveMinMax: Враћам сигурносни потез јер нисам нашао најбољи")
+        if bestMove == nil || isCancelled() {
+            print("findBestMoveMinMax: Враћам сигурносни потез")
             return safetyMove
         }
         
         print("findBestMoveMinMax: Коначан најбољи потез: (\(bestMove!.row), \(bestMove!.column)) са оценом \(bestScore)")
-        
-        // Проверамо валидност најбољег потеза (за сигурност)
-        if !game.board.isValidMove(row: bestMove!.row, column: bestMove!.column, player: game.currentPlayer) {
-            print("findBestMoveMinMax: УПОЗОРЕЊЕ - Изабрани потез није валидан! Враћам сигурносни потез.")
-            return safetyMove
-        }
-        
         return bestMove
     }
     
@@ -698,37 +624,44 @@ class AIPlayer {
         let opponentValidMoves = getValidMoves(for: board, player: opponent)
         
         // Ako nema validnih poteza za protivnika, pobedili smo
-        if opponentValidMoves.isEmpty && game.currentPlayer == opponent {
-            return 1000
+        if opponentValidMoves.isEmpty && aiTeam == opponent {
+            return 100000 // Драстично повећавамо вредност победе
         }
         
         // Ako nema validnih poteza za nas, izgubili smo
-        if myValidMoves.isEmpty && game.currentPlayer == originalPlayer {
-            return -1000
+        if myValidMoves.isEmpty && aiTeam == originalPlayer {
+            return -100000 // Драстично повећавамо апсолутну вредност губитка
         }
         
         var score = 0
         
-        // Razlika u broju validnih poteza - što više poteza imamo u odnosu na protivnika, to bolje
-        score += (myValidMoves.count - opponentValidMoves.count) * 5
+        // Мобилност - разлика u broју валидних потеза
+        // Дајемо већи значај мобилности у раној и средњој фази игре
+        let mobilityWeight = board.size >= 9 ? 25 : 20 // Повећавамо тежину мобилности
+        let mobilityScore = (myValidMoves.count - opponentValidMoves.count) * mobilityWeight
+        score += mobilityScore
         
-        // Bonus za kontrolu ivica
-        score += countEdgeMoves(myValidMoves, boardSize: board.size) * 2
-        score -= countEdgeMoves(opponentValidMoves, boardSize: board.size) * 2
+        // Контрола ивица и ћошкова
+        // На већим таблама, контрола ивица и ћошкова је важнија
+        let edgeWeight = board.size >= 9 ? 8 : 6  // Дуплирамо тежине
+        let cornerWeight = board.size >= 9 ? 12 : 10
         
-        // Bonus za kontrolu ćoškova
-        score += countCornerMoves(myValidMoves, boardSize: board.size) * 3
-        score -= countCornerMoves(opponentValidMoves, boardSize: board.size) * 3
+        let edgeScore = (countEdgeMoves(myValidMoves, boardSize: board.size) * edgeWeight) -
+                       (countEdgeMoves(opponentValidMoves, boardSize: board.size) * edgeWeight)
+        score += edgeScore
         
-        // Bonus za kontrolu centra (važniji na većim tablama)
-        if board.size >= 7 {
-            score += countCenterMoves(myValidMoves, boardSize: board.size) * 2
-            score -= countCenterMoves(opponentValidMoves, boardSize: board.size) * 2
+        let cornerScore = (countCornerMoves(myValidMoves, boardSize: board.size) * cornerWeight) -
+                         (countCornerMoves(opponentValidMoves, boardSize: board.size) * cornerWeight)
+        score += cornerScore
+        
+        // Додајемо бонус за потезе који воде ка победи
+        if opponentValidMoves.count <= 3 {
+            score += (10 - opponentValidMoves.count) * 1000  // Велики бонус када смо близу победе
         }
         
-        // Faktor koji uzima u obzir da li blokiramo protivničke poteze
-        let blockedMoves = countBlockedMovesFromLastMove(game, originalPlayer: originalPlayer)
-        score += blockedMoves * 3
+        // Смањујемо случајност за јачу игру
+        let randomRange = board.size >= 9 ? 2 : 3
+        score += Int.random(in: -randomRange...randomRange)
         
         return score
     }
@@ -750,7 +683,7 @@ class AIPlayer {
         }
         
         // Копирамо важне променљиве стања
-        clone.currentPlayer = game.currentPlayer
+        clone.currentPlayer = aiTeam
         clone.isGameOver = game.isGameOver
         clone.gameEndReason = game.gameEndReason
         
@@ -763,32 +696,25 @@ class AIPlayer {
     // MARK: - Time Management
     /// Izračunava vreme razmišljanja za teški nivo
     private func calculateThinkingTime(boardSize: Int) -> TimeInterval {
-        // Базно време је 2 секунде
-        let baseTime: TimeInterval = 2.0
+        // Повећавамо базно време на 8 секунди
+        let baseTime: TimeInterval = 8.0
         
-        // За мање табле дајемо више времена јер су прорачуни лакши
-        if boardSize <= 8 {
+        // Динамичко прилагођавање времена на основу величине табле и фазе игре
+        switch boardSize {
+        case 4...6: // Мале табле
+            return baseTime * 2.0 // Више времена јер можемо дубље да претражујемо
+        case 7...8: // Средње табле
+            return baseTime * 1.5
+        case 9...10: // Веће табле
+            return baseTime * 1.2 // Повећавамо време за веће табле
+        default:
             return baseTime
-        } else if boardSize <= 12 {
-            return baseTime * 0.8
-        } else {
-            return baseTime * 0.6
         }
     }
     
     /// Izračunava vreme razmišljanja za srednji nivo
     private func calculateMediumThinkingTime(boardSize: Int) -> TimeInterval {
-        // Базно време је 1 секунда
-        let baseTime: TimeInterval = 1.0
-        
-        // За мање табле дајемо више времена јер су прорачуни лакши
-        if boardSize <= 8 {
-            return baseTime
-        } else if boardSize <= 12 {
-            return baseTime * 0.6
-        } else {
-            return baseTime * 0.4
-        }
+        return calculateThinkingTime(boardSize: boardSize) * 0.6 // 60% времена тешког нивоа
     }
     
     // MARK: - Helper Functions
@@ -803,153 +729,56 @@ class AIPlayer {
     }
     
     /// Broji poteze u centru table
-    private func countCenterMoves(_ moves: [(row: Int, column: Int)], boardSize: Int) -> Int {
-        let centerStart = boardSize / 3
-        let centerEnd = boardSize - centerStart
+    private func countCenterMoves(in board: GameBoard) -> Int {
+        var centerMoves = 0
+        let size = board.size
+        let center = size / 2
         
-        return moves.filter { move in
-            move.row >= centerStart && move.row < centerEnd &&
-            move.column >= centerStart && move.column < centerEnd
-        }.count
+        // Проверавамо централну ћелију
+        if board.cells[center][center].type == .empty {
+            centerMoves += 1
+        }
+        
+        // Проверавамо суседне ћелије
+        let directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        for (dx, dy) in directions {
+            let newRow = center + dx
+            let newCol = center + dy
+            
+            if board.isValidPosition(row: newRow, column: newCol) &&
+               board.cells[newRow][newCol].type == .empty {
+                centerMoves += 1
+            }
+        }
+        
+        return centerMoves
     }
     
-    /// Procenjuje koliko poteza smo blokirali protivniku
-    private func countBlockedMovesFromLastMove(_ game: Game, originalPlayer: Player) -> Int {
-        // Procenjujemo koliko poteza protivnik ne može da igra
-        let opponent = originalPlayer == .blue ? Player.red : Player.blue
-        
-        // Brojimo koliko polja je blokirano za protivnika
-        var blockedCount = 0
-        let board = game.board
-        
-        // Prolazimo kroz sva polja
-        for row in 0..<board.size {
-            for column in 0..<board.size {
-                // Ako je polje prazno, proveravamo da li bi protivnik mogao da igra tu
-                if board.cells[row][column].type == .empty {
-                    if opponent.isHorizontal && column + 1 < board.size {
-                        if board.cells[row][column + 1].type != .empty {
-                            blockedCount += 1
-                        }
-                    } else if !opponent.isHorizontal && row + 1 < board.size {
-                        if board.cells[row + 1][column].type != .empty {
-                            blockedCount += 1
-                        }
-                    }
-                }
-            }
+    /// Проверава да ли је размишљање отказано
+    func isCancelled() -> Bool {
+        if cancellationFlag {
+            print("AIPlayer.isCancelled: Размишљање је отказано")
+            return true
         }
-        
-        return blockedCount
+        return false
     }
     
-    // MARK: - Hard Level Strategy Helper Functions
-    /// Ograničeni alfa-beta za srednji nivo (pojednostavljena verzija)
-    private func limitedAlphaBeta(_ game: Game, depth: Int, alpha: Int, beta: Int, maximizingPlayer: Bool, originalPlayer: Player) -> Int {
-        // Базни случај: досегли смо максималну дубину или игра је завршена
-        if depth == 0 || game.isGameOver {
-            return evaluatePosition(game, originalPlayer: originalPlayer)
-        }
-        
-        // Директно користимо currentPlayer без guard let конструкције
-        let currentPlayer = game.currentPlayer
-        
-        // Директно добављање валидних потеза без ослањања на кеш
-        let validMoves = getValidMoves(for: game.board, player: currentPlayer)
-        
-        // Ако нема валидних потеза, игра је завршена
-        if validMoves.isEmpty {
-            // Тренутни играч је изгубио (нема валидних потеза)
-            let playerWon = currentPlayer != originalPlayer
-            let score = playerWon ? 1000 : -1000
-            return score
-        }
-        
-        // Za srednji nivo, uzimamo samo nekoliko poteza u obzir za bolje performanse
-        let movesToConsider = validMoves.prefix(max(5, validMoves.count / 3))
-        
-        if maximizingPlayer {
-            var value = Int.min
-            var currentAlpha = alpha
-            
-            for move in movesToConsider {
-                let clonedGame = cloneGame(game)
-                _ = clonedGame.makeMove(row: move.row, column: move.column)
-                
-                value = max(value, limitedAlphaBeta(clonedGame, depth: depth - 1, alpha: currentAlpha, beta: beta, maximizingPlayer: false, originalPlayer: originalPlayer))
-                
-                if value >= beta {
-                    break // Beta odsecanje
-                }
-                
-                currentAlpha = max(currentAlpha, value)
-            }
-            
-            return value
-        } else {
-            var value = Int.max
-            var currentBeta = beta
-            
-            for move in movesToConsider {
-                let clonedGame = cloneGame(game)
-                _ = clonedGame.makeMove(row: move.row, column: move.column)
-                
-                value = min(value, limitedAlphaBeta(clonedGame, depth: depth - 1, alpha: alpha, beta: currentBeta, maximizingPlayer: true, originalPlayer: originalPlayer))
-                
-                if value <= alpha {
-                    break // Alfa odsecanje
-                }
-                
-                currentBeta = min(currentBeta, value)
-            }
-            
-            return value
-        }
+    /// Ресетује заставицу за отказивање размишљања
+    func resetCancelFlag() {
+        print("AIPlayer.resetCancelFlag: Ресетујем заставицу за отказивање")
+        cancellationFlag = false
+        search.resetCancelFlag()
     }
     
-    /// Pojednostavljeni minimax za srednji nivo težine
-    private func findSimplifiedMinimaxMove(for game: Game) -> (row: Int, column: Int)? {
-        let validMoves = getValidMoves(for: game.board, player: game.currentPlayer)
-        
-        if validMoves.isEmpty {
-            return nil
-        }
-        
-        var bestMove: (row: Int, column: Int)? = nil
-        var bestScore = Int.min
-        
-        // Smanjujemo dubinu za srednji nivo
-        let maxDepth = 2
-        
-        // Користимо динамичко време за размишљање
-        let maxThinkingTime = calculateMediumThinkingTime(boardSize: game.board.size)
-        let startTime = Date()
-        
-        // Razmatramo samo deo poteza za bolje performanse
-        let movesToConsider = validMoves.count > 6 ? Array(validMoves.prefix(6)) : validMoves
-        
-        for move in movesToConsider {
-            // Proveravamo da li je isteklo vreme za razmišljanje
-            if Date().timeIntervalSince(startTime) > maxThinkingTime {
-                print("AI (Medium): Prekinuto razmišljanje zbog vremenskog ograničenja")
-                break
-            }
-            
-            let clonedGame = cloneGame(game)
-            _ = clonedGame.makeMove(row: move.row, column: move.column)
-            
-            let score = limitedAlphaBeta(clonedGame, depth: maxDepth, alpha: Int.min, beta: Int.max, maximizingPlayer: false, originalPlayer: game.currentPlayer)
-            
-            if score > bestScore {
-                bestScore = score
-                bestMove = move
-            }
-        }
-        
-        return bestMove ?? validMoves.randomElement()
+    /// Отказује тренутно размишљање AI-а
+    func cancelThinking() {
+        print("AIPlayer.cancelThinking: Отказујем тренутно размишљање")
+        cancellationFlag = true
+        search.cancel()
     }
     
-    /// Alfa-beta minimax algoritam za evaluaciju poteza u dubinu
+    // MARK: - Minimax Algorithm
+    /// Имплементира алфа-бета минимакс алгоритам за процену најбољег потеза
     private func alphaBetaMinimax(
         game: Game,
         depth: Int,
@@ -957,69 +786,33 @@ class AIPlayer {
         beta: Int,
         maximizingPlayer: Bool,
         originalPlayer: Player,
-        startTime: Date = Date(),
-        maxThinkingTime: TimeInterval = 2.0
+        startTime: Date,
+        maxThinkingTime: TimeInterval
     ) -> Int {
-        // Повећавамо број евалуација
-        evaluationCount += 1
+        AIAnalytics.shared.visitNode(depth: depth)
         
-        // Прво проверавамо да ли је затражено отказивање размишљања
-        if checkCancellation() {
-            return evaluatePosition(game, originalPlayer: originalPlayer)
-        }
-        
-        // Проверавамо да ли је време истекло
-        if Date().timeIntervalSince(startTime) > maxThinkingTime * 0.9 {
-            // Ако је време скоро истекло, прекидамо размишљање и враћамо тренутну процену
-            return evaluatePosition(game, originalPlayer: originalPlayer)
-        }
-        
-        // Базни случај: досегли смо максималну дубину или игра је завршена
         if depth == 0 || game.isGameOver {
             return evaluatePosition(game, originalPlayer: originalPlayer)
         }
         
-        // Директно користимо currentPlayer без guard let конструкције
-        let currentPlayer = game.currentPlayer
-        
-        // Директно добављање валидних потеза без ослањања на кеш
+        let currentPlayer = maximizingPlayer ? aiTeam : (aiTeam == .blue ? .red : .blue)
         let validMoves = getValidMoves(for: game.board, player: currentPlayer)
         
-        // Ако нема валидних потеза, игра је завршена
         if validMoves.isEmpty {
-            // Тренутни играч је изгубио (нема валидних потеза)
-            let playerWon = currentPlayer != originalPlayer
-            let score = playerWon ? 1000 : -1000
-            return score
+            return evaluatePosition(game, originalPlayer: originalPlayer)
         }
-        
-        // Ако имамо превише потеза, узимамо само неке
-        let movesToAnalyze = validMoves.count > 12 ? Array(validMoves.prefix(12)) : validMoves
         
         if maximizingPlayer {
             var value = Int.min
             var currentAlpha = alpha
             
-            for move in movesToAnalyze {
-                // Прекидамо ако је затражено отказивање размишљања
-                if checkCancellation() {
-                    break
-                }
-                
-                // Прекидамо ако је време истекло
-                if Date().timeIntervalSince(startTime) > maxThinkingTime * 0.95 {
-                    break
-                }
-                
-                // Креирамо копију игре и симулирамо потез
+            for move in validMoves {
                 let clonedGame = cloneGame(game)
                 if !clonedGame.makeMove(row: move.row, column: move.column) {
-                    // Ако потез није валидан, прескачемо
                     continue
                 }
                 
-                // Рекурзивно позивамо alphaBetaMinimax
-                let moveValue = alphaBetaMinimax(
+                value = max(value, alphaBetaMinimax(
                     game: clonedGame,
                     depth: depth - 1,
                     alpha: currentAlpha,
@@ -1028,41 +821,26 @@ class AIPlayer {
                     originalPlayer: originalPlayer,
                     startTime: startTime,
                     maxThinkingTime: maxThinkingTime
-                )
-                value = max(value, moveValue)
+                ))
                 
                 if value >= beta {
-                    break // Beta odsecanje
+                    AIAnalytics.shared.recordBetaCutoff()
+                    break
                 }
-                
                 currentAlpha = max(currentAlpha, value)
             }
-            
             return value
         } else {
             var value = Int.max
             var currentBeta = beta
             
-            for move in movesToAnalyze {
-                // Прекидамо ако је затражено отказивање размишљања
-                if checkCancellation() {
-                    break
-                }
-                
-                // Прекидамо ако је време истекло
-                if Date().timeIntervalSince(startTime) > maxThinkingTime * 0.95 {
-                    break
-                }
-                
-                // Креирамо копију игре и симулирамо потез
+            for move in validMoves {
                 let clonedGame = cloneGame(game)
                 if !clonedGame.makeMove(row: move.row, column: move.column) {
-                    // Ако потез није валидан, прескачемо
                     continue
                 }
                 
-                // Рекурзивно позивамо alphaBetaMinimax
-                let moveValue = alphaBetaMinimax(
+                value = min(value, alphaBetaMinimax(
                     game: clonedGame,
                     depth: depth - 1,
                     alpha: alpha,
@@ -1071,38 +849,15 @@ class AIPlayer {
                     originalPlayer: originalPlayer,
                     startTime: startTime,
                     maxThinkingTime: maxThinkingTime
-                )
-                value = min(value, moveValue)
+                ))
                 
                 if value <= alpha {
-                    break // Alfa odsecanje
+                    AIAnalytics.shared.recordAlphaCutoff()
+                    break
                 }
-                
                 currentBeta = min(currentBeta, value)
             }
-            
             return value
         }
-    }
-    
-    /// Ресетује заставицу за отказивање размишљања
-    func resetCancelFlag() {
-        print("AIPlayer.resetCancelFlag: Ресетујем заставицу за отказивање")
-        isCancelled = false
-    }
-    
-    /// Отказује тренутно размишљање AI-а
-    func cancelThinking() {
-        print("AIPlayer.cancelThinking: Отказујем тренутно размишљање")
-        isCancelled = true
-    }
-    
-    /// Проверава да ли је размишљање отказано
-    private func checkCancellation() -> Bool {
-        if isCancelled {
-            print("AIPlayer.checkCancellation: Размишљање је отказано")
-            return true
-        }
-        return false
     }
 } 

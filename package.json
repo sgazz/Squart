@@ -1,0 +1,24 @@
+{
+  "name": "squart",
+  "version": "1.0.0",
+  "description": "Squart je logička igra za dva igrača inspirisana igrom TicTacToe, ali sa izmenjenim pravilima.",
+  "main": "analytics-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sgazz/Squart.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sgazz/Squart/issues"
+  },
+  "homepage": "https://github.com/sgazz/Squart#readme",
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.1"
+  }
+}
