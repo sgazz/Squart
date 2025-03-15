@@ -1,0 +1,67 @@
+// Game
+"New Game" = "Новая игра";
+"Resume Game" = "Продолжить игру";
+"Settings" = "Настройки";
+"Tutorial" = "Обучение";
+"About" = "О программе";
+
+// Game Settings
+"Board Size" = "Размер доски";
+"Timer" = "Таймер";
+"Sound Effects" = "Звуковые эффекты";
+"Vibration" = "Вибрация";
+"Theme" = "Тема";
+"Language" = "Язык";
+
+// Themes
+"Ocean" = "Океан";
+"Sunset" = "Закат";
+"Forest" = "Лес";
+"Galaxy" = "Галактика";
+"Classic" = "Классическая";
+
+// Game Status
+"Blue's Turn" = "Ход синих";
+"Red's Turn" = "Ход красных";
+"Game Over" = "Игра окончена";
+"Blue Wins!" = "Синие победили!";
+"Red Wins!" = "Красные победили!";
+"Draw" = "Ничья";
+
+// AI Difficulty
+"AI Difficulty" = "Сложность ИИ";
+"Easy" = "Легкий";
+"Medium" = "Средний";
+"Hard" = "Сложный";
+
+// Actions
+"Save Game" = "Сохранить игру";
+"Load Game" = "Загрузить игру";
+"Restart" = "Перезапуск";
+"Undo" = "Отменить";
+"Main Menu" = "Главное меню";
+"Confirm" = "Подтвердить";
+"Cancel" = "Отмена";
+
+// Messages
+"Are you sure?" = "Вы уверены?";
+"This will end the current game." = "Это завершит текущую игру.";
+"Game saved successfully!" = "Игра успешно сохранена!";
+"Error saving game" = "Ошибка сохранения";
+"Game loaded successfully!" = "Игра успешно загружена!";
+"Error loading game" = "Ошибка загрузки";
+
+// Tutorial
+"Welcome to Squart!" = "Добро пожаловать в Squart!";
+"Blue places horizontal pieces" = "Синие ставят горизонтальные фишки";
+"Red places vertical pieces" = "Красные ставят вертикальные фишки";
+"Win by blocking your opponent" = "Победите, заблокировав противника";
+"Got it!" = "Понятно!";
+
+// About
+"Version" = "Версия";
+"Created by" = "Создано";
+"Contact" = "Контакты";
+"Website" = "Веб-сайт";
+"Privacy Policy" = "Политика конфиденциальности";
+"Terms of Service" = "Условия использования"; 
