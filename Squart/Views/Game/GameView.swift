@@ -45,7 +45,7 @@ struct GameView: View {
         }
         .sheet(isPresented: $showingSettings) {
             GameSettingsView(game: game, settings: settings)
-                .presentationDetents([.large])
+                .modifier(PresentationDetentsModifier())
         }
         .onRotate { newOrientation in
             orientation = newOrientation
@@ -137,6 +137,16 @@ struct GameView: View {
             }
             
             Spacer()
+        }
+    }
+}
+
+struct PresentationDetentsModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16.0, *) {
+            content.presentationDetents([.large])
+        } else {
+            content
         }
     }
 }

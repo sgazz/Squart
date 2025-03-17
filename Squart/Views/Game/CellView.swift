@@ -51,7 +51,7 @@ struct CellView: View {
         .onAppear {
             scale = 1.0
         }
-        .onChange(of: cell.type) { oldValue, newValue in
+        .onChange(of: cell.type) { newValue in
             if newValue != .empty && newValue != .blocked {
                 // Animacija za postavljanje žetona
                 scale = 1.2
