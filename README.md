@@ -1,6 +1,6 @@
 # Squart
 
-Squart je logička igra za dva igrača inspirisana igrom TicTacToe, ali sa izmenjenim pravilima.
+Squart je logička igra za dva igrača inspirisana igrom Domineering, ali sa izmenjenim pravilima.
 
 ## O igri
 
@@ -8,16 +8,15 @@ U igri Squart, dva igrača naizmenično postavljaju žetone na tablu. Plavi igra
 
 ## Funkcionalnosti
 
-- Tabla različitih veličina (5x5 do 30x30, podrazumevano 7x7)
-- "Crna" polja koja se ne mogu koristiti
+- Tabla različitih veličina (od 5x5 do 20x20, podrazumevano 7x7)
+- "Crna" polja koja se ne mogu koristiti i ima ih 17/19% od svih polja na tabli
 - Horizontalni (plavi) i vertikalni (crveni) žetoni
-- Šahovski tajmer (1 do 10 minuta po igraču)
-- Različite teme (Okean, Zalazak sunca, Šuma, Galaksija, Klasična)
-- Čuvanje i učitavanje partija
+- Šahovski tajmer (1 do 10 minuta po igraču plus neograničeno)
+- Različite teme (Dark, Light)
+- Čuvanje i učitavanje tekuće partije
 - Zvučni efekti
 - Vibracija (haptički odziv)
 - Animacije za postavljanje žetona
-- Efekat konfeta za pobednika
 
 ## Kako igrati
 
@@ -25,6 +24,7 @@ U igri Squart, dva igrača naizmenično postavljaju žetone na tablu. Plavi igra
 - Crveni igrač postavlja žeton vertikalno (polje na koje klikne i polje ispod njega)
 - Igra se završava kada igrač na potezu nema validni potez ili kada mu istekne vreme
 - Pobednik je igrač koji je odigrao poslednji validni potez
+- Igrači se naizmenično smenjuju ko prvi igra
 
 ## Tehnički detalji
 

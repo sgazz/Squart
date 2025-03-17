@@ -118,6 +118,8 @@ struct SettingsData: Codable {
     let aiVsAiMode: Bool
     let secondAiDifficulty: AIDifficulty
     let language: Language
+    let firstPlayer: Player
+    let boardSize: Int
 }
 
 // Glavna klasa za podešavanja
@@ -132,13 +134,19 @@ class GameSettingsManager: ObservableObject {
     static let moveAnimationDuration: Double = 0.3
     static let gameOverAnimationDuration: Double = 0.5
     
+    @Published var boardSize: Int = defaultBoardSize {
+        didSet {
+            save()
+        }
+    }
+    
     @Published var currentTheme: ThemeType = .ocean {
         didSet {
             save()
         }
     }
     
-    @Published var timerOption: TimerOption = TimerOption.defaultOption {
+    @Published var timerOption: TimerOption = .defaultOption {
         didSet {
             save()
         }
@@ -189,8 +197,13 @@ class GameSettingsManager: ObservableObject {
     @Published var language: Language = .serbian {
         didSet {
             save()
-            // Obaveštavamo sistem o promeni jezika
             NotificationCenter.default.post(name: Notification.Name("LanguageChanged"), object: language)
+        }
+    }
+    
+    @Published var firstPlayer: Player = .blue {
+        didSet {
+            save()
         }
     }
     
@@ -209,7 +222,9 @@ class GameSettingsManager: ObservableObject {
             aiTeam: aiTeam,
             aiVsAiMode: aiVsAiMode,
             secondAiDifficulty: secondAiDifficulty,
-            language: language
+            language: language,
+            firstPlayer: firstPlayer,
+            boardSize: boardSize
         )
         
         if let encoded = try? JSONEncoder().encode(settings) {
@@ -230,6 +245,8 @@ class GameSettingsManager: ObservableObject {
             self.aiVsAiMode = settings.aiVsAiMode
             self.secondAiDifficulty = settings.secondAiDifficulty
             self.language = settings.language
+            self.firstPlayer = settings.firstPlayer
+            self.boardSize = settings.boardSize
         }
     }
 }
