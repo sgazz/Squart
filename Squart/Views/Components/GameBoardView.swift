@@ -10,11 +10,6 @@ struct GameBoardView: View {
             ScrollView([.horizontal, .vertical], showsIndicators: false) {
                 BoardView(game: game, cellSize: cellSize)
                     .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.white.opacity(0.1))
-                            .shadow(color: Color.black.opacity(0.2), radius: 10, x: 0, y: 5)
-                    )
             }
             .blur(radius: game.isGameOver ? 3 : 0)
             

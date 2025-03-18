@@ -29,19 +29,6 @@ struct GameView: View {
                     }
                 }
             }
-            
-            // Settings dugme
-            VStack {
-                HStack {
-                    Spacer()
-                    GameButton(icon: "gearshape.fill", color: .gray) {
-                        showingSettings = true
-                    }
-                    .frame(width: 44)
-                }
-                .padding()
-                Spacer()
-            }
         }
         .sheet(isPresented: $showingSettings) {
             GameSettingsView(game: game, settings: settings)
@@ -83,16 +70,49 @@ struct GameView: View {
     
     private func portraitLayout(geometry: GeometryProxy) -> some View {
         VStack {
+            // Status bar i Settings dugme
+            VStack(spacing: 0) {
+                HStack {
+                    Spacer()
+                    
+                    PlayerStatusView(
+                        player: .blue,
+                        score: game.blueScore,
+                        remainingTime: Int(game.blueTimeRemaining),
+                        isActive: !game.isGameOver && game.currentPlayer == .blue,
+                        isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .blue),
+                        isVertical: false,
+                        alignment: .center,
+                        position: .center
+                    )
+                    
+                    Spacer()
+                        .frame(width: 30)
+                    
+                    settingsButton
+                        .padding(.horizontal, 8)
+                    
+                    Spacer()
+                        .frame(width: 30)
+                    
+                    PlayerStatusView(
+                        player: .red,
+                        score: game.redScore,
+                        remainingTime: Int(game.redTimeRemaining),
+                        isActive: !game.isGameOver && game.currentPlayer == .red,
+                        isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .red),
+                        isVertical: false,
+                        alignment: .center,
+                        position: .center
+                    )
+                    
+                    Spacer()
+                }
+                .padding(.top, 4)
+            }
+            
+            // Tabla u centru
             Spacer()
-            
-            GameStatusView(game: game)
-                .padding()
-                .background(Color.black.opacity(0.2))
-                .cornerRadius(12)
-                .padding(.horizontal)
-            
-            Spacer()
-            
             GameBoardView(
                 game: game,
                 cellSize: GameLayout.calculateCellSize(
@@ -103,25 +123,21 @@ struct GameView: View {
                 onNewGame: { game.resetGame() }
             )
             .scaleEffect(GameLayout.boardScaleFactor(for: geometry, boardSize: game.board.size))
-            
             Spacer()
         }
         .scaleEffect(GameLayout.isInSlideOver ? 0.8 : 1.0)
     }
     
     private func landscapeLayout(geometry: GeometryProxy) -> some View {
-        HStack {
-            Spacer()
-            
-            VStack {
-                Spacer()
+        ZStack {
+            HStack(spacing: 0) {
+                // Crveni igrač (leva strana)
+                GameStatusBar(game: game, isLandscape: true, side: .left)
+                    .frame(width: geometry.size.width * 0.15)
+                    .padding(.horizontal, 8)
+                    .padding(.trailing, 16)
                 
-                GameStatusView(game: game)
-                    .padding()
-                    .background(Color.black.opacity(0.2))
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-                
+                // Tabla u centru
                 GameBoardView(
                     game: game,
                     cellSize: GameLayout.calculateCellSize(
@@ -133,10 +149,39 @@ struct GameView: View {
                 )
                 .scaleEffect(GameLayout.boardScaleFactor(for: geometry, boardSize: game.board.size))
                 
+                // Plavi igrač (desna strana)
+                GameStatusBar(game: game, isLandscape: true, side: .right)
+                    .frame(width: geometry.size.width * 0.15)
+                    .padding(.horizontal, 8)
+                    .padding(.leading, 16)
+            }
+            .padding(.horizontal)
+            
+            // Settings dugme u gornjem desnom uglu
+            VStack {
+                HStack {
+                    Spacer()
+                    settingsButton
+                        .padding()
+                }
                 Spacer()
             }
-            
-            Spacer()
+        }
+    }
+    
+    private var settingsButton: some View {
+        Button(action: {
+            showingSettings = true
+        }) {
+            Image(systemName: "gearshape.fill")
+                .font(.system(size: 24))
+                .foregroundColor(.white)
+                .frame(width: 60, height: 60)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white.opacity(0.2))
+                        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
+                )
         }
     }
 }

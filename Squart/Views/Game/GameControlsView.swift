@@ -5,7 +5,7 @@ struct PlayerScoreView: View {
     @ObservedObject private var localization = Localization.shared
     
     var body: some View {
-        HStack {
+        HStack(spacing: 20) {
             PlayerScoreItemView(
                 player: .blue,
                 score: game.blueScore,
@@ -22,6 +22,7 @@ struct PlayerScoreView: View {
                 isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .red)
             )
         }
+        .frame(height: 50) // Fiksna visina od 50px
     }
 }
 
@@ -32,31 +33,38 @@ struct PlayerScoreItemView: View {
     let isAI: Bool
     
     var body: some View {
-        VStack {
+        HStack(spacing: 8) {
+            // Indikator igrača i AI status
             ZStack {
                 Rectangle()
                     .fill(player == .blue ? Color.blue : Color.red)
-                    .frame(width: 30, height: 30)
+                    .frame(width: 24, height: 24)
                     .cornerRadius(4)
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
-                            .stroke(Color.white, lineWidth: 1)
+                            .stroke(Color.white.opacity(0.8), lineWidth: 1)
                     )
-                    .shadow(color: Color.black.opacity(0.3), radius: 3)
                 
                 if isAI {
                     Image(systemName: "cpu")
-                        .font(.system(size: 16))
+                        .font(.system(size: 12))
                         .foregroundColor(.white)
                 }
             }
             
+            // Rezultat
             Text("\(score)")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
+                .frame(minWidth: 30, alignment: .center)
         }
-        .padding(8)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.white.opacity(0.1))
+                .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        )
     }
 }
 

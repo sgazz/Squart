@@ -13,10 +13,10 @@ struct GameSettingsView: View {
         NavigationView {
             List {
                 // Glavne sekcije
-                Section {
+                Section(header: Text("main_settings".localized)) {
                     FirstPlayerSection(settings: settings)
                     OpponentSection(settings: settings)
-                    BoardSection(settings: settings)
+                    BoardSection(settings: settings, game: game)
                     TimerSection(settings: settings)
                         .onChange(of: settings.timerOption) { newValue in
                             game.timerOption = newValue
@@ -26,14 +26,14 @@ struct GameSettingsView: View {
                 }
                 
                 // Dodatne opcije
-                Section {
+                Section(header: Text("additional_options".localized)) {
                     SoundSection(settings: settings)
                     LanguageSection(settings: settings)
                     ThemeSection(settings: settings)
                 }
                 
                 // Upravljanje igrom
-                Section {
+                Section(header: Text("game_management".localized)) {
                     Button(action: { saveGame() }) {
                         Label("save".localized, systemImage: "square.and.arrow.down")
                     }
@@ -44,7 +44,7 @@ struct GameSettingsView: View {
                 }
                 
                 // Pomoć i dostignuća
-                Section {
+                Section(header: Text("help_and_achievements".localized)) {
                     Button(action: { showingHelpView = true }) {
                         Label("help".localized, systemImage: "questionmark.circle")
                     }

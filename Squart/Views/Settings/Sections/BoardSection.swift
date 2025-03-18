@@ -2,36 +2,29 @@ import SwiftUI
 
 struct BoardSection: View {
     @ObservedObject var settings: GameSettingsManager
+    @ObservedObject var game: Game
     @ObservedObject private var localization = Localization.shared
     
-    private let boardSizes = [7, 9, 11]
+    private let boardSizes = Array(5...20)
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("board_size".localized)
-                .font(.headline)
-            
-            HStack(spacing: 12) {
-                ForEach(boardSizes, id: \.self) { size in
-                    Button(action: {
-                        settings.boardSize = size
-                    }) {
-                        Text("\(size)x\(size)")
-                            .font(.headline)
-                            .foregroundColor(settings.boardSize == size ? .white : .primary)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .background(settings.boardSize == size ? Color.blue : Color.gray.opacity(0.2))
-                            .cornerRadius(8)
-                    }
-                }
+        Picker("board_size".localized, selection: Binding(
+            get: { settings.boardSize },
+            set: { newSize in
+                settings.boardSize = newSize
+                game.board = GameBoard(size: newSize)
             }
-            .padding(.top, 4)
+        )) {
+            ForEach(boardSizes, id: \.self) { size in
+                Text("\(size)x\(size)")
+                    .tag(size)
+            }
         }
+        .pickerStyle(.menu)
     }
 }
 
 #Preview {
-    BoardSection(settings: GameSettingsManager.shared)
+    BoardSection(settings: GameSettingsManager.shared, game: Game())
         .padding()
 } 

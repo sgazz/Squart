@@ -18,9 +18,8 @@ struct BoardView: View {
             }
         }
         .padding(6)
-        .background(Color.white.opacity(0.15))
         .clipShape(RoundedRectangle(cornerRadius: 10))
-        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.3), radius: 12, x: 0, y: 6)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.white.opacity(0.3), lineWidth: 2)
