@@ -1,16 +1,19 @@
 import SwiftUI
 
 struct GameLayout {
+    // Fiksne dimenzije okvira table
+    static let fixedBoardSize: CGFloat = isPad ? 600 : 340
+    
     static var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
     }
     
     static func sidePanelWidth(for geometry: GeometryProxy) -> CGFloat {
-        geometry.size.width * (isInSplitView ? 0.2 : 0.15)
+        geometry.size.width * 0.2
     }
     
     static func boardWidth(for geometry: GeometryProxy) -> CGFloat {
-        geometry.size.width * (isInSplitView ? 0.6 : 0.7)
+        fixedBoardSize
     }
     
     static var isInSplitView: Bool {
@@ -31,40 +34,23 @@ struct GameLayout {
     }
     
     static func boardScaleFactor(for geometry: GeometryProxy, boardSize: Int) -> CGFloat {
-        // Za iPhone
-        if UIDevice.current.userInterfaceIdiom == .phone {
-            switch boardSize {
-            case 5...7:
-                return 1.0
-            case 8...10:
-                return 0.9
-            case 11...13:
-                return 0.8
-            default:
-                return 0.7
-            }
-        }
+        let availableWidth = geometry.size.width * 0.8
+        let availableHeight = geometry.size.height - calculateVerticalPadding()
         
-        // Za iPad
-        return iPadScaleFactor(for: geometry)
+        let widthScale = availableWidth / fixedBoardSize
+        let heightScale = availableHeight / fixedBoardSize
+        
+        // Uzimamo manji scale factor da tabla stane i po širini i po visini
+        return min(widthScale, heightScale)
     }
     
     static func iPadScaleFactor(for geometry: GeometryProxy) -> CGFloat {
-        let screenWidth = UIScreen.main.bounds.width
-        
-        // Različiti faktori za različite iPad modele
-        switch screenWidth {
-        case 1024: // iPad 9.7" i 10.2"
-            return isInSplitView ? 0.8 : 1.0
-        case 1112: // iPad Pro 10.5"
-            return isInSplitView ? 0.85 : 1.1
-        case 1180: // iPad Pro 11"
-            return isInSplitView ? 0.9 : 1.2
-        case 1366: // iPad Pro 12.9"
-            return isInSplitView ? 0.95 : 1.3
-        default:
-            return 1.0
+        if isInSlideOver {
+            return 0.7
+        } else if isInSplitView {
+            return 0.8
         }
+        return 1.0
     }
     
     // MARK: - Cell Size Calculation
@@ -74,35 +60,10 @@ struct GameLayout {
         boardSize: Int,
         isPortrait: Bool
     ) -> CGFloat {
-        let horizontalPadding = calculateHorizontalPadding()
-        let verticalPadding = calculateVerticalPadding()
+        let cellSize = fixedBoardSize / CGFloat(boardSize)
+        let minCellSize: CGFloat = isPad ? 24 : 20
         
-        let availableWidth = geometry.size.width - (isPortrait ? horizontalPadding : geometry.size.width * (isInSplitView ? 0.5 : 0.4))
-        let availableHeight = geometry.size.height - (isPortrait ? verticalPadding : 80)
-        
-        let maxCellsInRow = CGFloat(boardSize)
-        let (maxCellSize, minCellSize) = calculateCellSizeLimits()
-        
-        let scaleFactor = iPadScaleFactor(for: geometry)
-        let desiredCellSize = isPortrait ? 
-            min(availableWidth / maxCellsInRow, maxCellSize) :
-            min(min(availableHeight / maxCellsInRow, availableWidth / maxCellsInRow), maxCellSize)
-        
-        return max(desiredCellSize, minCellSize) * scaleFactor
-    }
-    
-    private static func calculateHorizontalPadding() -> CGFloat {
-        if isPad {
-            if isInSlideOver {
-                return 20
-            } else if isInSplitView {
-                return 40
-            } else {
-                return 60
-            }
-        } else {
-            return 40
-        }
+        return max(cellSize, minCellSize)
     }
     
     private static func calculateVerticalPadding() -> CGFloat {
@@ -112,24 +73,10 @@ struct GameLayout {
             } else if isInSplitView {
                 return 180
             } else {
-                return 240
+                return 200
             }
         } else {
-            return 200
-        }
-    }
-    
-    private static func calculateCellSizeLimits() -> (max: CGFloat, min: CGFloat) {
-        if isPad {
-            if isInSlideOver {
-                return (45, 25)
-            } else if isInSplitView {
-                return (50, 30)
-            } else {
-                return (60, 35)
-            }
-        } else {
-            return (50, 30)
+            return 140
         }
     }
 } 

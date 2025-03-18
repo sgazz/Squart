@@ -69,50 +69,57 @@ struct GameView: View {
     }
     
     private func portraitLayout(geometry: GeometryProxy) -> some View {
-        VStack {
+        let scaleFactor = GameLayout.boardScaleFactor(for: geometry, boardSize: game.board.size)
+        let scaledBoardSize = GameLayout.fixedBoardSize * scaleFactor
+        let availableSpace = geometry.size.height - scaledBoardSize
+        let topSpace = availableSpace * 0.1 // Smanjujemo na 10%
+        
+        return VStack {
+            Spacer()
+            
             // Status bar i Settings dugme
-            VStack(spacing: 0) {
-                HStack {
-                    Spacer()
-                    
-                    PlayerStatusView(
-                        player: .blue,
-                        score: game.blueScore,
-                        remainingTime: Int(game.blueTimeRemaining),
-                        isActive: !game.isGameOver && game.currentPlayer == .blue,
-                        isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .blue),
-                        isVertical: false,
-                        alignment: .center,
-                        position: .center
-                    )
-                    
-                    Spacer()
-                        .frame(width: 30)
-                    
-                    settingsButton
-                        .padding(.horizontal, 8)
-                    
-                    Spacer()
-                        .frame(width: 30)
-                    
-                    PlayerStatusView(
-                        player: .red,
-                        score: game.redScore,
-                        remainingTime: Int(game.redTimeRemaining),
-                        isActive: !game.isGameOver && game.currentPlayer == .red,
-                        isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .red),
-                        isVertical: false,
-                        alignment: .center,
-                        position: .center
-                    )
-                    
-                    Spacer()
-                }
-                .padding(.top, 4)
+            HStack {
+                Spacer()
+                
+                PlayerStatusView(
+                    player: .blue,
+                    score: game.blueScore,
+                    remainingTime: Int(game.blueTimeRemaining),
+                    isActive: !game.isGameOver && game.currentPlayer == .blue,
+                    isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .blue),
+                    isVertical: false,
+                    alignment: .center,
+                    position: .center
+                )
+                
+                Spacer()
+                    .frame(width: 30)
+                
+                settingsButton
+                    .padding(.horizontal, 8)
+                
+                Spacer()
+                    .frame(width: 30)
+                
+                PlayerStatusView(
+                    player: .red,
+                    score: game.redScore,
+                    remainingTime: Int(game.redTimeRemaining),
+                    isActive: !game.isGameOver && game.currentPlayer == .red,
+                    isAI: game.aiEnabled && (game.aiVsAiMode || game.aiTeam == .red),
+                    isVertical: false,
+                    alignment: .center,
+                    position: .center
+                )
+                
+                Spacer()
             }
             
-            // Tabla u centru
+            // Manji razmak između indikatora i table
             Spacer()
+                .frame(height: topSpace)
+            
+            // Tabla u centru
             GameBoardView(
                 game: game,
                 cellSize: GameLayout.calculateCellSize(
@@ -122,10 +129,10 @@ struct GameView: View {
                 ),
                 onNewGame: { game.resetGame() }
             )
-            .scaleEffect(GameLayout.boardScaleFactor(for: geometry, boardSize: game.board.size))
+            .scaleEffect(scaleFactor)
+            
             Spacer()
         }
-        .scaleEffect(GameLayout.isInSlideOver ? 0.8 : 1.0)
     }
     
     private func landscapeLayout(geometry: GeometryProxy) -> some View {
