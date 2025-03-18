@@ -11,7 +11,7 @@ import SwiftUI
 struct SquartApp: App {
     var body: some Scene {
         WindowGroup {
-            GameView()
+            WelcomeView()
         }
     }
 }

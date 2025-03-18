@@ -3,11 +3,15 @@ import SwiftUI
 struct GameView: View {
     @StateObject private var game = Game()
     @State private var orientation = UIDevice.current.orientation
-    @State private var showingSettings = false
+    @Binding var showingSettings: Bool
     @ObservedObject private var settings = GameSettingsManager.shared
     @State private var timer: Timer? = nil
     @ObservedObject private var achievementManager = AchievementManager.shared
     @ObservedObject private var localization = Localization.shared
+    
+    init(showingSettings: Binding<Bool>) {
+        self._showingSettings = showingSettings
+    }
     
     private var effectiveOrientation: UIDeviceOrientation {
         if GameLayout.isInSplitView || GameLayout.isInSlideOver {
@@ -204,5 +208,5 @@ struct PresentationDetentsModifier: ViewModifier {
 }
 
 #Preview {
-    GameView()
+    GameView(showingSettings: .constant(false))
 } 
