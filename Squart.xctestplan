@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "4E470C78-D653-4082-8759-E5D0A64A4D3F",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:Squart.xcodeproj",
+      "identifier" : "CFA0656F2D7F7B1300CEB20B",
+      "name" : "Squart"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Squart.xcodeproj",
+        "identifier" : "CFA066F82D80E10400CEB20B",
+        "name" : "SquartTests"
+      }
+    }
+  ],
+  "version" : 1
+}

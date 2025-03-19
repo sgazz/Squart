@@ -8,23 +8,23 @@ struct HelpView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Glavni naslov sa animacijom
-                    Text("how_to_play".localized)
+                    // Main title with animation
+                    Text("How to Play")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .padding(.bottom, 16)
                         .transition(.scale.combined(with: .opacity))
                     
-                    // Brzi pristup sekcijama
+                    // Quick access sections
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
-                            ForEach(["about_game", "game_rules", "how_to_win", "ai_opponent", "game_tips"], id: \.self) { section in
+                            ForEach(["About", "Rules", "Winning", "AI", "Tips"], id: \.self) { section in
                                 Button(action: {
                                     withAnimation {
                                         selectedSection = section
                                     }
                                 }) {
-                                    Text(section.localized)
+                                    Text(section)
                                         .font(.subheadline)
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 8)
@@ -39,63 +39,58 @@ struct HelpView: View {
                     }
                     .padding(.bottom, 16)
                     
-                    // Osnovni opis igre
-                    HelpSection(title: "about_game".localized, icon: "gamecontroller") {
-                        Text("about_game_text".localized)
+                    // Basic game description
+                    HelpSection(title: "About", icon: "gamecontroller") {
+                        Text("Squart is an innovative strategy game based on spatial thinking, where each move changes the course of the game as you try to outmaneuver your opponent on a board full of challenges. With dynamic AI opponents and inactive fields that reshape strategy, every match is a unique intellectual battle!")
                             .padding(.bottom, 8)
                             
-                        Text("board_description".localized)
+                        Text("The game board consists of a grid where players take turns placing their pieces. Some cells are blocked and cannot be used. Players must carefully plan their moves to maximize their territory while limiting their opponent's options.")
                             .padding(.bottom, 8)
                     }
                     
-                    // Pravila igre
-                    HelpSection(title: "game_rules".localized, icon: "list.bullet.clipboard") {
-                        RuleItem(text: "rules_blue_first".localized)
-                        RuleItem(text: "rules_blue_move".localized)
-                        RuleItem(text: "rules_red_move".localized)
-                        RuleItem(text: "rules_alternating".localized)
-                        RuleItem(text: "rules_blocked_fields".localized)
-                        RuleItem(text: "rules_valid_move".localized)
-                        RuleItem(text: "rules_time_limit".localized)
+                    // Game rules
+                    HelpSection(title: "Rules", icon: "list.bullet.clipboard") {
+                        RuleItem(text: "Choose which player goes first (Blue or Red)")
+                        RuleItem(text: "Blue player places blue pieces")
+                        RuleItem(text: "Red player places red pieces")
+                        RuleItem(text: "Players take turns")
+                        RuleItem(text: "Blocked fields cannot be used")
+                        RuleItem(text: "Time limit is optional and can be set in Quick Setup")
                     }
                     
-                    // Kako pobediti
-                    HelpSection(title: "how_to_win".localized, icon: "trophy") {
-                        Text("win_ways".localized)
+                    // How to win
+                    HelpSection(title: "Winning", icon: "trophy") {
+                        Text("There are two ways to win:")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .padding(.bottom, 4)
                         
-                        RuleItem(text: "win_no_moves".localized)
-                        RuleItem(text: "win_timeout".localized)
+                        RuleItem(text: "Opponent has no valid moves left")
+                        RuleItem(text: "Opponent runs out of time (if timer is enabled)")
                     }
                     
-                    // AI protivnik
-                    HelpSection(title: "ai_opponent".localized, icon: "cpu") {
-                        Text("ai_intro".localized)
+                    // AI opponent
+                    HelpSection(title: "AI", icon: "cpu") {
+                        Text("You can play against an AI opponent with different difficulty levels:")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .padding(.bottom, 4)
                         
-                        RuleItem(text: "ai_settings".localized)
-                        RuleItem(text: "ai_team_select".localized)
-                        RuleItem(text: "ai_difficulty".localized)
-                        RuleItem(text: "ai_first_move".localized)
-                        RuleItem(text: "ai_turn_wait".localized)
-                        RuleItem(text: "ai_vs_ai_mode".localized)
-                        RuleItem(text: "ai_vs_ai_difficulty".localized)
-                        RuleItem(text: "ai_advanced".localized)
-                        RuleItem(text: "ai_vs_ai_learning".localized)
+                        RuleItem(text: "Enable AI in Quick Setup")
+                        RuleItem(text: "Choose which team the AI will play")
+                        RuleItem(text: "Select AI difficulty (Easy, Medium, Hard)")
+                        RuleItem(text: "AI will automatically make its moves")
+                        RuleItem(text: "AI vs AI mode is available for watching computer play")
                     }
                     
-                    // Saveti za igru
-                    HelpSection(title: "game_tips".localized, icon: "lightbulb") {
-                        RuleItem(text: "tips_planning".localized)
-                        RuleItem(text: "tips_blocking".localized)
-                        RuleItem(text: "tips_edges".localized)
-                        RuleItem(text: "tips_blocked_fields".localized)
-                        RuleItem(text: "tips_corners".localized)
-                        RuleItem(text: "tips_valid_moves".localized)
+                    // Game tips
+                    HelpSection(title: "Tips", icon: "lightbulb") {
+                        RuleItem(text: "Plan your moves ahead to create large connected areas")
+                        RuleItem(text: "Block your opponent's potential expansion paths")
+                        RuleItem(text: "Control the edges to limit opponent's options")
+                        RuleItem(text: "Use blocked fields strategically to create barriers")
+                        RuleItem(text: "Corner positions can be valuable for territory control")
+                        RuleItem(text: "Always check for valid moves before making your choice")
                     }
                 }
                 .padding()
@@ -113,8 +108,8 @@ struct HelpView: View {
                 )
                 .edgesIgnoringSafeArea(.all)
             )
-            .navigationBarTitle("help".localized, displayMode: .inline)
-            .navigationBarItems(trailing: Button("close".localized) {
+            .navigationBarTitle("Help", displayMode: .inline)
+            .navigationBarItems(trailing: Button("Close") {
                 dismiss()
             })
             .preferredColorScheme(.dark)
@@ -122,7 +117,7 @@ struct HelpView: View {
     }
 }
 
-// Pomoćne strukture za bolju organizaciju koda
+// Helper structures for better code organization
 struct HelpSection<Content: View>: View {
     let title: String
     let icon: String
