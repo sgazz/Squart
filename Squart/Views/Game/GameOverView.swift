@@ -4,43 +4,40 @@ struct GameOverView: View {
     let game: Game
     let onPlayAgain: () -> Void
     let onQuickSetup: () -> Void
-    let scoreText: String
-    let quickSetupText: String
-    let playAgainText: String
+    @Binding var isPresented: Bool
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: horizontalSizeClass == .regular ? 12 : 16) {
             // Winner announcement
             Text(winnerText)
-                .font(.title.bold())
-                .foregroundColor(.white)
+                .font(horizontalSizeClass == .regular ? .headline.bold() : .title3.bold())
+                .foregroundColor(.black)
                 .multilineTextAlignment(.center)
             
-            // Score
-            Text(scoreText)
-                .font(.title2)
-                .foregroundColor(.white)
-            
             // Buttons
-            HStack(spacing: 16) {
-                Button(action: onQuickSetup) {
-                    Text(quickSetupText)
-                        .font(.headline)
-                        .foregroundColor(.white)
+            HStack(spacing: 12) {
+                Button(action: {
+                    isPresented = false
+                    onQuickSetup()
+                }) {
+                    Text("Quick Setup")
+                        .font(horizontalSizeClass == .regular ? .callout : .headline)
+                        .foregroundColor(.black)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .frame(height: horizontalSizeClass == .regular ? 32 : 44)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.2))
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.white.opacity(0.1))
                         )
                 }
                 
                 Button(action: onPlayAgain) {
-                    Text(playAgainText)
-                        .font(.headline)
+                    Text("Play Again")
+                        .font(horizontalSizeClass == .regular ? .callout : .headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .frame(height: horizontalSizeClass == .regular ? 32 : 44)
                         .background(
                             LinearGradient(
                                 gradient: Gradient(colors: [.blue, .red]),
@@ -48,44 +45,45 @@ struct GameOverView: View {
                                 endPoint: .trailing
                             )
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, horizontalSizeClass == .regular ? 12 : 16)
         }
-        .padding(32)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.7))
-        )
-        .padding()
+        .padding(horizontalSizeClass == .regular ? 16 : 20)
+        .frame(width: horizontalSizeClass == .regular ? 260 : 300)
+        .background(Color(.systemGray6).opacity(0.95))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal)
     }
     
     private var winnerText: String {
         if game.gameEndReason == .noValidMoves {
             if game.currentPlayer == .red {
-                return "Blue wins - Red has no valid moves!"
+                return "Blue wins!\nRed has no valid moves"
             } else {
-                return "Red wins - Blue has no valid moves!"
+                return "Red wins!\nBlue has no valid moves"
             }
         } else if game.gameEndReason == .blueTimeout {
-            return "Red wins - Blue ran out of time!"
+            return "Red wins!\nBlue ran out of time"
         } else if game.gameEndReason == .redTimeout {
-            return "Blue wins - Red ran out of time!"
+            return "Blue wins!\nRed ran out of time"
         } else {
             return "Game Over"
         }
     }
 }
 
-#Preview {
-    GameOverView(
-        game: Game(),
-        onPlayAgain: {},
-        onQuickSetup: {},
-        scoreText: "Score: 0 - 0",
-        quickSetupText: "Quick Setup",
-        playAgainText: "Play Again"
-    )
-    .background(Color.gray)
+struct GameOverView_Previews: PreviewProvider {
+    static var previews: some View {
+        GameOverView(
+            game: Game(),
+            onPlayAgain: {},
+            onQuickSetup: {},
+            isPresented: .constant(true)
+        )
+        .background(Color.gray)
+        .previewInterfaceOrientation(.landscapeLeft)
+        .previewDisplayName("Game Over")
+    }
 } 

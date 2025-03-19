@@ -232,10 +232,10 @@ private struct TimerPickerView: View {
     @State private var isTimerEnabled = false
     
     private let options = [
-        (TimerOption.oneMinute, "1 minut"),
-        (TimerOption.twoMinutes, "2 minuta"),
-        (TimerOption.threeMinutes, "3 minuta"),
-        (TimerOption.fiveMinutes, "5 minuta")
+        (TimerOption.oneMinute, "1 min"),
+        (TimerOption.twoMinutes, "2 min"),
+        (TimerOption.threeMinutes, "3 min"),
+        (TimerOption.fiveMinutes, "5 min")
     ]
     
     var body: some View {
@@ -267,7 +267,7 @@ private struct TimerPickerView: View {
                     }
                 } label: {
                     HStack {
-                        Text(options.first { $0.0 == settings.timerOption }?.1 ?? "1 minut")
+                        Text(options.first { $0.0 == settings.timerOption }?.1 ?? "1 min")
                             .font(.system(size: 14, weight: .medium))
                         Image(systemName: "chevron.down")
                             .font(.caption)
