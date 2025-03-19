@@ -6,16 +6,31 @@ enum AIDifficulty: Int, CaseIterable, Codable {
     case medium = 1
     case hard = 2
     
-    // Ovo ćemo koristiti samo za kompatibilnost sa starim kodom
-    var description: String {
+    var localizedString: String {
         switch self {
         case .easy:
-            return "Lako"
+            return "easy".localized
         case .medium:
-            return "Srednje"
+            return "medium".localized
         case .hard:
-            return "Teško"
+            return "hard".localized
         }
+    }
+    
+    var stars: Int {
+        switch self {
+        case .easy:
+            return 1
+        case .medium:
+            return 2
+        case .hard:
+            return 3
+        }
+    }
+    
+    // Ovo ćemo koristiti samo za kompatibilnost sa starim kodom
+    var description: String {
+        localizedString
     }
 }
 

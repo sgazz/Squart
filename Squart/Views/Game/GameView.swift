@@ -4,6 +4,7 @@ struct GameView: View {
     @StateObject private var game = Game()
     @State private var orientation = UIDevice.current.orientation
     @Binding var showingSettings: Bool
+    @State private var showingQuickSetup = true
     @ObservedObject private var settings = GameSettingsManager.shared
     @State private var timer: Timer? = nil
     @ObservedObject private var achievementManager = AchievementManager.shared
@@ -32,6 +33,16 @@ struct GameView: View {
                         landscapeLayout(geometry: geometry)
                     }
                 }
+            }
+            
+            // Quick Setup Overlay
+            if showingQuickSetup {
+                Color.black.opacity(0.5)
+                    .edgesIgnoringSafeArea(.all)
+                    .transition(.opacity)
+                
+                QuickSetupView(isPresented: $showingQuickSetup, game: game)
+                    .transition(.move(edge: .trailing))
             }
         }
         .sheet(isPresented: $showingSettings) {
@@ -131,7 +142,8 @@ struct GameView: View {
                     boardSize: game.board.size,
                     isPortrait: effectiveOrientation.isPortrait
                 ),
-                onNewGame: { game.resetGame() }
+                onNewGame: { game.resetGame() },
+                onShowQuickSetup: { showingQuickSetup = true }
             )
             .scaleEffect(scaleFactor)
             
@@ -156,7 +168,8 @@ struct GameView: View {
                         boardSize: game.board.size,
                         isPortrait: effectiveOrientation.isPortrait
                     ),
-                    onNewGame: { game.resetGame() }
+                    onNewGame: { game.resetGame() },
+                    onShowQuickSetup: { showingQuickSetup = true }
                 )
                 .scaleEffect(GameLayout.boardScaleFactor(for: geometry, boardSize: game.board.size))
                 
