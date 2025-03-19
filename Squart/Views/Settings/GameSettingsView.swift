@@ -12,19 +12,6 @@ struct GameSettingsView: View {
     var body: some View {
         NavigationView {
             List {
-                // Glavne sekcije
-                Section(header: Text("main_settings".localized)) {
-                    FirstPlayerSection(settings: settings)
-                    OpponentSection(settings: settings)
-                    BoardSection(settings: settings, game: game)
-                    TimerSection(settings: settings)
-                        .onChange(of: settings.timerOption) { newValue in
-                            game.timerOption = newValue
-                            game.blueTimeRemaining = newValue.rawValue
-                            game.redTimeRemaining = newValue.rawValue
-                        }
-                }
-                
                 // Dodatne opcije
                 Section(header: Text("additional_options".localized)) {
                     SoundSection(settings: settings)
