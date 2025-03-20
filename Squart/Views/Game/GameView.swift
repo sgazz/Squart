@@ -37,10 +37,6 @@ struct GameView: View {
             
             // Quick Setup Overlay
             if showingQuickSetup {
-                Color.black.opacity(0.5)
-                    .edgesIgnoringSafeArea(.all)
-                    .transition(.opacity)
-                
                 QuickSetupView(isPresented: $showingQuickSetup, game: game)
                     .transition(.move(edge: .trailing))
             }
@@ -52,8 +48,12 @@ struct GameView: View {
         .onRotate { newOrientation in
             orientation = newOrientation
         }
-        .onAppear {
-            startTimer()
+        .onChange(of: game.isTimerRunning) { isRunning in
+            if isRunning {
+                startTimer()
+            } else {
+                stopTimer()
+            }
         }
         .onDisappear {
             stopTimer()
@@ -197,15 +197,10 @@ struct GameView: View {
         Button(action: {
             showingSettings = true
         }) {
-            Image(systemName: "gearshape.fill")
+            Image(systemName: "gearshape")
                 .font(.system(size: 24))
                 .foregroundColor(.white)
                 .frame(width: 60, height: 60)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.2))
-                        .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
-                )
         }
     }
 }

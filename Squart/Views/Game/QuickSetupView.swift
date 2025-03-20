@@ -300,7 +300,7 @@ struct QuickSetupView: View {
     
     var body: some View {
         ZStack {
-            Color.black.opacity(0.3)
+            Color.clear
                 .edgesIgnoringSafeArea(.all)
                 .onTapGesture {
                     withAnimation(.spring()) {
@@ -403,6 +403,9 @@ struct QuickSetupView: View {
         
         // Resetuj igru
         game.resetGame()
+        
+        // Pokreni tajmer
+        game.startGameTimer()
         
         // Ako je AI vs AI mod i AI je na potezu, pokreni prvi potez
         if settings.aiEnabled && game.aiVsAiMode {

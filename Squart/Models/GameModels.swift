@@ -130,6 +130,7 @@ class Game: ObservableObject {
     @Published var blueTimeRemaining: Int
     @Published var redTimeRemaining: Int
     @Published var timerOption: TimerOption
+    @Published var isTimerRunning: Bool = false
     
     // AI podrška
     @Published var aiEnabled: Bool = false
@@ -190,8 +191,18 @@ class Game: ObservableObject {
         return false
     }
     
+    func startGameTimer() {
+        if timerOption != .none {
+            isTimerRunning = true
+        }
+    }
+    
+    func stopGameTimer() {
+        isTimerRunning = false
+    }
+    
     func updateTimer() {
-        guard !isGameOver else { return }
+        guard !isGameOver && isTimerRunning else { return }
         guard timerOption != .none else { return }
         
         // Umanjujemo vreme trenutnom igraču (bez obzira da li AI razmišlja)
