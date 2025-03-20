@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <!-- Таласи -->
+    <path d="M0 50 C50 30, 100 70, 150 50 C200 30, 250 70, 300 50" 
+          fill="none" 
+          stroke="currentColor" 
+          stroke-width="1.5"
+          stroke-opacity="0.15"
+          transform="translate(-50, 0)">
+        <animate attributeName="d" 
+                 dur="8s" 
+                 repeatCount="indefinite" 
+                 values="M0 50 C50 30, 100 70, 150 50 C200 30, 250 70, 300 50;
+                         M0 50 C50 70, 100 30, 150 50 C200 70, 250 30, 300 50;
+                         M0 50 C50 30, 100 70, 150 50 C200 30, 250 70, 300 50"/>
+    </path>
+    
+    <path d="M0 100 C50 80, 100 120, 150 100 C200 80, 250 120, 300 100" 
+          fill="none" 
+          stroke="currentColor" 
+          stroke-width="1.5"
+          stroke-opacity="0.1"
+          transform="translate(-50, 0)">
+        <animate attributeName="d" 
+                 dur="6s" 
+                 repeatCount="indefinite" 
+                 values="M0 100 C50 80, 100 120, 150 100 C200 80, 250 120, 300 100;
+                         M0 100 C50 120, 100 80, 150 100 C200 120, 250 80, 300 100;
+                         M0 100 C50 80, 100 120, 150 100 C200 80, 250 120, 300 100"/>
+    </path>
+    
+    <!-- Мехурићи -->
+    <circle cx="30" cy="160" r="3" fill="currentColor" fill-opacity="0.1">
+        <animate attributeName="cy" 
+                 dur="4s" 
+                 values="160;140;130;120;110;100;90;80;70;60" 
+                 repeatCount="indefinite"/>
+        <animate attributeName="cx" 
+                 dur="4s" 
+                 values="30;32;34;32;30;28;30" 
+                 repeatCount="indefinite"/>
+    </circle>
+    
+    <circle cx="160" cy="180" r="2" fill="currentColor" fill-opacity="0.08">
+        <animate attributeName="cy" 
+                 dur="6s" 
+                 values="180;160;150;140;130;120;110;100;90" 
+                 repeatCount="indefinite"/>
+        <animate attributeName="cx" 
+                 dur="6s" 
+                 values="160;162;164;162;160;158;160" 
+                 repeatCount="indefinite"/>
+    </circle>
+    
+    <circle cx="100" cy="170" r="2.5" fill="currentColor" fill-opacity="0.12">
+        <animate attributeName="cy" 
+                 dur="5s" 
+                 values="170;150;140;130;120;110;100;90;80" 
+                 repeatCount="indefinite"/>
+        <animate attributeName="cx" 
+                 dur="5s" 
+                 values="100;102;104;102;100;98;100" 
+                 repeatCount="indefinite"/>
+    </circle>
+</svg> 
