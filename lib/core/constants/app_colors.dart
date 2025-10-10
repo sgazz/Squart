@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // ========== Dark Theme (Primary) ==========
+  // ========== Dark Theme (Primary) - Тамно љубичаста варијанта ==========
   
-  // Background Gradients
-  static const darkGradientStart = Color(0xFF1A1B3D); // Dark blue
-  static const darkGradientEnd = Color(0xFF2D1B4E); // Purple
+  // Background Gradients - Лепша љубичаста тема
+  static const darkGradientStart = Color(0xFF1a0933); // Deep purple
+  static const darkGradientEnd = Color(0xFF2d1b4e); // Medium purple
   
-  // Glass Container
-  static const darkGlassBackground = Color(0x1AFFFFFF); // white.withOpacity(0.1)
-  static const darkGlassBorder = Color(0x33FFFFFF); // white.withOpacity(0.2)
+  // Glass Container - Светлији за боље читљивост
+  static const darkGlassBackground = Color(0x26FFFFFF); // white.withOpacity(0.15) - светлије!
+  static const darkGlassBorder = Color(0x4DFFFFFF); // white.withOpacity(0.3) - видљивији!
   
   // ========== Light Theme ==========
   
@@ -42,8 +42,8 @@ class AppColors {
   static const blackCellDark = Color(0xFF424242); // Dark gray
   static const blackCellLight = Color(0xFF757575); // Light gray
   
-  // Regular Cells
-  static const regularCellDark = Color(0xFF37474F);
+  // Regular Cells - Једна боја за све неактивне ћелије
+  static const regularCellDark = Color(0xFF3d2657); // Тамно љубичаста, видљива
   static const regularCellLight = Color(0xFFFFFFFF);
   
   // Board Border
