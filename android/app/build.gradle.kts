@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.squart.squart"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36  // Force compileSdk to 36 for newer dependencies
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -25,7 +25,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36  // Force targetSdk to 36 to match emulator API level
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
