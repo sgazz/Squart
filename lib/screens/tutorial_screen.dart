@@ -157,13 +157,15 @@ class _TutorialScreenState extends State<TutorialScreen> {
   }
   
   Widget _buildSlide(BuildContext context, TutorialSlide slide, int index) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSizes.spaceL),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(AppSizes.spaceXL),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.spaceL),
+        child: GlassContainer(
+          padding: const EdgeInsets.all(AppSizes.spaceXL),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
             // Icon
             Container(
               width: 120,
@@ -217,7 +219,8 @@ class _TutorialScreenState extends State<TutorialScreen> {
               const SizedBox(height: AppSizes.spaceXL),
               _buildInteractiveExample(context),
             ],
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -254,11 +257,12 @@ class _TutorialScreenState extends State<TutorialScreen> {
           const SizedBox(height: AppSizes.spaceM),
           
           // Simple 3x3 example board
-          AspectRatio(
-            aspectRatio: 1,
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 200),
+          Center(
+            child: SizedBox(
+              width: 200,
+              height: 200,
               child: GridView.builder(
+                shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
