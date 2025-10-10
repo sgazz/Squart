@@ -5,6 +5,7 @@ import '../core/constants/app_sizes.dart';
 import '../core/constants/game_constants.dart';
 import '../widgets/glass_container.dart';
 import '../models/game_settings.dart';
+import '../models/ai_difficulty.dart';
 import '../providers/game_provider.dart';
 import '../providers/theme_provider.dart';
 import 'game_screen.dart';
@@ -22,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _boardSize = GameConstants.defaultBoardSize;
   int _timePerPlayer = GameConstants.timerUnlimited;
   String _gameMode = GameConstants.modePlayerVsPlayer;
+  AIDifficulty _aiDifficulty = AIDifficulty.medium;
   
   @override
   Widget build(BuildContext context) {
@@ -214,13 +216,57 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       
+                      // AI Difficulty (only show if PvE mode)
+                      if (_gameMode == GameConstants.modePlayerVsAI) ...[
+                        const SizedBox(height: AppSizes.spaceM),
+                        const Divider(),
+                        const SizedBox(height: AppSizes.spaceM),
+                        
+                        Text(
+                          'AI Difficulty',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: AppSizes.spaceS),
+                        Wrap(
+                          spacing: AppSizes.spaceS,
+                          runSpacing: AppSizes.spaceS,
+                          children: AIDifficulty.values.map((difficulty) {
+                            final isSelected = _aiDifficulty == difficulty;
+                            return ChoiceChip(
+                              label: Text(difficulty.displayName),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setState(() {
+                                    _aiDifficulty = difficulty;
+                                  });
+                                }
+                              },
+                              selectedColor: AppColors.redToken,
+                              labelStyle: TextStyle(
+                                color: isSelected ? Colors.white : null,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: AppSizes.spaceS),
+                        Text(
+                          _aiDifficulty.description,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary(isDark),
+                          ),
+                        ),
+                      ],
+                      
                       const SizedBox(height: AppSizes.spaceXL),
                       
                       // Start Game Button
                       ElevatedButton.icon(
                         onPressed: _startGame,
                         icon: const Icon(Icons.play_arrow),
-                        label: const Text('Start Game'),
+                        label: Text(_gameMode == GameConstants.modePlayerVsAI 
+                          ? 'Play vs AI' 
+                          : 'Start Game'),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceM),
                         ),
@@ -303,7 +349,7 @@ class _HomeScreenState extends State<HomeScreen> {
       timePerPlayer: _timePerPlayer,
       gameMode: _gameMode,
       aiDifficulty: _gameMode == GameConstants.modePlayerVsAI 
-          ? GameConstants.aiEasy 
+          ? _aiDifficulty 
           : null,
       showHints: context.read<ThemeProvider>().showHints,
     );

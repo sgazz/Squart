@@ -1,11 +1,12 @@
 import '../core/constants/game_constants.dart';
+import 'ai_difficulty.dart';
 
 /// Game settings and configuration
 class GameSettings {
   final int boardSize; // 5 to 20
   final int timePerPlayer; // seconds, 0 = unlimited
   final String gameMode; // PVP or PVE
-  final String? aiDifficulty; // EASY, MEDIUM, HARD (only for PVE)
+  final AIDifficulty? aiDifficulty; // AI difficulty level (only for PVE)
   final bool showHints;
   final bool soundEnabled;
   final bool vibrationEnabled;
@@ -45,7 +46,7 @@ class GameSettings {
     int? boardSize,
     int? timePerPlayer,
     String? gameMode,
-    String? aiDifficulty,
+    AIDifficulty? aiDifficulty,
     bool? showHints,
     bool? soundEnabled,
     bool? vibrationEnabled,
@@ -67,7 +68,7 @@ class GameSettings {
       'boardSize': boardSize,
       'timePerPlayer': timePerPlayer,
       'gameMode': gameMode,
-      'aiDifficulty': aiDifficulty,
+      'aiDifficulty': aiDifficulty?.toStorageString(),
       'showHints': showHints,
       'soundEnabled': soundEnabled,
       'vibrationEnabled': vibrationEnabled,
@@ -76,11 +77,14 @@ class GameSettings {
   
   /// Create from JSON
   factory GameSettings.fromJson(Map<String, dynamic> json) {
+    final aiDifficultyStr = json['aiDifficulty'] as String?;
     return GameSettings(
       boardSize: json['boardSize'] as int? ?? GameConstants.defaultBoardSize,
       timePerPlayer: json['timePerPlayer'] as int? ?? GameConstants.timerUnlimited,
       gameMode: json['gameMode'] as String? ?? GameConstants.modePlayerVsPlayer,
-      aiDifficulty: json['aiDifficulty'] as String?,
+      aiDifficulty: aiDifficultyStr != null 
+        ? AIDifficulty.fromStorageString(aiDifficultyStr)
+        : null,
       showHints: json['showHints'] as bool? ?? true,
       soundEnabled: json['soundEnabled'] as bool? ?? true,
       vibrationEnabled: json['vibrationEnabled'] as bool? ?? true,

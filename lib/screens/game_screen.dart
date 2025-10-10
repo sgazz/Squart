@@ -73,12 +73,14 @@ class GameScreen extends StatelessWidget {
                         Expanded(
                           child: _buildPlayerInfo(
                             context,
-                            'Red',
+                            gameProvider.isPlayerVsAI ? 'AI' : 'Red',
                             GameConstants.playerRed,
                             AppColors.redToken,
                             gameState.redTimeRemaining,
                             gameState.isRedsTurn,
                             gameState.settings.hasTimer,
+                            isAI: gameProvider.isPlayerVsAI,
+                            isAIThinking: gameProvider.isAIThinking,
                           ),
                         ),
                       ],
@@ -137,8 +139,10 @@ class GameScreen extends StatelessWidget {
     Color color,
     int timeRemaining,
     bool isActive,
-    bool hasTimer,
-  ) {
+    bool hasTimer, {
+    bool isAI = false,
+    bool isAIThinking = false,
+  }) {
     final isWarning = timeRemaining <= GameConstants.timerWarningThreshold;
     
     return GlassContainer(
@@ -174,6 +178,30 @@ class GameScreen extends StatelessWidget {
                 color: isWarning ? AppColors.timerWarning : null,
                 fontWeight: FontWeight.bold,
               ),
+            ),
+          ],
+          // AI Thinking Indicator
+          if (isAI && isAIThinking) ...[
+            const SizedBox(height: AppSizes.spaceS),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.spaceS),
+                Text(
+                  'Thinking...',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ),
           ],
         ],

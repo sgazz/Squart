@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/game_state.dart';
 import '../models/game_settings.dart';
 import '../services/game_logic_service.dart';
+import '../services/ai_service.dart';
 import '../core/utils/audio_manager.dart';
 import '../core/utils/haptic_manager.dart';
 import '../core/constants/game_constants.dart';
@@ -10,17 +11,23 @@ import '../core/constants/game_constants.dart';
 /// Provider for managing game state
 class GameProvider with ChangeNotifier {
   final GameLogicService _gameLogic = GameLogicService();
+  final AIService _aiService = AIService();
   GameState? _gameState;
   Timer? _timer;
+  bool _isAIThinking = false;
   
   GameState? get gameState => _gameState;
   bool get hasGame => _gameState != null;
   bool get isGameActive => _gameState?.isPlaying ?? false;
+  bool get isAIThinking => _isAIThinking;
+  bool get isPlayerVsAI => _gameState?.settings.isPlayerVsAI ?? false;
+  bool get isAITurn => isPlayerVsAI && _gameState?.isRedsTurn == true;
   
   /// Start a new game with given settings
   void startNewGame(GameSettings settings) {
     // Cancel existing timer
     _timer?.cancel();
+    _isAIThinking = false;
     
     // Create new game
     _gameState = _gameLogic.createNewGame(settings);
@@ -35,11 +42,20 @@ class GameProvider with ChangeNotifier {
     }
     
     notifyListeners();
+    
+    // If AI is first player (Red), make AI move
+    // Note: In our game, Blue always goes first (horizontal)
+    // So AI will be Red (vertical) and will move second
   }
   
   /// Make a move at given position
   Future<void> makeMove(int row, int col) async {
-    if (_gameState == null || _gameState!.isFinished) return;
+    if (_gameState == null || _gameState!.isFinished || _isAIThinking) return;
+    
+    // In PvE mode, only allow player (Blue) to make moves
+    if (isPlayerVsAI && _gameState!.isRedsTurn) {
+      return; // It's AI's turn, player can't move
+    }
     
     try {
       // Validate and place token
@@ -56,12 +72,23 @@ class GameProvider with ChangeNotifier {
           
           // Play win/lose sound based on winner
           if (_gameState!.winner != null) {
-            await AudioManager.instance.playWin();
-            await HapticManager.instance.success();
+            final isPlayerWin = _gameState!.winner == GameConstants.playerBlue;
+            if (isPlayerWin) {
+              await AudioManager.instance.playWin();
+              await HapticManager.instance.success();
+            } else {
+              await AudioManager.instance.playLose();
+              await HapticManager.instance.heavy();
+            }
           }
         }
         
         notifyListeners();
+        
+        // If it's AI's turn now, trigger AI move
+        if (isAITurn && !_gameState!.isFinished) {
+          await _makeAIMove();
+        }
       } else {
         // Invalid move
         await AudioManager.instance.playInvalid();
@@ -71,6 +98,52 @@ class GameProvider with ChangeNotifier {
       debugPrint('Error making move: $e');
       await AudioManager.instance.playInvalid();
       await HapticManager.instance.error();
+    }
+  }
+  
+  /// Make AI move
+  Future<void> _makeAIMove() async {
+    if (_gameState == null || _gameState!.isFinished || !isAITurn) return;
+    if (_gameState!.settings.aiDifficulty == null) return;
+    
+    _isAIThinking = true;
+    notifyListeners();
+    
+    try {
+      // Calculate AI move
+      final aiMove = await _aiService.calculateMove(
+        _gameState!,
+        _gameState!.settings.aiDifficulty!,
+      );
+      
+      // Make the move
+      _gameState = _gameLogic.placeToken(_gameState!, aiMove.row, aiMove.col);
+      
+      // Play sound and haptic feedback
+      await AudioManager.instance.playTokenPlace();
+      await HapticManager.instance.light();
+      
+      // Check if game ended
+      if (_gameState!.isFinished) {
+        _timer?.cancel();
+        
+        // Play win/lose sound based on winner
+        if (_gameState!.winner != null) {
+          final isPlayerWin = _gameState!.winner == GameConstants.playerBlue;
+          if (isPlayerWin) {
+            await AudioManager.instance.playWin();
+            await HapticManager.instance.success();
+          } else {
+            await AudioManager.instance.playLose();
+            await HapticManager.instance.heavy();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error making AI move: $e');
+    } finally {
+      _isAIThinking = false;
+      notifyListeners();
     }
   }
   
