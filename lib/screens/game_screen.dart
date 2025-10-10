@@ -145,81 +145,92 @@ class GameScreen extends StatelessWidget {
   }) {
     final isWarning = timeRemaining <= GameConstants.timerWarningThreshold;
     
-    return GlassContainer(
-      padding: const EdgeInsets.all(AppSizes.spaceM),
-      borderColor: isActive ? color : null,
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Stack(
+      children: [
+        GlassContainer(
+          padding: const EdgeInsets.all(AppSizes.spaceM),
+          borderColor: isActive ? color : null,
+          child: Column(
             children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.spaceS),
+                  Text(
+                    name,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: AppSizes.spaceS),
-              Text(
-                name,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              if (hasTimer) ...[
+                const SizedBox(height: AppSizes.spaceS),
+                Text(
+                  _formatTime(timeRemaining),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: isWarning ? AppColors.timerWarning : null,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
-          if (hasTimer) ...[
-            const SizedBox(height: AppSizes.spaceS),
-            Text(
-              _formatTime(timeRemaining),
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: isWarning ? AppColors.timerWarning : null,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-          // AI Thinking Indicator (as badge, doesn't push layout)
-          if (isAI && isAIThinking) ...[
-            const SizedBox(height: AppSizes.spaceXS),
-            Container(
+        ),
+        // AI Thinking Indicator - Absolute positioned overlay
+        if (isAI && isAIThinking)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
               padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.spaceS,
-                vertical: AppSizes.spaceXS,
+                horizontal: 6,
+                vertical: 4,
               ),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                border: Border.all(color: color.withOpacity(0.5), width: 1),
+                color: color,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.4),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
-                    width: 12,
-                    height: 12,
+                    width: 10,
+                    height: 10,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
-                  const SizedBox(width: AppSizes.spaceXS),
+                  const SizedBox(width: 4),
                   Text(
-                    'Thinking',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontSize: 10,
-                      color: color,
-                      fontWeight: FontWeight.w600,
+                    'AI',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ],
-      ),
+          ),
+      ],
     );
   }
   
