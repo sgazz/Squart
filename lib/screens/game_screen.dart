@@ -9,8 +9,15 @@ import '../widgets/game_board.dart';
 import '../providers/game_provider.dart';
 
 /// Main game screen
-class GameScreen extends StatelessWidget {
+class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
+
+  @override
+  State<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  bool _hasShownGameOverDialog = false;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +46,21 @@ class GameScreen extends StatelessWidget {
               return const Center(
                 child: Text('No active game'),
               );
+            }
+            
+            // Auto-show game over dialog after 1.5 seconds
+            if (gameState.isFinished && !_hasShownGameOverDialog) {
+              _hasShownGameOverDialog = true;
+              Future.delayed(const Duration(milliseconds: 1500), () {
+                if (mounted) {
+                  _showGameOverDialog(context);
+                }
+              });
+            }
+            
+            // Reset flag when game is not finished
+            if (!gameState.isFinished && _hasShownGameOverDialog) {
+              _hasShownGameOverDialog = false;
             }
             
             // Get valid moves if hints are enabled
