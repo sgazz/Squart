@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_sizes.dart';
 import '../core/constants/game_constants.dart';
@@ -145,92 +146,72 @@ class GameScreen extends StatelessWidget {
   }) {
     final isWarning = timeRemaining <= GameConstants.timerWarningThreshold;
     
-    return Stack(
-      children: [
-        GlassContainer(
-          padding: const EdgeInsets.all(AppSizes.spaceM),
-          borderColor: isActive ? color : null,
-          child: Column(
+    return GlassContainer(
+      padding: const EdgeInsets.all(AppSizes.spaceM),
+      borderColor: isActive ? color : null,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.spaceS),
-                  Text(
-                    name,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                ],
-              ),
-              if (hasTimer) ...[
-                const SizedBox(height: AppSizes.spaceS),
-                Text(
-                  _formatTime(timeRemaining),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: isWarning ? AppColors.timerWarning : null,
-                    fontWeight: FontWeight.bold,
-                  ),
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
                 ),
+              ),
+              const SizedBox(width: AppSizes.spaceS),
+              Text(
+                name,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              // AI Thinking Indicator - Three pulsing dots
+              if (isAI && isAIThinking) ...[
+                const SizedBox(width: AppSizes.spaceXS),
+                _buildThinkingDots(color),
               ],
             ],
           ),
-        ),
-        // AI Thinking Indicator - Absolute positioned overlay
-        if (isAI && isAIThinking)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 6,
-                vertical: 4,
-              ),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.4),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 10,
-                    height: 10,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'AI',
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+          if (hasTimer) ...[
+            const SizedBox(height: AppSizes.spaceS),
+            Text(
+              _formatTime(timeRemaining),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: isWarning ? AppColors.timerWarning : null,
+                fontWeight: FontWeight.bold,
               ),
             ),
+          ],
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildThinkingDots(Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (index) {
+        return Container(
+          width: 6,
+          height: 6,
+          margin: EdgeInsets.only(left: index > 0 ? 3 : 0),
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
           ),
-      ],
+        )
+            .animate(onPlay: (controller) => controller.repeat())
+            .fadeIn(
+              duration: 600.ms,
+              delay: (index * 200).ms,
+            )
+            .then(delay: 200.ms)
+            .fadeOut(duration: 600.ms);
+      }),
     );
   }
   
