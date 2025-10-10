@@ -99,8 +99,13 @@ class AIService {
       }
     }
     
+    // Fallback to random if no move found
+    if (bestMove == null) {
+      return _randomMove(validMoves);
+    }
+    
     return AIMove(
-      row: bestMove!.$1,
+      row: bestMove.$1,
       col: bestMove.$2,
       score: -bestScore,
       reasoning: 'Center preference',
@@ -128,8 +133,13 @@ class AIService {
       }
     }
     
+    // Fallback to random if no move found
+    if (bestMove == null) {
+      return _randomMove(validMoves);
+    }
+    
     return AIMove(
-      row: bestMove!.$1,
+      row: bestMove.$1,
       col: bestMove.$2,
       score: bestScore.toDouble(),
       reasoning: 'Greedy: minimize opponent options',
@@ -164,8 +174,13 @@ class AIService {
       }
     }
     
+    // Fallback to random if no move found
+    if (bestMove == null) {
+      return _randomMove(validMoves);
+    }
+    
     return AIMove(
-      row: bestMove!.$1,
+      row: bestMove.$1,
       col: bestMove.$2,
       score: bestScore,
       reasoning: useAlphaBeta ? 'Alpha-beta pruning' : 'Minimax',
