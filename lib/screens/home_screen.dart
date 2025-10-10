@@ -6,6 +6,7 @@ import '../core/constants/game_constants.dart';
 import '../widgets/glass_container.dart';
 import '../models/game_settings.dart';
 import '../providers/game_provider.dart';
+import '../providers/theme_provider.dart';
 import 'game_screen.dart';
 import 'settings_screen.dart';
 
@@ -21,7 +22,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _boardSize = GameConstants.defaultBoardSize;
   int _timePerPlayer = GameConstants.timerUnlimited;
   String _gameMode = GameConstants.modePlayerVsPlayer;
-  bool _showHints = true;
   
   @override
   Widget build(BuildContext context) {
@@ -161,11 +161,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                           Switch(
-                            value: _showHints,
+                            value: context.watch<ThemeProvider>().showHints,
                             onChanged: (value) {
-                              setState(() {
-                                _showHints = value;
-                              });
+                              context.read<ThemeProvider>().toggleHints();
                             },
                           ),
                         ],
@@ -307,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
       aiDifficulty: _gameMode == GameConstants.modePlayerVsAI 
           ? GameConstants.aiEasy 
           : null,
-      showHints: _showHints,
+      showHints: context.read<ThemeProvider>().showHints,
     );
     
     // Start game in provider

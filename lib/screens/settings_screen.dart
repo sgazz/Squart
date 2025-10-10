@@ -68,41 +68,40 @@ class SettingsScreen extends StatelessWidget {
                 
                 const SizedBox(height: AppSizes.spaceM),
                 
-                // Game Settings
-                if (gameProvider.hasGame)
-                  GlassContainer(
-                    padding: const EdgeInsets.all(AppSizes.spaceL),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.videogame_asset,
-                              color: AppColors.blueToken,
-                            ),
-                            const SizedBox(width: AppSizes.spaceS),
-                            Text(
-                              'Game Settings',
-                              style: Theme.of(context).textTheme.headlineSmall,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSizes.spaceM),
-                        _buildSettingRow(
-                          context,
-                          'Show Hints',
-                          'Highlight valid moves',
-                          Switch(
-                            value: gameProvider.gameState?.settings.showHints ?? true,
-                            onChanged: (value) {
-                              gameProvider.updateSettings(showHints: value);
-                            },
+                // Game Settings - Увек прикажи Hints toggle
+                GlassContainer(
+                  padding: const EdgeInsets.all(AppSizes.spaceL),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.videogame_asset,
+                            color: AppColors.blueToken,
                           ),
+                          const SizedBox(width: AppSizes.spaceS),
+                          Text(
+                            'Game Settings',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSizes.spaceM),
+                      _buildSettingRow(
+                        context,
+                        'Show Hints',
+                        'Highlight valid moves',
+                        Switch(
+                          value: context.watch<ThemeProvider>().showHints,
+                          onChanged: (value) {
+                            context.read<ThemeProvider>().toggleHints();
+                          },
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
                 
                 const SizedBox(height: AppSizes.spaceM),
                 
