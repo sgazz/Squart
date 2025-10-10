@@ -180,28 +180,42 @@ class GameScreen extends StatelessWidget {
               ),
             ),
           ],
-          // AI Thinking Indicator
+          // AI Thinking Indicator (as badge, doesn't push layout)
           if (isAI && isAIThinking) ...[
-            const SizedBox(height: AppSizes.spaceS),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(color),
+            const SizedBox(height: AppSizes.spaceXS),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.spaceS,
+                vertical: AppSizes.spaceXS,
+              ),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                border: Border.all(color: color.withOpacity(0.5), width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                    ),
                   ),
-                ),
-                const SizedBox(width: AppSizes.spaceS),
-                Text(
-                  'Thinking...',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
+                  const SizedBox(width: AppSizes.spaceXS),
+                  Text(
+                    'Thinking',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 10,
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ],
