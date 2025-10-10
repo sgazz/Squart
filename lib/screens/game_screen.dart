@@ -252,42 +252,78 @@ class GameScreen extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(
-          '$winnerName Wins!',
-          style: TextStyle(color: winnerColor),
+      builder: (context) => ScaleTransition(
+        scale: CurvedAnimation(
+          parent: ModalRoute.of(context)!.animation!,
+          curve: Curves.elasticOut,
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.emoji_events,
-              size: 64,
-              color: winnerColor,
+        child: AlertDialog(
+          title: Text(
+            '$winnerName Wins!',
+            style: TextStyle(color: winnerColor),
+            textAlign: TextAlign.center,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: Transform.rotate(
+                      angle: (1 - value) * 0.5,
+                      child: Icon(
+                        Icons.emoji_events,
+                        size: 80,
+                        color: winnerColor,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: AppSizes.spaceL),
+              Text(
+                reason,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: AppSizes.spaceM),
+              Container(
+                padding: const EdgeInsets.all(AppSizes.spaceM),
+                decoration: BoxDecoration(
+                  color: winnerColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                ),
+                child: Text(
+                  'Total moves: ${gameState.tokens.length}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+                gameProvider.endGame();
+              },
+              child: const Text('Back to Home'),
             ),
-            const SizedBox(height: AppSizes.spaceM),
-            Text(reason),
-            const SizedBox(height: AppSizes.spaceS),
-            Text('Total moves: ${gameState.tokens.length}'),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                gameProvider.startNewGame(gameState.settings);
+              },
+              child: const Text('Play Again'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              gameProvider.endGame();
-            },
-            child: const Text('Back to Home'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              gameProvider.startNewGame(gameState.settings);
-            },
-            child: const Text('Play Again'),
-          ),
-        ],
       ),
     );
   }

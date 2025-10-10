@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/cell.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_sizes.dart';
+import 'animated_token.dart';
 
-/// Widget for displaying a single board cell
-class BoardCell extends StatelessWidget {
+/// Widget for displaying a single board cell with animations
+class BoardCell extends StatefulWidget {
   final Cell cell;
   final double size;
   final bool isHighlighted;
@@ -19,50 +20,127 @@ class BoardCell extends StatelessWidget {
   });
 
   @override
+  State<BoardCell> createState() => _BoardCellState();
+}
+
+class _BoardCellState extends State<BoardCell> with SingleTickerProviderStateMixin {
+  late AnimationController _hoverController;
+  late Animation<double> _hoverAnimation;
+  bool _isHovering = false;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _hoverController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: AppSizes.animationFast),
+    );
+    
+    _hoverAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(
+      CurvedAnimation(
+        parent: _hoverController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _hoverController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     Color cellColor;
-    if (cell.isBlack) {
+    if (widget.cell.isBlack) {
       // Checkerboard pattern for black cells
-      cellColor = (cell.row + cell.col) % 2 == 0 
+      cellColor = (widget.cell.row + widget.cell.col) % 2 == 0 
           ? AppColors.blackCellDark 
           : AppColors.blackCellLight;
-    } else if (cell.isBlue) {
-      cellColor = AppColors.blueToken;
-    } else if (cell.isRed) {
-      cellColor = AppColors.redToken;
+    } else if (widget.cell.isBlue || widget.cell.isRed) {
+      // Show animated token
+      return AnimatedToken(
+        player: widget.cell.occupiedBy!,
+        orientation: '', // Not used for display
+        size: widget.size,
+      );
     } else {
       cellColor = AppColors.regularCell(isDark);
     }
     
-    return GestureDetector(
-      onTap: cell.isAvailable ? onTap : null,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: cellColor,
-          borderRadius: BorderRadius.circular(AppSizes.tokenRadius),
-          border: Border.all(
-            color: isHighlighted 
-                ? AppColors.hintBorder 
-                : AppColors.boardBorder,
-            width: isHighlighted ? 2 : AppSizes.cellBorderWidth,
-          ),
-        ),
-        child: isHighlighted
-            ? Center(
-                child: Container(
-                  width: size * 0.3,
-                  height: size * 0.3,
-                  decoration: BoxDecoration(
-                    color: AppColors.hintColor,
-                    shape: BoxShape.circle,
+    return MouseRegion(
+      onEnter: (_) {
+        if (widget.cell.isAvailable) {
+          setState(() => _isHovering = true);
+          _hoverController.forward();
+        }
+      },
+      onExit: (_) {
+        setState(() => _isHovering = false);
+        _hoverController.reverse();
+      },
+      child: AnimatedBuilder(
+        animation: _hoverAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _hoverAnimation.value,
+            child: GestureDetector(
+              onTap: widget.cell.isAvailable ? widget.onTap : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: AppSizes.animationFast),
+                width: widget.size,
+                height: widget.size,
+                decoration: BoxDecoration(
+                  color: cellColor,
+                  borderRadius: BorderRadius.circular(AppSizes.tokenRadius),
+                  border: Border.all(
+                    color: widget.isHighlighted 
+                        ? AppColors.hintBorder 
+                        : AppColors.boardBorder,
+                    width: widget.isHighlighted ? 2 : AppSizes.cellBorderWidth,
                   ),
+                  boxShadow: _isHovering && widget.cell.isAvailable
+                      ? [
+                          BoxShadow(
+                            color: AppColors.blueToken.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
-              )
-            : null,
+                child: widget.isHighlighted
+                    ? Center(
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          duration: const Duration(milliseconds: AppSizes.animationNormal),
+                          builder: (context, value, child) {
+                            return Transform.scale(
+                              scale: value,
+                              child: Container(
+                                width: widget.size * 0.3,
+                                height: widget.size * 0.3,
+                                decoration: BoxDecoration(
+                                  color: AppColors.hintColor.withValues(alpha: 0.6 + (0.4 * value)),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

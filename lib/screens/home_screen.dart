@@ -7,6 +7,7 @@ import '../widgets/glass_container.dart';
 import '../models/game_settings.dart';
 import '../providers/game_provider.dart';
 import 'game_screen.dart';
+import 'settings_screen.dart';
 
 /// Home screen with game setup options
 class HomeScreen extends StatefulWidget {
@@ -31,6 +32,20 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSizes.spaceL),
@@ -263,10 +278,28 @@ class _HomeScreenState extends State<HomeScreen> {
     // Start game in provider
     context.read<GameProvider>().startNewGame(settings);
     
-    // Navigate to game screen
+    // Navigate to game screen with fade transition
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const GameScreen(),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const GameScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                ),
+              ),
+              child: child,
+            ),
+          );
+        },
+        transitionDuration: const Duration(milliseconds: AppSizes.animationSlow),
       ),
     );
   }
