@@ -116,9 +116,9 @@ class _GameBoardState extends State<GameBoard> with SingleTickerProviderStateMix
                         bottom: row < widget.gameState.boardSize - 1 ? AppSizes.cellGap : 0,
                       ),
                       child: Transform.scale(
-                        scale: animation.value,
+                        scale: animation.value.clamp(0.0, 1.0),
                         child: Opacity(
-                          opacity: animation.value,
+                          opacity: animation.value.clamp(0.0, 1.0),
                           child: BoardCell(
                             cell: cell,
                             size: cellSize,
