@@ -21,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _boardSize = GameConstants.defaultBoardSize;
   int _timePerPlayer = GameConstants.timerUnlimited;
   String _gameMode = GameConstants.modePlayerVsPlayer;
+  bool _showHints = true;
   
   @override
   Widget build(BuildContext context) {
@@ -135,6 +136,39 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           );
                         }).toList(),
+                      ),
+                      
+                      const SizedBox(height: AppSizes.spaceM),
+                      const Divider(),
+                      const SizedBox(height: AppSizes.spaceM),
+                      
+                      // Hints Toggle
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Show Hints',
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              const SizedBox(height: AppSizes.spaceXS),
+                              Text(
+                                'Highlight valid moves',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                          Switch(
+                            value: _showHints,
+                            onChanged: (value) {
+                              setState(() {
+                                _showHints = value;
+                              });
+                            },
+                          ),
+                        ],
                       ),
                       
                       const SizedBox(height: AppSizes.spaceM),
@@ -273,6 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
       aiDifficulty: _gameMode == GameConstants.modePlayerVsAI 
           ? GameConstants.aiEasy 
           : null,
+      showHints: _showHints,
     );
     
     // Start game in provider
