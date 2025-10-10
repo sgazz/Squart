@@ -60,10 +60,8 @@ class _BoardCellState extends State<BoardCell> with SingleTickerProviderStateMix
     
     Color cellColor;
     if (widget.cell.isBlack) {
-      // Checkerboard pattern for black cells
-      cellColor = (widget.cell.row + widget.cell.col) % 2 == 0 
-          ? AppColors.blackCellDark 
-          : AppColors.blackCellLight;
+      // All black cells are the same dark gray color (no checkerboard pattern)
+      cellColor = AppColors.blackCellDark;
     } else if (widget.cell.isBlue || widget.cell.isRed) {
       // Show animated token
       return AnimatedToken(

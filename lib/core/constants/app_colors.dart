@@ -38,12 +38,12 @@ class AppColors {
   
   // ========== Board Colors ==========
   
-  // Black Cells (Checkerboard pattern)
+  // Black Cells - Sve tamno sive (bez checkerboard pattern)
   static const blackCellDark = Color(0xFF424242); // Dark gray
-  static const blackCellLight = Color(0xFF757575); // Light gray
+  static const blackCellLight = Color(0xFF424242); // Same as dark - no pattern
   
-  // Regular Cells - Једна боја за све неактивне ћелије
-  static const regularCellDark = Color(0xFF3d2657); // Тамно љубичаста, видљива
+  // Regular Cells - Bele boje u Dark mode
+  static const regularCellDark = Color(0xFFFFFFFF); // Бело уместо љубичасте
   static const regularCellLight = Color(0xFFFFFFFF);
   
   // Board Border

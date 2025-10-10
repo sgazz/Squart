@@ -123,10 +123,10 @@ class GameConstants {
   
   // ========== Audio Files ==========
   
-  static const String soundTokenPlace = 'assets/sounds/token_place.mp3';
-  static const String soundWin = 'assets/sounds/win.mp3';
-  static const String soundLose = 'assets/sounds/lose.mp3';
-  static const String soundInvalid = 'assets/sounds/invalid.mp3';
-  static const String soundTick = 'assets/sounds/tick.mp3';
+  static const String soundTokenPlace = 'sounds/token_place.mp3';
+  static const String soundWin = 'sounds/win.mp3';
+  static const String soundLose = 'sounds/lose.mp3';
+  static const String soundInvalid = 'sounds/invalid.mp3';
+  static const String soundTick = 'sounds/tick.mp3';
 }
 

@@ -1,5 +1,8 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
 
-// iOS 17 compatibility
+// iOS 17 compatibility - ДЕФИНИТИВНО РЕШЕЊЕ
 CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES
+CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO
+CLANG_ENABLE_MODULES = YES
+CLANG_MODULES_AUTOLINK = YES
