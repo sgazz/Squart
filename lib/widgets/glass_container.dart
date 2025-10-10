@@ -1,9 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:blur/blur.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_sizes.dart';
 
-/// Glass morphism container widget
+/// Glass morphism container widget with backdrop filter
 class GlassContainer extends StatelessWidget {
   final Widget child;
   final double? width;
@@ -52,9 +52,11 @@ class GlassContainer extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
-        child: Blur(
-          blur: AppSizes.glassBlur,
-          blurColor: bgColor,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: AppSizes.glassBlur,
+            sigmaY: AppSizes.glassBlur,
+          ),
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
