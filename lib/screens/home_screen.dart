@@ -253,7 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           _aiDifficulty.description,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary(isDark),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
