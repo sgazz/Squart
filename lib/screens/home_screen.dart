@@ -8,8 +8,10 @@ import '../models/game_settings.dart';
 import '../models/ai_difficulty.dart';
 import '../providers/game_provider.dart';
 import '../providers/theme_provider.dart';
+import '../services/tutorial_service.dart';
 import 'game_screen.dart';
 import 'settings_screen.dart';
+import 'tutorial_screen.dart';
 
 /// Home screen with game setup options
 class HomeScreen extends StatefulWidget {
@@ -24,6 +26,37 @@ class _HomeScreenState extends State<HomeScreen> {
   int _timePerPlayer = GameConstants.timerUnlimited;
   String _gameMode = GameConstants.modePlayerVsPlayer;
   AIDifficulty _aiDifficulty = AIDifficulty.medium;
+  final TutorialService _tutorialService = TutorialService();
+  
+  @override
+  void initState() {
+    super.initState();
+    _checkFirstLaunch();
+  }
+  
+  Future<void> _checkFirstLaunch() async {
+    final shouldShow = await _tutorialService.shouldShowTutorial();
+    if (shouldShow && mounted) {
+      // Show tutorial after a short delay
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _showTutorial();
+        }
+      });
+    }
+  }
+  
+  void _showTutorial() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const TutorialScreen(),
+      ),
+    ).then((_) {
+      // Mark tutorial as completed when user closes it
+      _tutorialService.markTutorialCompleted();
+      _tutorialService.markFirstLaunchComplete();
+    });
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -37,6 +70,11 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           actions: [
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              tooltip: 'How to Play',
+              onPressed: _showTutorial,
+            ),
             IconButton(
               icon: const Icon(Icons.settings),
               onPressed: () {
