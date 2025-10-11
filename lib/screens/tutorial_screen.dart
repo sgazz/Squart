@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../core/constants/app_colors.dart';
-import '../core/constants/app_sizes.dart';
 import '../models/tutorial_slide.dart';
-import '../widgets/glass_container.dart';
+import '../core/constants/app_colors.dart';
 
-/// Tutorial screen with interactive slides
+/// Tutorial screen with interactive slides showing how to play
 class TutorialScreen extends StatefulWidget {
-  final bool showSkipButton;
-  
-  const TutorialScreen({
-    super.key,
-    this.showSkipButton = true,
-  });
+  const TutorialScreen({super.key});
 
   @override
   State<TutorialScreen> createState() => _TutorialScreenState();
@@ -27,301 +19,373 @@ class _TutorialScreenState extends State<TutorialScreen> {
     _pageController.dispose();
     super.dispose();
   }
-  
-  void _nextPage() {
-    if (_currentPage < TutorialData.slides.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      _finishTutorial();
-    }
-  }
-  
-  void _previousPage() {
-    if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-  
-  void _finishTutorial() {
-    Navigator.of(context).pop();
-  }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Container(
-      decoration: BoxDecoration(
-        gradient: AppColors.backgroundGradient(isDark),
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: const Text('How to Play'),
-          leading: widget.showSkipButton
-              ? IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: _finishTutorial,
-                )
-              : null,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('How to Play'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Page View
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPage = index;
-                    });
-                  },
-                  itemCount: TutorialData.slides.length,
-                  itemBuilder: (context, index) {
-                    return _buildSlide(
-                      context,
-                      TutorialData.slides[index],
-                      index,
-                    );
-                  },
-                ),
-              ),
-              
-              // Navigation Controls
-              Padding(
-                padding: const EdgeInsets.all(AppSizes.spaceL),
-                child: Column(
-                  children: [
-                    // Page Indicator
-                    Row(
+      ),
+      body: Column(
+        children: [
+          // Page View
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentPage = index;
+                });
+              },
+              itemCount: TutorialData.slides.length,
+              itemBuilder: (context, index) {
+                final slide = TutorialData.slides[index];
+                return SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        TutorialData.slides.length,
-                        (index) => _buildPageIndicator(index),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: AppSizes.spaceL),
-                    
-                    // Navigation Buttons
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Previous Button
-                        if (_currentPage > 0)
-                          TextButton.icon(
-                            onPressed: _previousPage,
-                            icon: const Icon(Icons.arrow_back),
-                            label: const Text('Back'),
-                          )
-                        else
-                          const SizedBox(width: 100),
-                        
-                        // Next/Finish Button
-                        ElevatedButton.icon(
-                          onPressed: _nextPage,
-                          icon: Icon(
-                            _currentPage == TutorialData.slides.length - 1
-                                ? Icons.check
-                                : Icons.arrow_forward,
-                          ),
-                          label: Text(
-                            _currentPage == TutorialData.slides.length - 1
-                                ? 'Got it!'
-                                : 'Next',
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSizes.spaceL,
-                              vertical: AppSizes.spaceM,
-                            ),
-                          ),
+                        Icon(
+                          slide.icon,
+                          size: 64,
+                          color: slide.color,
                         ),
+                        const SizedBox(height: 24),
+                        Text(
+                          slide.title,
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: slide.color,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          slide.description,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
+                        // Visual example for each slide
+                        _buildVisualExample(index),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildSlide(BuildContext context, TutorialSlide slide, int index) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.spaceL),
-        child: GlassContainer(
-          padding: const EdgeInsets.all(AppSizes.spaceXL),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-            // Icon
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: slide.color.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                slide.icon,
-                size: 64,
-                color: slide.color,
-              ),
-            )
-                .animate()
-                .scale(
-                  duration: 600.ms,
-                  curve: Curves.elasticOut,
-                )
-                .fadeIn(duration: 400.ms),
-            
-            const SizedBox(height: AppSizes.spaceXL),
-            
-            // Title
-            Text(
-              slide.title,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: slide.color,
-              ),
-              textAlign: TextAlign.center,
-            )
-                .animate()
-                .fadeIn(delay: 200.ms, duration: 400.ms)
-                .slideY(begin: 0.3, end: 0, duration: 400.ms),
-            
-            const SizedBox(height: AppSizes.spaceL),
-            
-            // Description
-            Text(
-              slide.description,
-              style: Theme.of(context).textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            )
-                .animate()
-                .fadeIn(delay: 400.ms, duration: 400.ms)
-                .slideY(begin: 0.3, end: 0, duration: 400.ms),
-            
-            // Interactive Example (only on last slide)
-            if (slide.hasInteractiveExample) ...[ 
-              const SizedBox(height: AppSizes.spaceXL),
-              _buildInteractiveExample(context),
-            ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-  
-  Widget _buildPageIndicator(int index) {
-    final isActive = index == _currentPage;
-    
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: isActive ? 24 : 8,
-      height: 8,
-      decoration: BoxDecoration(
-        color: isActive
-            ? TutorialData.slides[_currentPage].color
-            : Colors.grey.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
-  
-  Widget _buildInteractiveExample(BuildContext context) {
-    return GlassContainer(
-      padding: const EdgeInsets.all(AppSizes.spaceM),
-      child: Column(
-        children: [
-          Text(
-            'Interactive Example',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+                  ),
+                );
+              },
             ),
           ),
-          const SizedBox(height: AppSizes.spaceM),
           
-          // Simple 3x3 example board
-          Center(
-            child: SizedBox(
-              width: 200,
-              height: 200,
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 4,
-                  crossAxisSpacing: 4,
+          // Navigation
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Previous Button
+                SizedBox(
+                  width: 80,
+                  child: _currentPage > 0
+                      ? TextButton(
+                          onPressed: () => _pageController.previousPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          ),
+                          child: const Text('Back'),
+                        )
+                      : null,
                 ),
-                itemCount: 9,
-                itemBuilder: (context, index) {
-                  final row = index ~/ 3;
-                  final col = index % 3;
-                  
-                  // Example pattern: show some tokens
-                  Color? tokenColor;
-                  IconData? tokenIcon;
-                  
-                  if (row == 0 && col == 1) {
-                    // Blue horizontal token
-                    tokenColor = AppColors.blueToken;
-                    tokenIcon = Icons.horizontal_rule;
-                  } else if (row == 1 && col == 0) {
-                    // Red vertical token
-                    tokenColor = AppColors.redToken;
-                    tokenIcon = Icons.more_vert;
-                  } else if (row == 1 && col == 1) {
-                    // Black cell (blocked)
-                    tokenColor = AppColors.blackCellDark;
-                  }
-                  
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: tokenColor ?? AppColors.regularCellDark,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        width: 1,
-                      ),
+                
+                // Page Indicator
+                Text('${_currentPage + 1} / ${TutorialData.slides.length}'),
+                
+                // Next/Finish Button
+                SizedBox(
+                  width: 80,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_currentPage < TutorialData.slides.length - 1) {
+                        _pageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                      } else {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Text(
+                      _currentPage == TutorialData.slides.length - 1
+                          ? 'Done'
+                          : 'Next',
                     ),
-                    child: tokenIcon != null
-                        ? Icon(tokenIcon, color: Colors.white, size: 20)
-                        : null,
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          
-          const SizedBox(height: AppSizes.spaceM),
-          
-          Text(
-            'Tap cells to place tokens and block your opponent!',
-            style: Theme.of(context).textTheme.bodySmall,
-            textAlign: TextAlign.center,
           ),
         ],
       ),
-    )
-        .animate()
-        .fadeIn(delay: 600.ms, duration: 400.ms)
-        .scale(begin: const Offset(0.8, 0.8), duration: 400.ms);
+    );
+  }
+  
+  Widget _buildVisualExample(int slideIndex) {
+    switch (slideIndex) {
+      case 0:
+        return _buildWelcomeExample();
+      case 1:
+        return _buildBluePlayerExample();
+      case 2:
+        return _buildRedPlayerExample();
+      case 3:
+        return _buildWinConditionExample();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+  
+  // Slide 1: Welcome - Show empty board
+  Widget _buildWelcomeExample() {
+    return Column(
+      children: [
+        Text(
+          'Empty 4×4 Board',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildMiniBoard(
+          size: 4,
+          tokens: {},
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Players take turns placing tokens\nuntil one runs out of moves!',
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+  
+  // Slide 2: Blue Player - Show horizontal tokens
+  Widget _buildBluePlayerExample() {
+    return Column(
+      children: [
+        Text(
+          'Blue Horizontal Tokens (2 cells wide)',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.blueToken,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildMiniBoard(
+          size: 4,
+          tokens: {
+            '0,0': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '0,1': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '2,1': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '2,2': {'color': AppColors.blueToken, 'isHorizontal': true},
+          },
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 40,
+              height: 20,
+              decoration: BoxDecoration(
+                color: AppColors.blueToken,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Icon(Icons.horizontal_rule, color: Colors.white, size: 16),
+            ),
+            const SizedBox(width: 8),
+            const Text('Takes 2 cells horizontally'),
+          ],
+        ),
+      ],
+    );
+  }
+  
+  // Slide 3: Red Player - Show vertical tokens
+  Widget _buildRedPlayerExample() {
+    return Column(
+      children: [
+        Text(
+          'Red Vertical Tokens (2 cells tall)',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.redToken,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildMiniBoard(
+          size: 4,
+          tokens: {
+            '0,1': {'color': AppColors.redToken, 'isHorizontal': false},
+            '1,1': {'color': AppColors.redToken, 'isHorizontal': false},
+            '1,3': {'color': AppColors.redToken, 'isHorizontal': false},
+            '2,3': {'color': AppColors.redToken, 'isHorizontal': false},
+          },
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 20,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.redToken,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Icon(Icons.more_vert, color: Colors.white, size: 16),
+            ),
+            const SizedBox(width: 8),
+            const Text('Takes 2 cells vertically'),
+          ],
+        ),
+      ],
+    );
+  }
+  
+  // Slide 4: Win Condition - Show full board
+  Widget _buildWinConditionExample() {
+    return Column(
+      children: [
+        Text(
+          'Game in Progress',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.amber[700],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildMiniBoard(
+          size: 4,
+          tokens: {
+            // Blue horizontal tokens
+            '0,0': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '0,1': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '2,0': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '2,1': {'color': AppColors.blueToken, 'isHorizontal': true},
+            // Red vertical tokens
+            '0,2': {'color': AppColors.redToken, 'isHorizontal': false},
+            '1,2': {'color': AppColors.redToken, 'isHorizontal': false},
+            '1,3': {'color': AppColors.redToken, 'isHorizontal': false},
+            '2,3': {'color': AppColors.redToken, 'isHorizontal': false},
+          },
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.amber.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.amber, width: 2),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.emoji_events, color: Colors.amber[700], size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Win Condition',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber[700],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'The player who makes the last\nvalid move wins the game!',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  
+  // Helper method to build mini game board
+  Widget _buildMiniBoard({
+    required int size,
+    required Map<String, Map<String, dynamic>> tokens,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: 200,
+        height: 200,
+        child: GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: size,
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
+          ),
+          itemCount: size * size,
+          itemBuilder: (context, index) {
+            final row = index ~/ size;
+            final col = index % size;
+            final key = '$row,$col';
+            final tokenData = tokens[key];
+            
+            return Container(
+              decoration: BoxDecoration(
+                color: tokenData != null 
+                    ? tokenData['color'] as Color
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: Colors.grey[400]!,
+                  width: 1,
+                ),
+              ),
+              child: tokenData != null
+                  ? Icon(
+                      tokenData['isHorizontal'] as bool
+                          ? Icons.horizontal_rule
+                          : Icons.more_vert,
+                      color: Colors.white,
+                      size: 20,
+                    )
+                  : null,
+            );
+          },
+        ),
+      ),
+    );
   }
 }
 

@@ -51,10 +51,11 @@ class _GameScreenState extends State<GameScreen> {
             // Auto-show game over dialog after 1.5 seconds
             if (gameState.isFinished && !_hasShownGameOverDialog) {
               _hasShownGameOverDialog = true;
+              final dialogContext = context;
               Future.delayed(const Duration(milliseconds: 1500), () {
-                if (mounted) {
-                  _showGameOverDialog(context);
-                }
+                if (!mounted) return;
+                // ignore: use_build_context_synchronously
+                _showGameOverDialog(dialogContext);
               });
             }
             

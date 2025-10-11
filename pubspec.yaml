@@ -44,6 +44,10 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
 
+# Force newer versions of dependencies to avoid iOS 17 deprecated warnings
+dependency_overrides:
+  audio_session: ^0.2.0
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

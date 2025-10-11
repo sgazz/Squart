@@ -2,7 +2,6 @@ import 'dart:math';
 import '../models/game_state.dart';
 import '../models/ai_difficulty.dart';
 import '../models/ai_move.dart';
-import '../models/cell.dart';
 import '../core/constants/game_constants.dart';
 
 /// Service for AI opponent logic
