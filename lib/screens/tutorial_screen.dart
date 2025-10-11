@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'dart:io' show Platform;
 import '../models/tutorial_slide.dart';
 import '../core/constants/app_colors.dart';
 
@@ -14,6 +16,12 @@ class _TutorialScreenState extends State<TutorialScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   
+  // Check if running on desktop or web (platforms that benefit from buttons)
+  bool get _isDesktopOrWeb {
+    if (kIsWeb) return true;
+    return Platform.isMacOS || Platform.isWindows || Platform.isLinux;
+  }
+  
   @override
   void dispose() {
     _pageController.dispose();
@@ -22,15 +30,23 @@ class _TutorialScreenState extends State<TutorialScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('How to Play'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppColors.backgroundGradient(isDark),
       ),
-      body: Column(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: const Text('How to Play'),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: Column(
         children: [
           // Page View
           Expanded(
@@ -50,12 +66,6 @@ class _TutorialScreenState extends State<TutorialScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          slide.icon,
-                          size: 64,
-                          color: slide.color,
-                        ),
-                        const SizedBox(height: 24),
                         Text(
                           slide.title,
                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -81,54 +91,105 @@ class _TutorialScreenState extends State<TutorialScreen> {
             ),
           ),
           
-          // Navigation
+          // Navigation Controls - conditional based on platform
           Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Previous Button
-                SizedBox(
-                  width: 80,
-                  child: _currentPage > 0
-                      ? TextButton(
-                          onPressed: () => _pageController.previousPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          ),
-                          child: const Text('Back'),
-                        )
-                      : null,
-                ),
-                
-                // Page Indicator
-                Text('${_currentPage + 1} / ${TutorialData.slides.length}'),
-                
-                // Next/Finish Button
-                SizedBox(
-                  width: 80,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_currentPage < TutorialData.slides.length - 1) {
-                        _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      } else {
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    child: Text(
-                      _currentPage == TutorialData.slides.length - 1
-                          ? 'Done'
-                          : 'Next',
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            child: _isDesktopOrWeb ? _buildDesktopNavigation() : _buildMobileNavigation(),
           ),
         ],
+        ),
+      ),
+    );
+  }
+  
+  // Desktop/Web navigation with buttons
+  Widget _buildDesktopNavigation() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Previous Button
+        SizedBox(
+          width: 100,
+          child: _currentPage > 0
+              ? TextButton.icon(
+                  onPressed: () => _pageController.previousPage(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  ),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back'),
+                )
+              : null,
+        ),
+        
+        // Page Indicator
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            TutorialData.slides.length,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: index == _currentPage ? 24 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: index == _currentPage
+                    ? TutorialData.slides[_currentPage].color
+                    : Colors.grey.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+        
+        // Next/Done Button
+        SizedBox(
+          width: 100,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              if (_currentPage < TutorialData.slides.length - 1) {
+                _pageController.nextPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              } else {
+                Navigator.of(context).pop();
+              }
+            },
+            icon: Icon(
+              _currentPage == TutorialData.slides.length - 1
+                  ? Icons.check
+                  : Icons.arrow_forward,
+            ),
+            label: Text(
+              _currentPage == TutorialData.slides.length - 1
+                  ? 'Done'
+                  : 'Next',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  // Mobile navigation with just page indicator (swipe to navigate)
+  Widget _buildMobileNavigation() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        TutorialData.slides.length,
+        (index) => AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: index == _currentPage ? 24 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: index == _currentPage
+                ? TutorialData.slides[_currentPage].color
+                : Colors.grey.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
       ),
     );
   }
@@ -153,7 +214,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
     return Column(
       children: [
         Text(
-          'Empty 4×4 Board',
+          'This is how boards look at the start of each game',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -162,12 +223,13 @@ class _TutorialScreenState extends State<TutorialScreen> {
         ),
         const SizedBox(height: 16),
         _buildMiniBoard(
-          size: 4,
+          size: 5,
           tokens: {},
+          blackCells: {'1,2', '2,1', '3,3'},
         ),
         const SizedBox(height: 12),
         Text(
-          'Players take turns placing tokens\nuntil one runs out of moves!',
+          'Black cells cannot be used.\nPlayers take turns placing tokens!',
           style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           textAlign: TextAlign.center,
         ),
@@ -189,26 +251,37 @@ class _TutorialScreenState extends State<TutorialScreen> {
         ),
         const SizedBox(height: 16),
         _buildMiniBoard(
-          size: 4,
+          size: 5,
           tokens: {
             '0,0': {'color': AppColors.blueToken, 'isHorizontal': true},
             '0,1': {'color': AppColors.blueToken, 'isHorizontal': true},
-            '2,1': {'color': AppColors.blueToken, 'isHorizontal': true},
             '2,2': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '2,3': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '4,1': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '4,2': {'color': AppColors.blueToken, 'isHorizontal': true},
           },
+          blackCells: {'1,2', '2,1', '3,3'},
         ),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 40,
+              width: 20,
               height: 20,
               decoration: BoxDecoration(
                 color: AppColors.blueToken,
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: const Icon(Icons.horizontal_rule, color: Colors.white, size: 16),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: AppColors.blueToken,
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
             const SizedBox(width: 8),
             const Text('Takes 2 cells horizontally'),
@@ -232,26 +305,41 @@ class _TutorialScreenState extends State<TutorialScreen> {
         ),
         const SizedBox(height: 16),
         _buildMiniBoard(
-          size: 4,
+          size: 5,
           tokens: {
-            '0,1': {'color': AppColors.redToken, 'isHorizontal': false},
-            '1,1': {'color': AppColors.redToken, 'isHorizontal': false},
+            '0,0': {'color': AppColors.redToken, 'isHorizontal': false},
+            '1,0': {'color': AppColors.redToken, 'isHorizontal': false},
             '1,3': {'color': AppColors.redToken, 'isHorizontal': false},
             '2,3': {'color': AppColors.redToken, 'isHorizontal': false},
+            '2,4': {'color': AppColors.redToken, 'isHorizontal': false},
+            '3,4': {'color': AppColors.redToken, 'isHorizontal': false},
           },
+          blackCells: {'1,2', '2,1', '3,3'},
         ),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 20,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.redToken,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Icon(Icons.more_vert, color: Colors.white, size: 16),
+            Column(
+              children: [
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: AppColors.redToken,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: AppColors.redToken,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(width: 8),
             const Text('Takes 2 cells vertically'),
@@ -275,19 +363,24 @@ class _TutorialScreenState extends State<TutorialScreen> {
         ),
         const SizedBox(height: 16),
         _buildMiniBoard(
-          size: 4,
+          size: 5,
           tokens: {
             // Blue horizontal tokens
             '0,0': {'color': AppColors.blueToken, 'isHorizontal': true},
             '0,1': {'color': AppColors.blueToken, 'isHorizontal': true},
-            '2,0': {'color': AppColors.blueToken, 'isHorizontal': true},
-            '2,1': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '2,2': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '2,3': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '4,2': {'color': AppColors.blueToken, 'isHorizontal': true},
+            '4,3': {'color': AppColors.blueToken, 'isHorizontal': true},
             // Red vertical tokens
-            '0,2': {'color': AppColors.redToken, 'isHorizontal': false},
-            '1,2': {'color': AppColors.redToken, 'isHorizontal': false},
+            '0,3': {'color': AppColors.redToken, 'isHorizontal': false},
             '1,3': {'color': AppColors.redToken, 'isHorizontal': false},
-            '2,3': {'color': AppColors.redToken, 'isHorizontal': false},
+            '0,4': {'color': AppColors.redToken, 'isHorizontal': false},
+            '1,4': {'color': AppColors.redToken, 'isHorizontal': false},
+            '3,0': {'color': AppColors.redToken, 'isHorizontal': false},
+            '4,0': {'color': AppColors.redToken, 'isHorizontal': false},
           },
+          blackCells: {'1,2', '2,1', '3,3'},
         ),
         const SizedBox(height: 12),
         Container(
@@ -330,6 +423,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
   Widget _buildMiniBoard({
     required int size,
     required Map<String, Map<String, dynamic>> tokens,
+    Set<String> blackCells = const {},
   }) {
     return Container(
       padding: const EdgeInsets.all(8),
@@ -360,27 +454,28 @@ class _TutorialScreenState extends State<TutorialScreen> {
             final col = index % size;
             final key = '$row,$col';
             final tokenData = tokens[key];
+            final isBlack = blackCells.contains(key);
+            
+            // Determine cell color
+            Color cellColor;
+            if (isBlack) {
+              cellColor = AppColors.blackCellDark;
+            } else if (tokenData != null) {
+              cellColor = tokenData['color'] as Color;
+            } else {
+              cellColor = Colors.white;
+            }
             
             return Container(
               decoration: BoxDecoration(
-                color: tokenData != null 
-                    ? tokenData['color'] as Color
-                    : Colors.white,
+                color: cellColor,
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: Colors.grey[400]!,
                   width: 1,
                 ),
               ),
-              child: tokenData != null
-                  ? Icon(
-                      tokenData['isHorizontal'] as bool
-                          ? Icons.horizontal_rule
-                          : Icons.more_vert,
-                      color: Colors.white,
-                      size: 20,
-                    )
-                  : null,
+              child: null,
             );
           },
         ),
