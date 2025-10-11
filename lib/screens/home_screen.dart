@@ -27,11 +27,22 @@ class _HomeScreenState extends State<HomeScreen> {
   String _gameMode = GameConstants.modePlayerVsPlayer;
   AIDifficulty _aiDifficulty = AIDifficulty.medium;
   final TutorialService _tutorialService = TutorialService();
+  bool _hasSavedGame = false;
   
   @override
   void initState() {
     super.initState();
     _checkFirstLaunch();
+    _checkSavedGame();
+  }
+  
+  Future<void> _checkSavedGame() async {
+    final hasSaved = await context.read<GameProvider>().hasSavedGame();
+    if (mounted) {
+      setState(() {
+        _hasSavedGame = hasSaved;
+      });
+    }
   }
   
   Future<void> _checkFirstLaunch() async {
@@ -298,6 +309,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       
                       const SizedBox(height: AppSizes.spaceXL),
                       
+                      // Continue Game Button (if saved game exists)
+                      if (_hasSavedGame) ...[
+                        ElevatedButton.icon(
+                          onPressed: _continueGame,
+                          icon: const Icon(Icons.play_circle_filled),
+                          label: const Text('Continue Game'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceM),
+                            backgroundColor: AppColors.success,
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.spaceM),
+                      ],
+                      
                       // Start Game Button
                       ElevatedButton.icon(
                         onPressed: _startGame,
@@ -381,7 +406,43 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
   
-  void _startGame() {
+  void _continueGame() async {
+    // Load saved game
+    final success = await context.read<GameProvider>().loadSavedGame();
+    
+    if (!success) {
+      // Show error if load failed
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load saved game'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
+    
+    // Navigate to game screen
+    if (mounted) {
+      _navigateToGameScreen();
+    }
+  }
+  
+  void _startGame() async {
+    // Get showHints and gameProvider before any async gaps
+    final showHints = context.read<ThemeProvider>().showHints;
+    final gameProvider = context.read<GameProvider>();
+    
+    // Check if there's a saved game
+    if (_hasSavedGame) {
+      // Show warning dialog
+      final shouldOverwrite = await _showOverwriteDialog();
+      if (shouldOverwrite != true) {
+        return; // User cancelled
+      }
+    }
+    
     final settings = GameSettings(
       boardSize: _boardSize,
       timePerPlayer: _timePerPlayer,
@@ -389,13 +450,49 @@ class _HomeScreenState extends State<HomeScreen> {
       aiDifficulty: _gameMode == GameConstants.modePlayerVsAI 
           ? _aiDifficulty 
           : null,
-      showHints: context.read<ThemeProvider>().showHints,
+      showHints: showHints,
     );
     
-    // Start game in provider
-    context.read<GameProvider>().startNewGame(settings);
+    // Start new game (with overwrite if needed)
+    await gameProvider.startNewGameWithOverwrite(settings);
     
-    // Navigate to game screen with fade transition
+    // Update saved game status
+    if (mounted) {
+      setState(() {
+        _hasSavedGame = false;
+      });
+      
+      // Navigate to game screen
+      _navigateToGameScreen();
+    }
+  }
+  
+  Future<bool?> _showOverwriteDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Overwrite Saved Game?'),
+        content: const Text(
+          'You have a saved game in progress. Starting a new game will delete the saved game. Do you want to continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: const Text('Start New Game'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _navigateToGameScreen() {
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => const GameScreen(),
@@ -418,7 +515,10 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         transitionDuration: const Duration(milliseconds: AppSizes.animationSlow),
       ),
-    );
+    ).then((_) {
+      // Refresh saved game status when returning from game
+      _checkSavedGame();
+    });
   }
 }
 

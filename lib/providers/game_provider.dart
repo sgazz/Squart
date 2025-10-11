@@ -4,6 +4,7 @@ import '../models/game_state.dart';
 import '../models/game_settings.dart';
 import '../services/game_logic_service.dart';
 import '../services/ai_service.dart';
+import '../services/storage_service.dart';
 import '../core/utils/audio_manager.dart';
 import '../core/utils/haptic_manager.dart';
 import '../core/constants/game_constants.dart';
@@ -12,6 +13,7 @@ import '../core/constants/game_constants.dart';
 class GameProvider with ChangeNotifier {
   final GameLogicService _gameLogic = GameLogicService();
   final AIService _aiService = AIService();
+  final StorageService _storageService = StorageService();
   GameState? _gameState;
   Timer? _timer;
   bool _isAIThinking = false;
@@ -165,6 +167,10 @@ class GameProvider with ChangeNotifier {
     
     _gameState = _gameLogic.pauseGame(_gameState!);
     _timer?.cancel();
+    
+    // Auto-save when pausing
+    autoSaveGame();
+    
     notifyListeners();
   }
   
@@ -248,6 +254,71 @@ class GameProvider with ChangeNotifier {
   double getBlackCellsPercentage() {
     if (_gameState == null) return 0.0;
     return _gameLogic.getBlackCellsPercentage(_gameState!.board);
+  }
+  
+  // ==================== SAVE/LOAD FUNCTIONALITY ====================
+  
+  /// Check if there is a saved game
+  Future<bool> hasSavedGame() async {
+    return await _storageService.hasSavedGame();
+  }
+  
+  /// Load saved game and continue playing
+  Future<bool> loadSavedGame() async {
+    final savedState = await _storageService.loadGame();
+    
+    if (savedState == null) {
+      return false;
+    }
+    
+    // Cancel existing timer
+    _timer?.cancel();
+    _isAIThinking = false;
+    
+    // Load saved state
+    _gameState = savedState;
+    
+    // Apply settings to managers
+    AudioManager.instance.setEnabled(savedState.settings.soundEnabled);
+    HapticManager.instance.setEnabled(savedState.settings.vibrationEnabled);
+    
+    // Resume timer if game is playing and has timer
+    if (savedState.isPlaying && savedState.settings.hasTimer) {
+      _startTimer();
+    }
+    
+    notifyListeners();
+    return true;
+  }
+  
+  /// Save current game
+  Future<bool> saveCurrentGame() async {
+    if (_gameState == null) {
+      return false;
+    }
+    
+    return await _storageService.saveGame(_gameState!);
+  }
+  
+  /// Auto-save game (called on pause or app lifecycle changes)
+  Future<void> autoSaveGame() async {
+    if (_gameState != null) {
+      await _storageService.autoSaveGame(_gameState!);
+    }
+  }
+  
+  /// Delete saved game
+  Future<bool> deleteSavedGame() async {
+    return await _storageService.deleteSavedGame();
+  }
+  
+  /// Start new game and optionally delete saved game
+  Future<void> startNewGameWithOverwrite(GameSettings settings) async {
+    // Delete any existing saved game
+    await deleteSavedGame();
+    
+    // Start new game
+    startNewGame(settings);
   }
   
   @override
