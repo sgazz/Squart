@@ -1,13 +1,14 @@
 {
-    "name": "squart",
-    "short_name": "squart",
+    "name": "Squart - Logic Board Game",
+    "short_name": "Squart",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#1a1a2e",
+    "theme_color": "#1a1a2e",
+    "description": "A strategic board game for two players. Blue plays horizontal, Red plays vertical. Make the last valid move to win!",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "categories": ["games", "entertainment"],
     "icons": [
         {
             "src": "icons/Icon-192.png",
