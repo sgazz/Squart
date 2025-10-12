@@ -23,7 +23,12 @@ class GameProvider with ChangeNotifier {
   bool get isGameActive => _gameState?.isPlaying ?? false;
   bool get isAIThinking => _isAIThinking;
   bool get isPlayerVsAI => _gameState?.settings.isPlayerVsAI ?? false;
-  bool get isAITurn => isPlayerVsAI && _gameState?.isRedsTurn == true;
+  bool get isAITurn {
+    if (!isPlayerVsAI || _gameState == null) return false;
+    // AI is the opposite of starting player
+    final aiPlayer = _gameState!.settings.aiPlayer;
+    return _gameState!.currentPlayer == aiPlayer;
+  }
   
   /// Start a new game with given settings
   void startNewGame(GameSettings settings) {
@@ -45,17 +50,18 @@ class GameProvider with ChangeNotifier {
     
     notifyListeners();
     
-    // If AI is first player (Red), make AI move
-    // Note: In our game, Blue always goes first (horizontal)
-    // So AI will be Red (vertical) and will move second
+    // If AI is the starting player, make first AI move
+    if (isAITurn && !_gameState!.isFinished) {
+      _makeAIMove();
+    }
   }
   
   /// Make a move at given position
   Future<void> makeMove(int row, int col) async {
     if (_gameState == null || _gameState!.isFinished || _isAIThinking) return;
     
-    // In PvE mode, only allow player (Blue) to make moves
-    if (isPlayerVsAI && _gameState!.isRedsTurn) {
+    // In PvE mode, only allow human player to make moves
+    if (isPlayerVsAI && isAITurn) {
       return; // It's AI's turn, player can't move
     }
     
@@ -68,22 +74,26 @@ class GameProvider with ChangeNotifier {
         await AudioManager.instance.playTokenPlace();
         await HapticManager.instance.light();
         
-        // Check if game ended
-        if (_gameState!.isFinished) {
-          _timer?.cancel();
-          
-          // Play win/lose sound based on winner
-          if (_gameState!.winner != null) {
-            final isPlayerWin = _gameState!.winner == GameConstants.playerBlue;
-            if (isPlayerWin) {
-              await AudioManager.instance.playWin();
-              await HapticManager.instance.success();
-            } else {
-              await AudioManager.instance.playLose();
-              await HapticManager.instance.heavy();
-            }
+      // Check if game ended
+      if (_gameState!.isFinished) {
+        _timer?.cancel();
+        
+        // Play win/lose sound based on winner
+        if (_gameState!.winner != null) {
+          // In PvE mode, check if human player won
+          // In PvP mode, both players hear win sound for their color
+          final isPlayerWin = isPlayerVsAI 
+              ? _gameState!.winner == _gameState!.settings.humanPlayer
+              : true; // In PvP, both players are human
+          if (isPlayerWin) {
+            await AudioManager.instance.playWin();
+            await HapticManager.instance.success();
+          } else {
+            await AudioManager.instance.playLose();
+            await HapticManager.instance.heavy();
           }
         }
+      }
         
         notifyListeners();
         
@@ -131,7 +141,8 @@ class GameProvider with ChangeNotifier {
         
         // Play win/lose sound based on winner
         if (_gameState!.winner != null) {
-          final isPlayerWin = _gameState!.winner == GameConstants.playerBlue;
+          final humanPlayer = _gameState!.settings.humanPlayer;
+          final isPlayerWin = _gameState!.winner == humanPlayer;
           if (isPlayerWin) {
             await AudioManager.instance.playWin();
             await HapticManager.instance.success();

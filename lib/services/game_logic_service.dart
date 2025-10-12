@@ -16,7 +16,7 @@ class GameLogicService {
       settings: settings,
       board: board,
       tokens: [],
-      currentPlayer: GameConstants.playerBlue,
+      currentPlayer: settings.startingPlayer,
       gameStatus: GameConstants.statePlaying,
       startedAt: DateTime.now(),
     );

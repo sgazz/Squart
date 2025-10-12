@@ -26,6 +26,9 @@ class _HomeScreenState extends State<HomeScreen> {
   int _timePerPlayer = GameConstants.timerUnlimited;
   String _gameMode = GameConstants.modePlayerVsPlayer;
   AIDifficulty _aiDifficulty = AIDifficulty.medium;
+  String _startingPlayer = GameConstants.playerBlue;
+  String _playerColor = GameConstants.playerBlue; // Color human plays in PvE
+  bool _aiGoesFirst = false; // Who goes first in PvE
   final TutorialService _tutorialService = TutorialService();
   bool _hasSavedGame = false;
   
@@ -137,22 +140,44 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: AppSizes.spaceL),
                       
                       // Board Size
-                      Text(
-                        'Board Size: $_boardSize × $_boardSize',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: AppSizes.spaceS),
-                      Slider(
-                        value: _boardSize.toDouble(),
-                        min: GameConstants.minBoardSize.toDouble(),
-                        max: GameConstants.maxBoardSize.toDouble(),
-                        divisions: GameConstants.maxBoardSize - GameConstants.minBoardSize,
-                        label: '$_boardSize × $_boardSize',
-                        activeColor: AppColors.blueToken,
-                        onChanged: (value) {
-                          setState(() {
-                            _boardSize = value.toInt();
-                          });
+                      Builder(
+                        builder: (context) {
+                          // Calculate max board size based on screen width
+                          final screenWidth = MediaQuery.of(context).size.width;
+                          final maxSize = GameConstants.getMaxBoardSizeForScreen(screenWidth);
+                          
+                          // Clamp current board size to max
+                          if (_boardSize > maxSize) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              setState(() {
+                                _boardSize = maxSize;
+                              });
+                            });
+                          }
+                          
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'Board Size: $_boardSize × $_boardSize',
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              const SizedBox(height: AppSizes.spaceS),
+                              Slider(
+                                value: _boardSize.toDouble(),
+                                min: GameConstants.minBoardSize.toDouble(),
+                                max: maxSize.toDouble(),
+                                divisions: maxSize - GameConstants.minBoardSize,
+                                label: '$_boardSize × $_boardSize',
+                                activeColor: AppColors.blueToken,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _boardSize = value.toInt();
+                                  });
+                                },
+                              ),
+                            ],
+                          );
                         },
                       ),
                       
@@ -193,32 +218,146 @@ class _HomeScreenState extends State<HomeScreen> {
                       const Divider(),
                       const SizedBox(height: AppSizes.spaceM),
                       
-                      // Hints Toggle
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Show Hints',
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              const SizedBox(height: AppSizes.spaceXS),
-                              Text(
-                                'Highlight valid moves',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
+                      // Starting Player (PvP only)
+                      if (_gameMode == GameConstants.modePlayerVsPlayer) ...[
+                        Text(
+                          'Starting Player',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: AppSizes.spaceS),
+                        SegmentedButton<String>(
+                          segments: const [
+                            ButtonSegment<String>(
+                              value: GameConstants.playerBlue,
+                              label: Text('Blue'),
+                              icon: Icon(Icons.square),
+                            ),
+                            ButtonSegment<String>(
+                              value: GameConstants.playerRed,
+                              label: Text('Red'),
+                              icon: Icon(Icons.square),
+                            ),
+                          ],
+                          selected: {_startingPlayer},
+                          onSelectionChanged: (Set<String> newSelection) {
+                            setState(() {
+                              _startingPlayer = newSelection.first;
+                            });
+                          },
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return _startingPlayer == GameConstants.playerBlue
+                                      ? AppColors.blueToken
+                                      : AppColors.redToken;
+                                }
+                                return Colors.transparent;
+                              },
+                            ),
+                            foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return Colors.white;
+                                }
+                                return AppColors.textSecondary;
+                              },
+                            ),
                           ),
-                          Switch(
-                            value: context.watch<ThemeProvider>().showHints,
-                            onChanged: (value) {
-                              context.read<ThemeProvider>().toggleHints();
-                            },
+                        ),
+                      ],
+                      
+                      // Player Color (PvE only)
+                      if (_gameMode == GameConstants.modePlayerVsAI) ...[
+                        Text(
+                          'You Play As',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: AppSizes.spaceS),
+                        SegmentedButton<String>(
+                          segments: const [
+                            ButtonSegment<String>(
+                              value: GameConstants.playerBlue,
+                              label: Text('Blue (Horizontal)'),
+                              icon: Icon(Icons.square),
+                            ),
+                            ButtonSegment<String>(
+                              value: GameConstants.playerRed,
+                              label: Text('Red (Vertical)'),
+                              icon: Icon(Icons.square),
+                            ),
+                          ],
+                          selected: {_playerColor},
+                          onSelectionChanged: (Set<String> newSelection) {
+                            setState(() {
+                              _playerColor = newSelection.first;
+                            });
+                          },
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return _playerColor == GameConstants.playerBlue
+                                      ? AppColors.blueToken
+                                      : AppColors.redToken;
+                                }
+                                return Colors.transparent;
+                              },
+                            ),
+                            foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return Colors.white;
+                                }
+                                return AppColors.textSecondary;
+                              },
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                        
+                        const SizedBox(height: AppSizes.spaceM),
+                        
+                        // Who Goes First (PvE only)
+                        Text(
+                          'Who Goes First',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: AppSizes.spaceS),
+                        SegmentedButton<bool>(
+                          segments: const [
+                            ButtonSegment<bool>(
+                              value: false,
+                              label: Text('You'),
+                              icon: Icon(Icons.person),
+                            ),
+                            ButtonSegment<bool>(
+                              value: true,
+                              label: Text('AI'),
+                              icon: Icon(Icons.computer),
+                            ),
+                          ],
+                          selected: {_aiGoesFirst},
+                          onSelectionChanged: (Set<bool> newSelection) {
+                            setState(() {
+                              _aiGoesFirst = newSelection.first;
+                            });
+                          },
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.resolveWith((states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return AppColors.blueToken;
+                              }
+                              return null;
+                            }),
+                            foregroundColor: WidgetStateProperty.resolveWith((states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return Colors.white;
+                              }
+                              return null;
+                            }),
+                          ),
+                        ),
+                      ],
                       
                       const SizedBox(height: AppSizes.spaceM),
                       const Divider(),
@@ -338,71 +477,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 
-                const SizedBox(height: AppSizes.spaceL),
-                
-                // How to Play
-                GlassContainer(
-                  padding: const EdgeInsets.all(AppSizes.spaceL),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.info_outline, size: AppSizes.iconM),
-                          const SizedBox(width: AppSizes.spaceS),
-                          Text(
-                            'How to Play',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSizes.spaceM),
-                      _buildHowToPlayItem(
-                        Icons.square,
-                        'Blue player places horizontal tokens (2 cells wide)',
-                        AppColors.blueToken,
-                      ),
-                      const SizedBox(height: AppSizes.spaceS),
-                      _buildHowToPlayItem(
-                        Icons.square,
-                        'Red player places vertical tokens (2 cells tall)',
-                        AppColors.redToken,
-                      ),
-                      const SizedBox(height: AppSizes.spaceS),
-                      _buildHowToPlayItem(
-                        Icons.block,
-                        'Black cells cannot be used',
-                        Colors.grey,
-                      ),
-                      const SizedBox(height: AppSizes.spaceS),
-                      _buildHowToPlayItem(
-                        Icons.emoji_events,
-                        'Win by making the last valid move',
-                        AppColors.success,
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-  
-  Widget _buildHowToPlayItem(IconData icon, String text, Color color) {
-    return Row(
-      children: [
-        Icon(icon, color: color, size: AppSizes.iconS),
-        const SizedBox(width: AppSizes.spaceS),
-        Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-      ],
     );
   }
   
@@ -443,6 +522,30 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
     
+    // Calculate starting player and human player color based on game mode
+    String startingPlayer;
+    String? humanPlayerColor;
+    
+    if (_gameMode == GameConstants.modePlayerVsPlayer) {
+      // PvP: Use selected starting player, no humanPlayerColor needed
+      startingPlayer = _startingPlayer;
+      humanPlayerColor = null;
+    } else {
+      // PvE: Set humanPlayerColor explicitly
+      humanPlayerColor = _playerColor;
+      
+      // Calculate starting player based on who goes first
+      if (_aiGoesFirst) {
+        // AI goes first, so starting player is opposite of human color
+        startingPlayer = _playerColor == GameConstants.playerBlue
+            ? GameConstants.playerRed
+            : GameConstants.playerBlue;
+      } else {
+        // Player goes first, so starting player is human color
+        startingPlayer = _playerColor;
+      }
+    }
+    
     final settings = GameSettings(
       boardSize: _boardSize,
       timePerPlayer: _timePerPlayer,
@@ -450,6 +553,8 @@ class _HomeScreenState extends State<HomeScreen> {
       aiDifficulty: _gameMode == GameConstants.modePlayerVsAI 
           ? _aiDifficulty 
           : null,
+      startingPlayer: startingPlayer,
+      humanPlayerColor: humanPlayerColor,
       showHints: showHints,
     );
     
