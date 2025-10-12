@@ -27,6 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _gameMode = GameConstants.modePlayerVsPlayer;
   AIDifficulty _aiDifficulty = AIDifficulty.medium;
   String _startingPlayer = GameConstants.playerBlue;
+  String _playerColor = GameConstants.playerBlue; // Color human plays in PvE
+  bool _aiGoesFirst = false; // Who goes first in PvE
   final TutorialService _tutorialService = TutorialService();
   bool _hasSavedGame = false;
   
@@ -216,52 +218,146 @@ class _HomeScreenState extends State<HomeScreen> {
                       const Divider(),
                       const SizedBox(height: AppSizes.spaceM),
                       
-                      // Starting Player
-                      Text(
-                        'Starting Player',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: AppSizes.spaceS),
-                      SegmentedButton<String>(
-                        segments: [
-                          ButtonSegment<String>(
-                            value: GameConstants.playerBlue,
-                            label: const Text('Blue'),
-                            icon: const Icon(Icons.square),
+                      // Starting Player (PvP only)
+                      if (_gameMode == GameConstants.modePlayerVsPlayer) ...[
+                        Text(
+                          'Starting Player',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: AppSizes.spaceS),
+                        SegmentedButton<String>(
+                          segments: const [
+                            ButtonSegment<String>(
+                              value: GameConstants.playerBlue,
+                              label: Text('Blue'),
+                              icon: Icon(Icons.square),
+                            ),
+                            ButtonSegment<String>(
+                              value: GameConstants.playerRed,
+                              label: Text('Red'),
+                              icon: Icon(Icons.square),
+                            ),
+                          ],
+                          selected: {_startingPlayer},
+                          onSelectionChanged: (Set<String> newSelection) {
+                            setState(() {
+                              _startingPlayer = newSelection.first;
+                            });
+                          },
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return _startingPlayer == GameConstants.playerBlue
+                                      ? AppColors.blueToken
+                                      : AppColors.redToken;
+                                }
+                                return Colors.transparent;
+                              },
+                            ),
+                            foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return Colors.white;
+                                }
+                                return AppColors.textSecondary;
+                              },
+                            ),
                           ),
-                          ButtonSegment<String>(
-                            value: GameConstants.playerRed,
-                            label: const Text('Red'),
-                            icon: const Icon(Icons.square),
+                        ),
+                      ],
+                      
+                      // Player Color (PvE only)
+                      if (_gameMode == GameConstants.modePlayerVsAI) ...[
+                        Text(
+                          'You Play As',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: AppSizes.spaceS),
+                        SegmentedButton<String>(
+                          segments: const [
+                            ButtonSegment<String>(
+                              value: GameConstants.playerBlue,
+                              label: Text('Blue (Horizontal)'),
+                              icon: Icon(Icons.square),
+                            ),
+                            ButtonSegment<String>(
+                              value: GameConstants.playerRed,
+                              label: Text('Red (Vertical)'),
+                              icon: Icon(Icons.square),
+                            ),
+                          ],
+                          selected: {_playerColor},
+                          onSelectionChanged: (Set<String> newSelection) {
+                            setState(() {
+                              _playerColor = newSelection.first;
+                            });
+                          },
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return _playerColor == GameConstants.playerBlue
+                                      ? AppColors.blueToken
+                                      : AppColors.redToken;
+                                }
+                                return Colors.transparent;
+                              },
+                            ),
+                            foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return Colors.white;
+                                }
+                                return AppColors.textSecondary;
+                              },
+                            ),
                           ),
-                        ],
-                        selected: {_startingPlayer},
-                        onSelectionChanged: (Set<String> newSelection) {
-                          setState(() {
-                            _startingPlayer = newSelection.first;
-                          });
-                        },
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                            (Set<WidgetState> states) {
+                        ),
+                        
+                        const SizedBox(height: AppSizes.spaceM),
+                        
+                        // Who Goes First (PvE only)
+                        Text(
+                          'Who Goes First',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: AppSizes.spaceS),
+                        SegmentedButton<bool>(
+                          segments: const [
+                            ButtonSegment<bool>(
+                              value: false,
+                              label: Text('You'),
+                              icon: Icon(Icons.person),
+                            ),
+                            ButtonSegment<bool>(
+                              value: true,
+                              label: Text('AI'),
+                              icon: Icon(Icons.computer),
+                            ),
+                          ],
+                          selected: {_aiGoesFirst},
+                          onSelectionChanged: (Set<bool> newSelection) {
+                            setState(() {
+                              _aiGoesFirst = newSelection.first;
+                            });
+                          },
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.resolveWith((states) {
                               if (states.contains(WidgetState.selected)) {
-                                return _startingPlayer == GameConstants.playerBlue
-                                    ? AppColors.blueToken
-                                    : AppColors.redToken;
+                                return AppColors.blueToken;
                               }
-                              return Colors.transparent;
-                            },
-                          ),
-                          foregroundColor: WidgetStateProperty.resolveWith<Color>(
-                            (Set<WidgetState> states) {
+                              return null;
+                            }),
+                            foregroundColor: WidgetStateProperty.resolveWith((states) {
                               if (states.contains(WidgetState.selected)) {
                                 return Colors.white;
                               }
-                              return AppColors.textSecondary;
-                            },
+                              return null;
+                            }),
                           ),
                         ),
-                      ),
+                      ],
                       
                       const SizedBox(height: AppSizes.spaceM),
                       const Divider(),
@@ -426,6 +522,24 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
     
+    // Calculate starting player based on game mode
+    String startingPlayer;
+    if (_gameMode == GameConstants.modePlayerVsPlayer) {
+      // PvP: Use selected starting player
+      startingPlayer = _startingPlayer;
+    } else {
+      // PvE: Calculate based on player color and who goes first
+      if (_aiGoesFirst) {
+        // AI goes first, so AI gets the opposite color
+        startingPlayer = _playerColor == GameConstants.playerBlue
+            ? GameConstants.playerRed
+            : GameConstants.playerBlue;
+      } else {
+        // Player goes first
+        startingPlayer = _playerColor;
+      }
+    }
+    
     final settings = GameSettings(
       boardSize: _boardSize,
       timePerPlayer: _timePerPlayer,
@@ -433,7 +547,7 @@ class _HomeScreenState extends State<HomeScreen> {
       aiDifficulty: _gameMode == GameConstants.modePlayerVsAI 
           ? _aiDifficulty 
           : null,
-      startingPlayer: _startingPlayer,
+      startingPlayer: startingPlayer,
       showHints: showHints,
     );
     
