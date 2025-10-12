@@ -137,22 +137,44 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: AppSizes.spaceL),
                       
                       // Board Size
-                      Text(
-                        'Board Size: $_boardSize × $_boardSize',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: AppSizes.spaceS),
-                      Slider(
-                        value: _boardSize.toDouble(),
-                        min: GameConstants.minBoardSize.toDouble(),
-                        max: GameConstants.maxBoardSize.toDouble(),
-                        divisions: GameConstants.maxBoardSize - GameConstants.minBoardSize,
-                        label: '$_boardSize × $_boardSize',
-                        activeColor: AppColors.blueToken,
-                        onChanged: (value) {
-                          setState(() {
-                            _boardSize = value.toInt();
-                          });
+                      Builder(
+                        builder: (context) {
+                          // Calculate max board size based on screen width
+                          final screenWidth = MediaQuery.of(context).size.width;
+                          final maxSize = GameConstants.getMaxBoardSizeForScreen(screenWidth);
+                          
+                          // Clamp current board size to max
+                          if (_boardSize > maxSize) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              setState(() {
+                                _boardSize = maxSize;
+                              });
+                            });
+                          }
+                          
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'Board Size: $_boardSize × $_boardSize',
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              const SizedBox(height: AppSizes.spaceS),
+                              Slider(
+                                value: _boardSize.toDouble(),
+                                min: GameConstants.minBoardSize.toDouble(),
+                                max: maxSize.toDouble(),
+                                divisions: maxSize - GameConstants.minBoardSize,
+                                label: '$_boardSize × $_boardSize',
+                                activeColor: AppColors.blueToken,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _boardSize = value.toInt();
+                                  });
+                                },
+                              ),
+                            ],
+                          );
                         },
                       ),
                       

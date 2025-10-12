@@ -7,11 +7,30 @@ class GameConstants {
   /// Minimum board size
   static const int minBoardSize = 5;
   
-  /// Maximum board size
+  /// Maximum board size (absolute maximum, may be limited by screen size)
   static const int maxBoardSize = 20;
   
   /// Default board size
   static const int defaultBoardSize = 7;
+  
+  /// Calculate maximum board size based on screen width
+  /// This ensures cells never go below minCellSize (20px)
+  static int getMaxBoardSizeForScreen(double screenWidth) {
+    const double minCellSize = 20.0;
+    const double boardPadding = 16.0 * 2; // AppSizes.boardPadding * 2
+    const double cellGap = 2.0; // AppSizes.cellGap
+    
+    // Available width for board
+    final double availableWidth = screenWidth - boardPadding;
+    
+    // Calculate max board size that keeps cells >= minCellSize
+    // Formula: (availableWidth - (size - 1) * cellGap) / size >= minCellSize
+    // Simplified: size <= (availableWidth + cellGap) / (minCellSize + cellGap)
+    final int calculatedMax = ((availableWidth + cellGap) / (minCellSize + cellGap)).floor();
+    
+    // Clamp between minBoardSize and maxBoardSize
+    return calculatedMax.clamp(minBoardSize, maxBoardSize);
+  }
   
   /// Minimum percentage of black cells
   static const double minBlackCellsPercent = 0.17; // 17%
