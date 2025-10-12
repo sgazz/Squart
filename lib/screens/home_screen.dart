@@ -215,37 +215,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       const Divider(),
                       const SizedBox(height: AppSizes.spaceM),
                       
-                      // Hints Toggle
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Show Hints',
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              const SizedBox(height: AppSizes.spaceXS),
-                              Text(
-                                'Highlight valid moves',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                          Switch(
-                            value: context.watch<ThemeProvider>().showHints,
-                            onChanged: (value) {
-                              context.read<ThemeProvider>().toggleHints();
-                            },
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: AppSizes.spaceM),
-                      const Divider(),
-                      const SizedBox(height: AppSizes.spaceM),
-                      
                       // Game Mode
                       Text(
                         'Game Mode',
