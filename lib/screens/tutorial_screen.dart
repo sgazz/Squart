@@ -46,8 +46,9 @@ class _TutorialScreenState extends State<TutorialScreen> {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
-        body: Column(
-        children: [
+        body: SafeArea(
+          child: Column(
+          children: [
           // Page View
           Expanded(
             child: PageView.builder(
@@ -97,6 +98,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
             child: _isDesktopOrWeb ? _buildDesktopNavigation() : _buildMobileNavigation(),
           ),
         ],
+          ),
         ),
       ),
     );
