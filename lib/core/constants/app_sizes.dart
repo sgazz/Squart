@@ -20,8 +20,8 @@ class AppSizes {
   
   // ========== Game Board ==========
   
-  /// Maximum cell size (for small boards)
-  static const double maxCellSize = 60.0;
+  /// Maximum cell size (for small boards on phones, larger for tablets)
+  static const double maxCellSize = 80.0;
   
   /// Minimum cell size (for large boards)
   static const double minCellSize = 20.0;
