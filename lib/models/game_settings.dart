@@ -7,7 +7,8 @@ class GameSettings {
   final int timePerPlayer; // seconds, 0 = unlimited
   final String gameMode; // PVP or PVE
   final AIDifficulty? aiDifficulty; // AI difficulty level (only for PVE)
-  final String startingPlayer; // BLUE or RED
+  final String startingPlayer; // BLUE or RED (who goes first)
+  final String? humanPlayerColor; // BLUE or RED (only for PVE, null for PVP)
   final bool showHints;
   final bool soundEnabled;
   final bool vibrationEnabled;
@@ -18,6 +19,7 @@ class GameSettings {
     this.gameMode = GameConstants.modePlayerVsPlayer,
     this.aiDifficulty,
     this.startingPlayer = GameConstants.playerBlue,
+    this.humanPlayerColor,
     this.showHints = true,
     this.soundEnabled = true,
     this.vibrationEnabled = true,
@@ -37,18 +39,19 @@ class GameSettings {
   /// Check if game is Player vs AI
   bool get isPlayerVsAI => gameMode == GameConstants.modePlayerVsAI;
   
-  /// Get AI player (opposite of starting player in PvE mode)
-  String get aiPlayer {
-    if (!isPlayerVsAI) return '';
-    return startingPlayer == GameConstants.playerBlue 
-        ? GameConstants.playerRed 
-        : GameConstants.playerBlue;
+  /// Get human player color in PvE mode
+  String get humanPlayer {
+    if (!isPlayerVsAI) return startingPlayer; // In PvP, use startingPlayer
+    return humanPlayerColor ?? GameConstants.playerBlue; // In PvE, use explicit humanPlayerColor
   }
   
-  /// Get human player in PvE mode
-  String get humanPlayer {
+  /// Get AI player (opposite of human player in PvE mode)
+  String get aiPlayer {
     if (!isPlayerVsAI) return '';
-    return startingPlayer;
+    final human = humanPlayer;
+    return human == GameConstants.playerBlue 
+        ? GameConstants.playerRed 
+        : GameConstants.playerBlue;
   }
   
   /// Check if timer is enabled
@@ -64,6 +67,7 @@ class GameSettings {
     String? gameMode,
     AIDifficulty? aiDifficulty,
     String? startingPlayer,
+    String? humanPlayerColor,
     bool? showHints,
     bool? soundEnabled,
     bool? vibrationEnabled,
@@ -74,6 +78,7 @@ class GameSettings {
       gameMode: gameMode ?? this.gameMode,
       aiDifficulty: aiDifficulty ?? this.aiDifficulty,
       startingPlayer: startingPlayer ?? this.startingPlayer,
+      humanPlayerColor: humanPlayerColor ?? this.humanPlayerColor,
       showHints: showHints ?? this.showHints,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
@@ -88,6 +93,7 @@ class GameSettings {
       'gameMode': gameMode,
       'aiDifficulty': aiDifficulty?.toStorageString(),
       'startingPlayer': startingPlayer,
+      'humanPlayerColor': humanPlayerColor,
       'showHints': showHints,
       'soundEnabled': soundEnabled,
       'vibrationEnabled': vibrationEnabled,
@@ -105,6 +111,7 @@ class GameSettings {
         ? AIDifficulty.fromStorageString(aiDifficultyStr)
         : null,
       startingPlayer: json['startingPlayer'] as String? ?? GameConstants.playerBlue,
+      humanPlayerColor: json['humanPlayerColor'] as String?,
       showHints: json['showHints'] as bool? ?? true,
       soundEnabled: json['soundEnabled'] as bool? ?? true,
       vibrationEnabled: json['vibrationEnabled'] as bool? ?? true,
@@ -120,6 +127,7 @@ class GameSettings {
       other.gameMode == gameMode &&
       other.aiDifficulty == aiDifficulty &&
       other.startingPlayer == startingPlayer &&
+      other.humanPlayerColor == humanPlayerColor &&
       other.showHints == showHints &&
       other.soundEnabled == soundEnabled &&
       other.vibrationEnabled == vibrationEnabled;
@@ -132,6 +140,7 @@ class GameSettings {
     gameMode,
     aiDifficulty,
     startingPlayer,
+    humanPlayerColor,
     showHints,
     soundEnabled,
     vibrationEnabled,

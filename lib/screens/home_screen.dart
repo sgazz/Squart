@@ -522,20 +522,26 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
     
-    // Calculate starting player based on game mode
+    // Calculate starting player and human player color based on game mode
     String startingPlayer;
+    String? humanPlayerColor;
+    
     if (_gameMode == GameConstants.modePlayerVsPlayer) {
-      // PvP: Use selected starting player
+      // PvP: Use selected starting player, no humanPlayerColor needed
       startingPlayer = _startingPlayer;
+      humanPlayerColor = null;
     } else {
-      // PvE: Calculate based on player color and who goes first
+      // PvE: Set humanPlayerColor explicitly
+      humanPlayerColor = _playerColor;
+      
+      // Calculate starting player based on who goes first
       if (_aiGoesFirst) {
-        // AI goes first, so AI gets the opposite color
+        // AI goes first, so starting player is opposite of human color
         startingPlayer = _playerColor == GameConstants.playerBlue
             ? GameConstants.playerRed
             : GameConstants.playerBlue;
       } else {
-        // Player goes first
+        // Player goes first, so starting player is human color
         startingPlayer = _playerColor;
       }
     }
@@ -548,6 +554,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? _aiDifficulty 
           : null,
       startingPlayer: startingPlayer,
+      humanPlayerColor: humanPlayerColor,
       showHints: showHints,
     );
     
