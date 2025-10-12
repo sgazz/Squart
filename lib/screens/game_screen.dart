@@ -82,12 +82,16 @@ class _GameScreenState extends State<GameScreen> {
                         Expanded(
                           child: _buildPlayerInfo(
                             context,
-                            'Blue',
+                            gameProvider.isPlayerVsAI && gameState.settings.aiPlayer == GameConstants.playerBlue
+                                ? 'AI'
+                                : 'Blue',
                             GameConstants.playerBlue,
                             AppColors.blueToken,
                             gameState.blueTimeRemaining,
                             gameState.isBluesTurn,
                             gameState.settings.hasTimer,
+                            isAI: gameProvider.isPlayerVsAI && gameState.settings.aiPlayer == GameConstants.playerBlue,
+                            isAIThinking: gameProvider.isPlayerVsAI && gameState.settings.aiPlayer == GameConstants.playerBlue && gameProvider.isAIThinking,
                           ),
                         ),
                         
@@ -97,14 +101,16 @@ class _GameScreenState extends State<GameScreen> {
                         Expanded(
                           child: _buildPlayerInfo(
                             context,
-                            gameProvider.isPlayerVsAI ? 'AI' : 'Red',
+                            gameProvider.isPlayerVsAI && gameState.settings.aiPlayer == GameConstants.playerRed
+                                ? 'AI'
+                                : 'Red',
                             GameConstants.playerRed,
                             AppColors.redToken,
                             gameState.redTimeRemaining,
                             gameState.isRedsTurn,
                             gameState.settings.hasTimer,
-                            isAI: gameProvider.isPlayerVsAI,
-                            isAIThinking: gameProvider.isAIThinking,
+                            isAI: gameProvider.isPlayerVsAI && gameState.settings.aiPlayer == GameConstants.playerRed,
+                            isAIThinking: gameProvider.isPlayerVsAI && gameState.settings.aiPlayer == GameConstants.playerRed && gameProvider.isAIThinking,
                           ),
                         ),
                       ],

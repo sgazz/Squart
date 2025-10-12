@@ -37,6 +37,20 @@ class GameSettings {
   /// Check if game is Player vs AI
   bool get isPlayerVsAI => gameMode == GameConstants.modePlayerVsAI;
   
+  /// Get AI player (opposite of starting player in PvE mode)
+  String get aiPlayer {
+    if (!isPlayerVsAI) return '';
+    return startingPlayer == GameConstants.playerBlue 
+        ? GameConstants.playerRed 
+        : GameConstants.playerBlue;
+  }
+  
+  /// Get human player in PvE mode
+  String get humanPlayer {
+    if (!isPlayerVsAI) return '';
+    return startingPlayer;
+  }
+  
   /// Check if timer is enabled
   bool get hasTimer => timePerPlayer > 0;
   
