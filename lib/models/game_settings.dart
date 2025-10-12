@@ -7,6 +7,7 @@ class GameSettings {
   final int timePerPlayer; // seconds, 0 = unlimited
   final String gameMode; // PVP or PVE
   final AIDifficulty? aiDifficulty; // AI difficulty level (only for PVE)
+  final String startingPlayer; // BLUE or RED
   final bool showHints;
   final bool soundEnabled;
   final bool vibrationEnabled;
@@ -16,6 +17,7 @@ class GameSettings {
     this.timePerPlayer = GameConstants.timerUnlimited,
     this.gameMode = GameConstants.modePlayerVsPlayer,
     this.aiDifficulty,
+    this.startingPlayer = GameConstants.playerBlue,
     this.showHints = true,
     this.soundEnabled = true,
     this.vibrationEnabled = true,
@@ -47,6 +49,7 @@ class GameSettings {
     int? timePerPlayer,
     String? gameMode,
     AIDifficulty? aiDifficulty,
+    String? startingPlayer,
     bool? showHints,
     bool? soundEnabled,
     bool? vibrationEnabled,
@@ -56,6 +59,7 @@ class GameSettings {
       timePerPlayer: timePerPlayer ?? this.timePerPlayer,
       gameMode: gameMode ?? this.gameMode,
       aiDifficulty: aiDifficulty ?? this.aiDifficulty,
+      startingPlayer: startingPlayer ?? this.startingPlayer,
       showHints: showHints ?? this.showHints,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
@@ -69,6 +73,7 @@ class GameSettings {
       'timePerPlayer': timePerPlayer,
       'gameMode': gameMode,
       'aiDifficulty': aiDifficulty?.toStorageString(),
+      'startingPlayer': startingPlayer,
       'showHints': showHints,
       'soundEnabled': soundEnabled,
       'vibrationEnabled': vibrationEnabled,
@@ -85,6 +90,7 @@ class GameSettings {
       aiDifficulty: aiDifficultyStr != null 
         ? AIDifficulty.fromStorageString(aiDifficultyStr)
         : null,
+      startingPlayer: json['startingPlayer'] as String? ?? GameConstants.playerBlue,
       showHints: json['showHints'] as bool? ?? true,
       soundEnabled: json['soundEnabled'] as bool? ?? true,
       vibrationEnabled: json['vibrationEnabled'] as bool? ?? true,
@@ -99,6 +105,7 @@ class GameSettings {
       other.timePerPlayer == timePerPlayer &&
       other.gameMode == gameMode &&
       other.aiDifficulty == aiDifficulty &&
+      other.startingPlayer == startingPlayer &&
       other.showHints == showHints &&
       other.soundEnabled == soundEnabled &&
       other.vibrationEnabled == vibrationEnabled;
@@ -110,6 +117,7 @@ class GameSettings {
     timePerPlayer,
     gameMode,
     aiDifficulty,
+    startingPlayer,
     showHints,
     soundEnabled,
     vibrationEnabled,
