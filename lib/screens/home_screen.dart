@@ -329,71 +329,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 
-                const SizedBox(height: AppSizes.spaceL),
-                
-                // How to Play
-                GlassContainer(
-                  padding: const EdgeInsets.all(AppSizes.spaceL),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.info_outline, size: AppSizes.iconM),
-                          const SizedBox(width: AppSizes.spaceS),
-                          Text(
-                            'How to Play',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSizes.spaceM),
-                      _buildHowToPlayItem(
-                        Icons.square,
-                        'Blue player places horizontal tokens (2 cells wide)',
-                        AppColors.blueToken,
-                      ),
-                      const SizedBox(height: AppSizes.spaceS),
-                      _buildHowToPlayItem(
-                        Icons.square,
-                        'Red player places vertical tokens (2 cells tall)',
-                        AppColors.redToken,
-                      ),
-                      const SizedBox(height: AppSizes.spaceS),
-                      _buildHowToPlayItem(
-                        Icons.block,
-                        'Black cells cannot be used',
-                        Colors.grey,
-                      ),
-                      const SizedBox(height: AppSizes.spaceS),
-                      _buildHowToPlayItem(
-                        Icons.emoji_events,
-                        'Win by making the last valid move',
-                        AppColors.success,
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-  
-  Widget _buildHowToPlayItem(IconData icon, String text, Color color) {
-    return Row(
-      children: [
-        Icon(icon, color: color, size: AppSizes.iconS),
-        const SizedBox(width: AppSizes.spaceS),
-        Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-      ],
     );
   }
   
