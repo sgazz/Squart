@@ -17,8 +17,38 @@ void main() async {
   runApp(const SquartApp());
 }
 
-class SquartApp extends StatelessWidget {
+class SquartApp extends StatefulWidget {
   const SquartApp({super.key});
+
+  @override
+  State<SquartApp> createState() => _SquartAppState();
+}
+
+class _SquartAppState extends State<SquartApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // Dispose audio manager when app is closed
+    AudioManager.instance.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Manage app lifecycle (background/foreground)
+    if (state == AppLifecycleState.paused) {
+      // App is going to background - pause audio if needed
+    } else if (state == AppLifecycleState.resumed) {
+      // App is resuming from background
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

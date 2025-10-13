@@ -100,37 +100,49 @@ class _GameBoardState extends State<GameBoard> with SingleTickerProviderStateMix
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(widget.gameState.boardSize, (row) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(widget.gameState.boardSize, (col) {
-                    final cell = widget.gameState.board[row][col];
-                    final isHighlighted = widget.validMoves.contains((row, col));
-                    final animation = _cellAnimations[row][col];
-                    
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        right: col < widget.gameState.boardSize - 1 ? AppSizes.cellGap : 0,
-                        bottom: row < widget.gameState.boardSize - 1 ? AppSizes.cellGap : 0,
-                      ),
-                      child: Transform.scale(
-                        scale: animation.value.clamp(0.0, 1.0),
-                        child: Opacity(
-                          opacity: animation.value.clamp(0.0, 1.0),
-                          child: BoardCell(
-                            cell: cell,
-                            size: cellSize,
-                            isHighlighted: isHighlighted,
-                            onTap: () => widget.onCellTap(row, col),
-                          ),
+            // Build board cells - use simple for loops instead of List.generate
+            // to reduce memory allocations per frame
+            final rows = <Widget>[];
+            for (var row = 0; row < widget.gameState.boardSize; row++) {
+              final cells = <Widget>[];
+              for (var col = 0; col < widget.gameState.boardSize; col++) {
+                final cell = widget.gameState.board[row][col];
+                final isHighlighted = widget.validMoves.contains((row, col));
+                final animation = _cellAnimations[row][col];
+                final animValue = animation.value.clamp(0.0, 1.0);
+                
+                cells.add(
+                  Padding(
+                    padding: EdgeInsets.only(
+                      right: col < widget.gameState.boardSize - 1 ? AppSizes.cellGap : 0,
+                      bottom: row < widget.gameState.boardSize - 1 ? AppSizes.cellGap : 0,
+                    ),
+                    child: Transform.scale(
+                      scale: animValue,
+                      child: Opacity(
+                        opacity: animValue,
+                        child: BoardCell(
+                          cell: cell,
+                          size: cellSize,
+                          isHighlighted: isHighlighted,
+                          onTap: () => widget.onCellTap(row, col),
                         ),
                       ),
-                    );
-                  }),
+                    ),
+                  ),
                 );
-              }),
+              }
+              rows.add(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: cells,
+                ),
+              );
+            }
+            
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: rows,
             );
           },
         ),

@@ -2,17 +2,24 @@ import 'dart:math';
 import '../models/game_state.dart';
 import '../models/ai_difficulty.dart';
 import '../models/ai_move.dart';
+import '../models/cell.dart';
 import '../core/constants/game_constants.dart';
 
 /// Service for AI opponent logic
 class AIService {
   final Random _random = Random();
   
+  // Memory safety: limit number of evaluations to prevent OOM on iOS
+  static const int _maxEvaluations = 10000;
+  int _evaluationCount = 0;
+  
   /// Calculate the best move for AI based on difficulty
   Future<AIMove> calculateMove(
     GameState state,
     AIDifficulty difficulty,
   ) async {
+    // Reset evaluation counter
+    _evaluationCount = 0;
     // Get all valid moves
     final validMoves = state.getValidMoves();
     
@@ -188,6 +195,12 @@ class AIService {
   
   /// Minimax recursive evaluation
   double _minimax(GameState state, int depth, bool isMaximizing) {
+    // Check evaluation limit to prevent OOM
+    _evaluationCount++;
+    if (_evaluationCount > _maxEvaluations) {
+      return _evaluatePosition(state); // Early exit if too many evaluations
+    }
+    
     // Terminal conditions
     if (depth == 0 || state.isFinished) {
       return _evaluatePosition(state);
@@ -221,6 +234,12 @@ class AIService {
   
   /// Alpha-beta pruning algorithm
   double _alphabeta(GameState state, int depth, double alpha, double beta, bool isMaximizing) {
+    // Check evaluation limit to prevent OOM
+    _evaluationCount++;
+    if (_evaluationCount > _maxEvaluations) {
+      return _evaluatePosition(state); // Early exit if too many evaluations
+    }
+    
     // Terminal conditions
     if (depth == 0 || state.isFinished) {
       return _evaluatePosition(state);
@@ -369,31 +388,40 @@ class AIService {
   }
   
   /// Simulate a move without modifying original state
+  /// Optimized to reduce memory allocations
   GameState _simulateMove(GameState state, int row, int col) {
     // Create token
     final orientation = state.isBluesTurn
         ? GameConstants.orientationHorizontal
         : GameConstants.orientationVertical;
     
-    // Copy board
-    final newBoard = state.board.map((r) => r.map((c) => c).toList()).toList();
-    
-    // Place token on board
-    if (orientation == GameConstants.orientationHorizontal) {
-      newBoard[row][col] = newBoard[row][col].copyWith(
-        occupiedBy: state.currentPlayer,
-      );
-      newBoard[row][col + 1] = newBoard[row][col + 1].copyWith(
-        occupiedBy: state.currentPlayer,
-      );
-    } else {
-      newBoard[row][col] = newBoard[row][col].copyWith(
-        occupiedBy: state.currentPlayer,
-      );
-      newBoard[row + 1][col] = newBoard[row + 1][col].copyWith(
-        occupiedBy: state.currentPlayer,
-      );
-    }
+    // Use efficient board copying - only copy rows that change
+    final boardSize = state.boardSize;
+    final newBoard = List<List<Cell>>.generate(boardSize, (r) {
+      if (orientation == GameConstants.orientationHorizontal) {
+        // Only copy the affected row
+        if (r == row) {
+          return List<Cell>.generate(boardSize, (c) {
+            if (c == col || c == col + 1) {
+              return state.board[r][c].copyWith(occupiedBy: state.currentPlayer);
+            }
+            return state.board[r][c];
+          });
+        }
+      } else {
+        // Only copy affected rows for vertical placement
+        if (r == row || r == row + 1) {
+          return List<Cell>.generate(boardSize, (c) {
+            if (c == col) {
+              return state.board[r][c].copyWith(occupiedBy: state.currentPlayer);
+            }
+            return state.board[r][c];
+          });
+        }
+      }
+      // Reuse unchanged rows (safe because Cells are immutable)
+      return state.board[r];
+    });
     
     // Switch player
     final nextPlayer = state.isBluesTurn

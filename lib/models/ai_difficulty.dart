@@ -41,14 +41,15 @@ enum AIDifficulty {
   }
   
   /// Get minimax depth
+  /// Reduced for iOS memory efficiency
   int get minimaxDepth {
     switch (this) {
       case AIDifficulty.easy:
         return 1; // Very shallow, almost random
       case AIDifficulty.medium:
-        return 3; // Moderate lookahead
+        return 2; // Shallow lookahead (was 3, reduced for iOS)
       case AIDifficulty.hard:
-        return 5; // Deep lookahead
+        return 3; // Moderate lookahead (was 5, reduced for iOS)
     }
   }
   
