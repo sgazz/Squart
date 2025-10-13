@@ -7,13 +7,44 @@ import '../services/ai_service.dart';
 import '../services/storage_service.dart';
 import '../core/utils/audio_manager.dart';
 import '../core/utils/haptic_manager.dart';
+import '../core/utils/performance_monitor.dart';
 import '../core/constants/game_constants.dart';
 
 /// Provider for managing game state
 class GameProvider with ChangeNotifier {
-  final GameLogicService _gameLogic = GameLogicService();
-  final AIService _aiService = AIService();
-  final StorageService _storageService = StorageService();
+  // Lazy initialization - create services only when needed
+  GameLogicService? __gameLogic;
+  AIService? __aiService;
+  StorageService? __storageService;
+  
+  GameLogicService get _gameLogic {
+    if (__gameLogic == null) {
+      PerformanceMonitor.instance.log('🎮 Creating GameLogicService (lazy)');
+      __gameLogic = GameLogicService();
+    }
+    return __gameLogic!;
+  }
+  
+  AIService get _aiService {
+    if (__aiService == null) {
+      PerformanceMonitor.instance.log('🤖 Creating AIService (lazy)');
+      __aiService = AIService();
+    }
+    return __aiService!;
+  }
+  
+  StorageService get _storageService {
+    if (__storageService == null) {
+      PerformanceMonitor.instance.log('💾 Creating StorageService (lazy)');
+      __storageService = StorageService();
+    }
+    return __storageService!;
+  }
+  
+  GameProvider() {
+    PerformanceMonitor.instance.log('🎮 GameProvider created');
+  }
+  
   GameState? _gameState;
   Timer? _timer;
   bool _isAIThinking = false;

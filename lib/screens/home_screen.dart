@@ -35,23 +35,34 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _checkFirstLaunch();
-    _checkSavedGame();
+    // Defer startup checks to after first frame
+    // This prevents blocking the initial UI render
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _performStartupChecks();
+    });
   }
   
-  Future<void> _checkSavedGame() async {
-    final hasSaved = await context.read<GameProvider>().hasSavedGame();
-    if (mounted) {
-      setState(() {
-        _hasSavedGame = hasSaved;
-      });
-    }
-  }
-  
-  Future<void> _checkFirstLaunch() async {
-    final shouldShow = await _tutorialService.shouldShowTutorial();
-    if (shouldShow && mounted) {
-      // Show tutorial after a short delay
+  /// Perform all startup checks AFTER first frame is rendered
+  Future<void> _performStartupChecks() async {
+    if (!mounted) return;
+    
+    // Perform checks in parallel (still only 2 SharedPreferences calls total)
+    final results = await Future.wait([
+      context.read<GameProvider>().hasSavedGame(),
+      _tutorialService.shouldShowTutorial(),
+    ]);
+    
+    if (!mounted) return;
+    
+    final hasSaved = results[0];
+    final shouldShowTutorial = results[1];
+    
+    setState(() {
+      _hasSavedGame = hasSaved;
+    });
+    
+    // Show tutorial after a short delay if needed
+    if (shouldShowTutorial) {
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           _showTutorial();
@@ -620,9 +631,16 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         transitionDuration: const Duration(milliseconds: AppSizes.animationSlow),
       ),
-    ).then((_) {
+    ).then((_) async {
       // Refresh saved game status when returning from game
-      _checkSavedGame();
+      if (mounted) {
+        final hasSaved = await context.read<GameProvider>().hasSavedGame();
+        if (mounted) {
+          setState(() {
+            _hasSavedGame = hasSaved;
+          });
+        }
+      }
     });
   }
 }

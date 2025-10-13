@@ -1,5 +1,6 @@
 import 'package:just_audio/just_audio.dart';
 import '../constants/game_constants.dart';
+import 'performance_monitor.dart';
 
 /// Manages audio playback for the game using just_audio
 /// Uses multiple pre-loaded audio players for efficient memory usage
@@ -9,17 +10,21 @@ class AudioManager {
   static final AudioManager instance = AudioManager._();
   
   // Separate audio players for each sound to avoid memory issues
-  late final AudioPlayer _tokenPlacePlayer;
-  late final AudioPlayer _winPlayer;
-  late final AudioPlayer _losePlayer;
-  late final AudioPlayer _invalidPlayer;
-  late final AudioPlayer _tickPlayer;
+  // Nullable because they may not be initialized if audio is disabled
+  AudioPlayer? _tokenPlacePlayer;
+  AudioPlayer? _winPlayer;
+  AudioPlayer? _losePlayer;
+  AudioPlayer? _invalidPlayer;
+  AudioPlayer? _tickPlayer;
   
   bool _isEnabled = true;
   bool _isInitialized = false;
   
   /// Initialize audio manager - preload all sounds once
   Future<void> init() async {
+    PerformanceMonitor.instance.log('🔊 AudioManager.init started');
+    'AudioManager.createPlayers'.startTracking();
+    
     try {
       // Initialize all audio players
       _tokenPlacePlayer = AudioPlayer();
@@ -27,28 +32,32 @@ class AudioManager {
       _losePlayer = AudioPlayer();
       _invalidPlayer = AudioPlayer();
       _tickPlayer = AudioPlayer();
+      'AudioManager.createPlayers'.endTracking();
       
       // Preload all audio assets once to avoid repeated loading
+      'AudioManager.loadAssets'.startTracking();
       await Future.wait([
-        _tokenPlacePlayer.setAsset('assets/${GameConstants.soundTokenPlace}'),
-        _winPlayer.setAsset('assets/${GameConstants.soundWin}'),
-        _losePlayer.setAsset('assets/${GameConstants.soundLose}'),
-        _invalidPlayer.setAsset('assets/${GameConstants.soundInvalid}'),
-        _tickPlayer.setAsset('assets/${GameConstants.soundTick}'),
+        _tokenPlacePlayer!.setAsset('assets/${GameConstants.soundTokenPlace}'),
+        _winPlayer!.setAsset('assets/${GameConstants.soundWin}'),
+        _losePlayer!.setAsset('assets/${GameConstants.soundLose}'),
+        _invalidPlayer!.setAsset('assets/${GameConstants.soundInvalid}'),
+        _tickPlayer!.setAsset('assets/${GameConstants.soundTick}'),
       ]);
-      
-      // Set audio players to loop mode off and low latency mode
-      await Future.wait([
-        _tokenPlacePlayer.setLoopMode(LoopMode.off),
-        _winPlayer.setLoopMode(LoopMode.off),
-        _losePlayer.setLoopMode(LoopMode.off),
-        _invalidPlayer.setLoopMode(LoopMode.off),
-        _tickPlayer.setLoopMode(LoopMode.off),
-      ]);
+      'AudioManager.loadAssets'.endTracking();
       
       _isInitialized = true;
+      PerformanceMonitor.instance.log('✅ AudioManager initialized');
+      PerformanceMonitor.instance.logMemory('After AudioManager init');
+      
+      // Set audio players to loop mode off (non-blocking, can happen after init)
+      _tokenPlacePlayer!.setLoopMode(LoopMode.off);
+      _winPlayer!.setLoopMode(LoopMode.off);
+      _losePlayer!.setLoopMode(LoopMode.off);
+      _invalidPlayer!.setLoopMode(LoopMode.off);
+      _tickPlayer!.setLoopMode(LoopMode.off);
     } catch (e) {
       // Silently fail if audio initialization fails
+      PerformanceMonitor.instance.logError('AudioManager.init', e);
       _isInitialized = false;
     }
   }
@@ -93,7 +102,9 @@ class AudioManager {
   
   /// Play a sound from pre-loaded audio player
   /// Uses fire-and-forget approach to avoid blocking
-  Future<void> _playSoundFromPlayer(AudioPlayer player) async {
+  Future<void> _playSoundFromPlayer(AudioPlayer? player) async {
+    if (player == null) return; // Not initialized
+    
     try {
       // Seek to beginning and play (no need to reload asset)
       // Use unawaited to avoid blocking - audio playback is fire-and-forget
@@ -105,16 +116,29 @@ class AudioManager {
   
   /// Dispose all audio players
   Future<void> dispose() async {
-    if (!_isInitialized) return;
+    if (!_isInitialized) {
+      PerformanceMonitor.instance.log('🔊 AudioManager not initialized, skip dispose');
+      return;
+    }
     
-    await Future.wait([
-      _tokenPlacePlayer.dispose(),
-      _winPlayer.dispose(),
-      _losePlayer.dispose(),
-      _invalidPlayer.dispose(),
-      _tickPlayer.dispose(),
-    ]);
+    PerformanceMonitor.instance.log('🔊 AudioManager disposing...');
+    'AudioManager.disposePlayers'.startTracking();
+    
+    // Only dispose if players were created
+    final disposals = <Future>[];
+    if (_tokenPlacePlayer != null) disposals.add(_tokenPlacePlayer!.dispose());
+    if (_winPlayer != null) disposals.add(_winPlayer!.dispose());
+    if (_losePlayer != null) disposals.add(_losePlayer!.dispose());
+    if (_invalidPlayer != null) disposals.add(_invalidPlayer!.dispose());
+    if (_tickPlayer != null) disposals.add(_tickPlayer!.dispose());
+    
+    if (disposals.isNotEmpty) {
+      await Future.wait(disposals);
+    }
     
     _isInitialized = false;
+    'AudioManager.disposePlayers'.endTracking();
+    PerformanceMonitor.instance.log('✅ AudioManager disposed');
+    PerformanceMonitor.instance.logMemory('After AudioManager dispose');
   }
 }
