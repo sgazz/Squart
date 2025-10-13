@@ -36,12 +36,55 @@ U igri Squart, dva igrača naizmenično postavljaju žetone na tablu. **Plavi ig
 
 ## 🎮 Kako igrati
 
-- **Plavi igrač** igra prvi i postavlja žeton horizontalno (polje na koje klikne i polje desno od njega)
-- **Crveni igrač** postavlja žeton vertikalno (polje na koje klikne i polje ispod njega)
-- **Crna polja** se ne mogu koristiti
+### 🎯 Osnovna Pravila
+
+- **Plavi igrač** postavlja žeton **horizontalno** (polje na koje klikne i polje desno od njega)
+- **Crveni igrač** postavlja žeton **vertikalno** (polje na koje klikne i polje ispod njega)
+- **Crna polja** se ne mogu koristiti - nasumično raspodeljena na tabli (17-19%)
 - Igra se završava kada igrač na potezu nema validni potez ili kada mu istekne vreme
 - **Pobednik** je igrač koji je odigrao poslednji validni potez
-- Igrači se naizmenično smenjuju ko prvi igra
+
+### 👤 Ko Igra Prvi?
+
+#### **Player vs Player Mode:**
+
+Pre pokretanja nove igre, možeš izabrati ko će igrati prvi:
+- **Plavi igra prvi** (podrazumevano) - plavi odigrava prvi potez
+- **Crveni igra prvi** - crveni odigrava prvi potez
+
+**Napomena**: U PvP modu, **plavi UVEK igra horizontalne žetone** i **crveni UVEK igra vertikalne žetone**, bez obzira ko igra prvi. Ovo znači:
+- Ako plavi igra prvi → plavi postavlja horizontalni žeton
+- Ako crveni igra prvi → crveni postavlja vertikalni žeton
+
+#### **Player vs AI Mode:**
+
+U AI modu imaš **potpunu kontrolu** nad postavkama:
+
+1. **Ko si ti (boja)**:
+   - Možeš izabrati da budeš **plavi** ili **crveni**
+   - Ako si plavi → igraš horizontalne žetone
+   - Ako si crveni → igraš vertikalne žetone
+
+2. **Ko igra prvi**:
+   - **Ti (human)** - ti počinješ partiju
+   - **AI** - računar odigrava prvi potez
+
+3. **Kombinacije** (4 moguće):
+   - Ti si plavi + igraš prvi → plavi (ti) otvara igru horizontalnim žetonom
+   - Ti si plavi + AI igra prvi → crveni (AI) otvara igru vertikalnim žetonom
+   - Ti si crveni + igraš prvi → crveni (ti) otvara igru vertikalnim žetonom
+   - Ti si crveni + AI igra prvi → plavi (AI) otvara igru horizontalnim žetonom
+
+**Važno**: Boja određuje **orijentaciju žetona**, a izbor "ko igra prvi" određuje **redosled poteza**.
+
+### 🎲 Zašto je Važno Ko Igra Prvi?
+
+Igrati prvi može biti **prednost** ili **mana** zavisno od:
+- Veličine table (manje table → veća prednost prvog igrača)
+- Rasporeda crnih polja (više crnih polja u centru → može pomoći ili smetati)
+- Strategije koju igrač koristi
+
+U nekim partijama prvi potez daje inicijativu, u drugim omogućava protivniku da bolje reaguje.
 
 ## 🚀 Pokretanje Aplikacije (Development)
 
