@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Squart - 3D Strategic Board Game</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Squart is a strategic board game for two players in 3D space. Play against AI or friends!">
+    <meta name="theme-color" content="#6366F1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Squart">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h2>🎮 Loading Squart...</h2>
+            <p>Preparing 3D world for you!</p>
+        </div>
+    </div>
+
+    <!-- Main Game Container -->
+    <div id="game-container" class="game-container">
+        <!-- Canvas for Three.js -->
+        <canvas id="game-canvas"></canvas>
+        
+        <!-- UI Overlay -->
+        <div id="ui-overlay" class="ui-overlay">
+            
+            <!-- Top UI Bar -->
+            <div id="top-bar" class="top-bar">
+                <div class="game-info">
+                    <div id="current-player" class="current-player">
+                        <i class="fas fa-user"></i>
+                        <span>Blue Player</span>
+                    </div>
+                    <div id="game-status" class="game-status">
+                        <span>Game in Progress</span>
+                    </div>
+                </div>
+                
+                <div class="top-controls">
+                    <button id="hint-btn" class="control-btn" title="Show valid moves">
+                        <i class="fas fa-lightbulb"></i>
+                    </button>
+                    <button id="settings-btn" class="control-btn" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button id="theme-btn" class="control-btn" title="Change theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Timer Display -->
+            <div id="timer-display" class="timer-display">
+                <div class="timer blue-timer">
+                    <div class="timer-label">Blue</div>
+                    <div class="timer-value" id="blue-timer">5:00</div>
+                </div>
+                <div class="timer red-timer">
+                    <div class="timer-label">Red</div>
+                    <div class="timer-value" id="red-timer">5:00</div>
+                </div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div id="bottom-controls" class="bottom-controls">
+                <button id="new-game-btn" class="primary-btn">
+                    <i class="fas fa-plus"></i>
+                    New Game
+                </button>
+                <button id="pause-btn" class="secondary-btn">
+                    <i class="fas fa-pause"></i>
+                    Pause
+                </button>
+                <button id="tutorial-btn" class="secondary-btn">
+                    <i class="fas fa-question-circle"></i>
+                    Tutorial
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu Overlay -->
+        <div id="menu-overlay" class="menu-overlay">
+            <div class="menu-content">
+                <h1 class="game-title">🎮 Squart</h1>
+                <p class="game-subtitle">Strategic board game in 3D space</p>
+                
+                <div class="menu-buttons">
+                    <button id="play-btn" class="menu-btn primary">
+                        <i class="fas fa-play"></i>
+                        Play Game
+                    </button>
+                    <button id="settings-menu-btn" class="menu-btn secondary">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </button>
+                    <button id="tutorial-menu-btn" class="menu-btn secondary">
+                        <i class="fas fa-question-circle"></i>
+                        How to Play
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>⚙️ Settings</h3>
+                    <button id="close-settings" class="close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Settings content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tutorial Modal -->
+        <div id="tutorial-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📚 How to Play</h3>
+                    <button id="close-tutorial" class="close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Tutorial content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Over Modal -->
+        <div id="game-over-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="game-over-title">🎉 Game Over!</h3>
+                </div>
+                <div class="modal-body">
+                    <div id="game-over-content">
+                        <!-- Game over content will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="play-again-btn" class="primary-btn">Play Again</button>
+                    <button id="main-menu-btn" class="secondary-btn">Main Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Context Warning -->
+    <div id="audio-warning" class="audio-warning">
+        <p>🔊 Click anywhere to activate sound</p>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="src/utils/Constants.js"></script>
+    <script type="module" src="src/utils/Helpers.js"></script>
+    <script type="module" src="src/audio/AudioManager.js"></script>
+    <script type="module" src="src/game/Cell.js"></script>
+    <script type="module" src="src/game/Token.js"></script>
+    <script type="module" src="src/game/GameLogic.js"></script>
+    <script type="module" src="src/game/GameBoard.js"></script>
+    <script type="module" src="src/ai/AI.js"></script>
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Audio files directory
+# Place your .wav sound files here:
+# - token_place.wav
+# - win.wav  
+# - lose.wav
+# - invalid.wav
+# - tick.wav

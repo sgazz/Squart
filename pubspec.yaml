@@ -32,6 +32,10 @@ dependencies:
   
   # Animations
   flutter_animate: ^4.5.0
+  
+  # Multiplayer
+  socket_io_client: ^2.0.3+1
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:

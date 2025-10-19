@@ -8,10 +8,12 @@ import '../models/game_settings.dart';
 import '../models/ai_difficulty.dart';
 import '../providers/game_provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/multiplayer_provider.dart';
 import '../services/tutorial_service.dart';
 import 'game_screen.dart';
 import 'settings_screen.dart';
 import 'tutorial_screen.dart';
+import 'multiplayer_lobby_screen.dart';
 
 /// Home screen with game setup options
 class HomeScreen extends StatefulWidget {
@@ -384,13 +386,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         segments: const [
                           ButtonSegment(
                             value: GameConstants.modePlayerVsPlayer,
-                            label: Text('Player vs Player'),
+                            label: Text('Local'),
                             icon: Icon(Icons.people),
                           ),
                           ButtonSegment(
                             value: GameConstants.modePlayerVsAI,
-                            label: Text('Player vs AI'),
+                            label: Text('vs AI'),
                             icon: Icon(Icons.computer),
+                          ),
+                          ButtonSegment(
+                            value: 'multiplayer',
+                            label: Text('Online'),
+                            icon: Icon(Icons.cloud),
                           ),
                         ],
                         selected: {_gameMode},
@@ -477,9 +484,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ElevatedButton.icon(
                         onPressed: _startGame,
                         icon: const Icon(Icons.play_arrow),
-                        label: Text(_gameMode == GameConstants.modePlayerVsAI 
-                          ? 'Play vs AI' 
-                          : 'Start Game'),
+                        label: Text(_gameMode == 'multiplayer' 
+                          ? 'Join Online' 
+                          : _gameMode == GameConstants.modePlayerVsAI 
+                            ? 'Play vs AI' 
+                            : 'Start Game'),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceM),
                         ),
@@ -520,6 +529,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   
   void _startGame() async {
+    // Handle multiplayer mode
+    if (_gameMode == 'multiplayer') {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => MultiplayerLobbyScreen(),
+        ),
+      );
+      return;
+    }
+    
     // Get showHints and gameProvider before any async gaps
     final showHints = context.read<ThemeProvider>().showHints;
     final gameProvider = context.read<GameProvider>();

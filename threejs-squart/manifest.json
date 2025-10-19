@@ -1,0 +1,119 @@
+{
+  "name": "Squart - 3D Strategic Board Game",
+  "short_name": "Squart",
+  "description": "Squart is a strategic board game for two players in 3D space. Play against AI or friends!",
+  "version": "1.0.0",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "landscape-primary",
+  "theme_color": "#6366F1",
+  "background_color": "#1a1a2e",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["games", "entertainment", "strategy"],
+  "icons": [
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Game",
+      "short_name": "New Game",
+      "description": "Start a new game",
+      "url": "/?action=new-game",
+      "icons": [
+        {
+          "src": "assets/icons/shortcut-new-game.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Tutorial",
+      "short_name": "Tutorial",
+      "description": "How to play Squart",
+      "url": "/?action=tutorial",
+      "icons": [
+        {
+          "src": "assets/icons/shortcut-tutorial.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "short_name": "Settings",
+      "description": "Game settings",
+      "url": "/?action=settings",
+      "icons": [
+        {
+          "src": "assets/icons/shortcut-settings.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+squart",
+      "url": "/?game=%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/?import-game",
+      "accept": {
+        "application/json": [".squart"]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/?share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "permissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "features": [
+    "cross-origin-isolated"
+  ]
+}

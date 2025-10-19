@@ -6,6 +6,7 @@ import 'core/utils/haptic_manager.dart';
 import 'core/utils/performance_monitor.dart';
 import 'providers/game_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/multiplayer_provider.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
@@ -140,6 +141,7 @@ class _SquartAppState extends State<SquartApp> with WidgetsBindingObserver {
       providers: [
         ChangeNotifierProvider(create: (_) => GameProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => MultiplayerProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
